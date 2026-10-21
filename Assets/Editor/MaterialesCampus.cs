@@ -57,6 +57,8 @@ public static class MaterialesCampus
         new Def { Nombre = "Pista_Roja", Metros = 4.04f, Color = new Color(0.55f, 0.24f, 0.2f), Suavidad = 0.25f, Relieve = true },
         new Def { Nombre = "Tierra_Batida", Textura = "gravelly_sand", Carpeta = Suelo, Metros = 2.48f, Color = Color.white },
         new Def { Nombre = "Agua", Metros = 1f, Color = new Color(0.12f, 0.42f, 0.5f), Suavidad = 0.96f },
+        // Campo lejano alrededor del Terrain
+        new Def { Nombre = "Campo", Textura = "withered_grass", Carpeta = Suelo, Metros = 8f, Color = new Color(0.95f, 0.9f, 0.85f) },
     };
 
     [MenuItem("Tools/Materiales/Actualizar materiales del campus")]

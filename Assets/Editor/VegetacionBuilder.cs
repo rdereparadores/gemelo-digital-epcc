@@ -264,7 +264,7 @@ public static class VegetacionBuilder
         data.wavingGrassSpeed = 0.4f;
         data.SetDetailLayer(0, 0, iSeca, mSeca);
         data.SetDetailLayer(0, 0, iVerde, mVerde);
-        terrain.detailObjectDistance = 120f;
+        terrain.detailObjectDistance = 90f;
         EditorUtility.SetDirty(data);
         Debug.Log($"[Vegetacion] Hierba en {celdas} celdas");
     }
@@ -288,7 +288,7 @@ public static class VegetacionBuilder
     {
         var go = new GameObject(e.Nombre);
         var lods = new LOD[2];
-        float[] corte = { 0.1f, e.Arbusto ? 0.012f : 0.003f };
+        float[] corte = { 0.18f, e.Arbusto ? 0.015f : 0.003f };
         var mats = extra != null ? new[] { e.Corteza, e.Hojas, e.HojasInterior, extra } : new[] { e.Corteza, e.Hojas, e.HojasInterior };
         for (int l = 0; l < 2; l++)
         {

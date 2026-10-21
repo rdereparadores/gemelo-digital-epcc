@@ -42,3 +42,5 @@ Edificios (Assets/Edificios/Texturas), CC0 de Poly Haven:
 | Fachada blanca | plastered_wall | Amal Kumar |
 | Fachada ocre | yellow_plaster | Rob Tuytel |
 | Ladrillo visto | red_brick | Rob Tuytel |
+
+Cielo (Assets/Ambiente/cielo.hdr): kloofendal_43d_clear_puresky de Poly Haven, CC0, de Greg Zaal.

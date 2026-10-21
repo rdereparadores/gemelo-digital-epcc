@@ -19,7 +19,7 @@ public class McamImporter : ScriptedImporter
     public const string MaterialesDir = "Assets/Materiales";
 
     // Materiales que no llevan collider (pintura, follaje...)
-    static readonly HashSet<string> SinCollider = new HashSet<string> { "Pintura", "Agua", "Follaje" };
+    static readonly HashSet<string> SinCollider = new HashSet<string> { "Pintura", "Agua", "Follaje", "Campo" };
 
     public override void OnImportAsset(AssetImportContext ctx)
     {
