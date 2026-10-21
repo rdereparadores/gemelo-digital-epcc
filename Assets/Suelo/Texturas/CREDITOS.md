@@ -34,3 +34,11 @@ Parque (Assets/Parque/Texturas) y cortezas (Assets/Vegetacion/Texturas), CC0 de 
 | Corteza de árbol de alineación | bark_platanus | Dimitrios Savva |
 | Corteza de palmera | palm_bark | Charlotte Baglioni |
 | Corteza de sauce | bark_willow | Dario Barresi, Dimitrios Savva |
+
+Edificios (Assets/Edificios/Texturas), CC0 de Poly Haven:
+
+| Uso | Textura | Autoría |
+|---|---|---|
+| Fachada blanca | plastered_wall | Amal Kumar |
+| Fachada ocre | yellow_plaster | Rob Tuytel |
+| Ladrillo visto | red_brick | Rob Tuytel |

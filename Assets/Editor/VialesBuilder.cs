@@ -91,3 +91,36 @@ public static class ParqueBuilder
         Debug.Log("[Parque] Parque colocado");
     }
 }
+
+public static class EquipamientoBuilder
+{
+    const string Politecnica = "Datos/Edificios/politecnica.csv";
+
+    [MenuItem("Tools/Equipamiento/Colocar edificios y equipamiento")]
+    public static void Build()
+    {
+        MaterialesCampus.Build();
+        if (Entorno.Colocar("Assets/Edificios/edificios.mcam", "Edificios") == null) return;
+        if (Entorno.Colocar("Assets/Equipamiento/equipamiento.mcam", "Equipamiento") == null) return;
+        ColocarPolitecnica();
+        Entorno.Guardar();
+        Debug.Log("[Equipamiento] Edificios y equipamiento colocados");
+    }
+
+    // Objeto vacío para los edificios de la Escuela Politécnica, que se modelan aparte: un hijo
+    // por edificio en el centro de su huella de OSM y a la cota del terreno. Si ya existe no se
+    // toca, para no perder lo que se haya colocado dentro.
+    static void ColocarPolitecnica()
+    {
+        if (GameObject.Find("Politecnica_Edificios") != null || !System.IO.File.Exists(Politecnica)) return;
+        var raiz = new GameObject("Politecnica_Edificios").transform;
+        foreach (var linea in System.Linq.Enumerable.Skip(System.IO.File.ReadAllLines(Politecnica), 1))
+        {
+            var c = linea.Split(',');
+            float F(int i) => float.Parse(c[i], System.Globalization.CultureInfo.InvariantCulture);
+            var go = new GameObject(string.IsNullOrEmpty(c[0]) ? "Edificio" : c[0]);
+            go.transform.SetParent(raiz, false);
+            go.transform.position = new Vector3(F(1), F(3), F(2));
+        }
+    }
+}
