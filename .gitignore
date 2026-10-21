@@ -48,3 +48,5 @@ __pycache__/
 
 # Descargas cacheadas (se regeneran con los scripts de Herramientas/)
 /Datos/descargas/
+/Datos/Viales/*.raw
+/Datos/Viales/*_preview.png

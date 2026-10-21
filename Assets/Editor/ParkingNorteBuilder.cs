@@ -46,11 +46,13 @@ public static class ParkingNorteBuilder
         var chapaSup = Mat("Chapa_Superior", new Color(0.88f, 0.88f, 0.86f), 0.2f, 0.3f);
         var chapaInf = Mat("Chapa_Inferior", new Color(0.62f, 0.60f, 0.56f), 0.3f, 0.3f);
         var hormigon = Mat("Hormigon", new Color(0.70f, 0.70f, 0.68f), 0f, 0.15f);
-        var bordillo = Mat("Bordillo", new Color(0.78f, 0.78f, 0.76f), 0f, 0.2f);
-        var acera = Mat("Baldosa_Acera", new Color(0.66f, 0.66f, 0.64f), 0f, 0.15f);
+        // Pavimentos y pintura: los mismos materiales con textura que la red viaria
+        MaterialesCampus.Build();
+        var bordillo = MatCampus("Bordillo");
+        var acera = MatCampus("Acera");
         var isleta = Mat("Baldosa_Isleta", new Color(0.76f, 0.72f, 0.69f), 0f, 0.15f);
         var mediana = Mat("Pavimento_Mediana", new Color(0.55f, 0.55f, 0.55f), 0f, 0.15f);
-        var pintura = Mat("Pintura_Vial", new Color(0.92f, 0.92f, 0.90f), 0f, 0.25f);
+        var pintura = MatCampus("Pintura");
         var farolaMetal = Mat("Farola_Metal", new Color(0.55f, 0.57f, 0.58f), 0.6f, 0.5f);
         var luminaria = Mat("Farola_Luminaria", new Color(0.75f, 0.75f, 0.75f), 0.3f, 0.6f);
 
@@ -184,10 +186,18 @@ public static class ParkingNorteBuilder
         }
 
         // Altura del terreno en un punto del marco local del parking (raíz con y = 0 y solo giro en Y)
+        // Si hay viales generados (Entorno/Viales), las piezas se apoyan en su superficie, que
+        // queda por encima del Terrain rebajado; si no, en el propio Terrain.
         float H(Vector3 local)
         {
             var w = root.TransformPoint(new Vector3(local.x, 0f, local.z));
-            return terrain.SampleHeight(w) + terrain.GetPosition().y;
+            float h = terrain.SampleHeight(w) + terrain.GetPosition().y;
+            var viales = GameObject.Find("Entorno/Viales");
+            if (viales == null) return h;
+            foreach (var hit in Physics.RaycastAll(new Vector3(w.x, h + 20f, w.z), Vector3.down, 40f))
+                if (hit.collider.transform.IsChildOf(viales.transform) && hit.collider.name.StartsWith("Calzada"))
+                    h = Mathf.Max(h, hit.point.y);
+            return h;
         }
 
         GameObject Spawn(GameObject prefab, Transform parent)
@@ -477,6 +487,9 @@ public static class ParkingNorteBuilder
         int slash = path.LastIndexOf('/');
         AssetDatabase.CreateFolder(path.Substring(0, slash), path.Substring(slash + 1));
     }
+
+    static Material MatCampus(string nombre) =>
+        AssetDatabase.LoadAssetAtPath<Material>($"{McamImporter.MaterialesDir}/{nombre}.mat");
 
     static Material Mat(string name, Color color, float metallic, float smoothness)
     {
