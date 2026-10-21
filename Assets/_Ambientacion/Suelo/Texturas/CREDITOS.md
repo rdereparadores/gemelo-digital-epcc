@@ -14,14 +14,14 @@ Color corregido hacia el tono del suelo de Cáceres con `Herramientas/preparar_t
 | Pavimento | concrete_pavement | Charlotte Baglioni |
 | Pedregal | rocky_trail | Amal Kumar |
 
-Texturas de mallas (Assets/Viales/Texturas), también CC0 de Poly Haven:
+Texturas de mallas (Assets/_Ambientacion/Viales/Texturas), también CC0 de Poly Haven:
 
 | Uso | Textura | Autoría |
 |---|---|---|
 | Acera (baldosa de tacos) | concrete_tiles | Dimitrios Savva |
 | Bordillo | concrete_floor_worn_001 | Dimitrios Savva, Rico Cilliers |
 
-Parque (Assets/Parque/Texturas) y cortezas (Assets/Vegetacion/Texturas), CC0 de Poly Haven:
+Parque (Assets/_Ambientacion/Parque/Texturas) y cortezas (Assets/_Ambientacion/Vegetacion/Texturas), CC0 de Poly Haven:
 
 | Uso | Textura | Autoría |
 |---|---|---|
@@ -35,7 +35,7 @@ Parque (Assets/Parque/Texturas) y cortezas (Assets/Vegetacion/Texturas), CC0 de 
 | Corteza de palmera | palm_bark | Charlotte Baglioni |
 | Corteza de sauce | bark_willow | Dario Barresi, Dimitrios Savva |
 
-Edificios (Assets/Edificios/Texturas), CC0 de Poly Haven:
+Edificios (Assets/_Ambientacion/Edificios/Texturas), CC0 de Poly Haven:
 
 | Uso | Textura | Autoría |
 |---|---|---|
@@ -43,4 +43,4 @@ Edificios (Assets/Edificios/Texturas), CC0 de Poly Haven:
 | Fachada ocre | yellow_plaster | Rob Tuytel |
 | Ladrillo visto | red_brick | Rob Tuytel |
 
-Cielo (Assets/Ambiente/cielo.hdr): kloofendal_43d_clear_puresky de Poly Haven, CC0, de Greg Zaal.
+Cielo (Assets/_Ambientacion/Ambiente/cielo.hdr): kloofendal_43d_clear_puresky de Poly Haven, CC0, de Greg Zaal.

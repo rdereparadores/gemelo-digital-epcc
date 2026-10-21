@@ -6,9 +6,9 @@ using UnityEngine;
 // repartidas con el splatmap que genera Herramientas/generar_splatmap.py.
 public static class SueloBuilder
 {
-    const string TexDir = "Assets/Suelo/Texturas";
-    const string CapasDir = "Assets/Suelo/Capas";
-    const string Material = "Assets/Suelo/Terreno.mat";
+    const string TexDir = "Assets/_Ambientacion/Suelo/Texturas";
+    const string CapasDir = "Assets/_Ambientacion/Suelo/Capas";
+    const string Material = "Assets/_Ambientacion/Suelo/Terreno.mat";
     const string Splat03 = "Datos/Suelo/splat_0_3.png";
     const string Splat47 = "Datos/Suelo/splat_4_7.png";
 
@@ -35,7 +35,7 @@ public static class SueloBuilder
             Debug.LogError("[Suelo] Falta el splatmap: ejecuta /usr/bin/python3.14 Herramientas/generar_splatmap.py");
             return;
         }
-        if (!AssetDatabase.IsValidFolder(CapasDir)) AssetDatabase.CreateFolder("Assets/Suelo", "Capas");
+        if (!AssetDatabase.IsValidFolder(CapasDir)) AssetDatabase.CreateFolder("Assets/_Ambientacion/Suelo", "Capas");
 
         var layers = new TerrainLayer[Capas.Length];
         for (int i = 0; i < Capas.Length; i++)

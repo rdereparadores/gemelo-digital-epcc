@@ -4,11 +4,11 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 // Coloca en la escena la red viaria que genera Herramientas/generar_viales.py: aplica al Terrain
-// el heightmap con el rebaje bajo los viales, instancia Assets/Viales/viales.mcam bajo
+// el heightmap con el rebaje bajo los viales, instancia Assets/_Ambientacion/Viales/viales.mcam bajo
 // Entorno/Viales y vuelve a asentar el parking norte sobre el asfalto.
 public static class VialesBuilder
 {
-    const string Mallas = "Assets/Viales/viales.mcam";
+    const string Mallas = "Assets/_Ambientacion/Viales/viales.mcam";
     const string Heightmap = "Datos/Viales/heightmap_viales.raw";
 
     [MenuItem("Tools/Viales/Aplicar red viaria")]
@@ -86,7 +86,7 @@ public static class ParqueBuilder
     public static void Build()
     {
         MaterialesCampus.Build();
-        if (Entorno.Colocar("Assets/Parque/parque.mcam", "Parque") == null) return;
+        if (Entorno.Colocar("Assets/_Ambientacion/Parque/parque.mcam", "Parque") == null) return;
         Entorno.Guardar();
         Debug.Log("[Parque] Parque colocado");
     }
@@ -100,8 +100,8 @@ public static class EquipamientoBuilder
     public static void Build()
     {
         MaterialesCampus.Build();
-        if (Entorno.Colocar("Assets/Edificios/edificios.mcam", "Edificios") == null) return;
-        if (Entorno.Colocar("Assets/Equipamiento/equipamiento.mcam", "Equipamiento") == null) return;
+        if (Entorno.Colocar("Assets/_Ambientacion/Edificios/edificios.mcam", "Edificios") == null) return;
+        if (Entorno.Colocar("Assets/_Ambientacion/Equipamiento/equipamiento.mcam", "Equipamiento") == null) return;
         ColocarPolitecnica();
         Entorno.Guardar();
         Debug.Log("[Equipamiento] Edificios y equipamiento colocados");

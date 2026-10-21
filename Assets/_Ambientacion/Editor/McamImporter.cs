@@ -11,12 +11,12 @@ using UnityEngine.Rendering;
 //
 // Formato (little endian): "MCAM", nº de mallas, y por malla: nombre, material (cadenas con
 // longitud int32), nº de vértices, posiciones float3, UV float2, nº de triángulos, índices int3.
-// El material se busca en Assets/Materiales/<material>.mat. Los nombres "Grupo_resto" se
+// El material se busca en Assets/_Ambientacion/Materiales/<material>.mat. Los nombres "Grupo_resto" se
 // agrupan bajo un hijo "Grupo".
 [ScriptedImporter(3, "mcam")]
 public class McamImporter : ScriptedImporter
 {
-    public const string MaterialesDir = "Assets/Materiales";
+    public const string MaterialesDir = "Assets/_Ambientacion/Materiales";
 
     // Materiales que no llevan collider (pintura, follaje...)
     static readonly HashSet<string> SinCollider = new HashSet<string> { "Pintura", "Agua", "Follaje", "Campo" };

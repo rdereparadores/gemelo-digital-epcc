@@ -8,9 +8,9 @@ using UnityEngine.Rendering.Universal;
 // Cáceres, niebla, postprocesado, oclusión ambiental y ajustes de sombras y distancias.
 public static class AmbienteBuilder
 {
-    const string Cielo = "Assets/Ambiente/cielo.hdr";
-    const string MatCielo = "Assets/Ambiente/Cielo.mat";
-    const string Perfil = "Assets/Ambiente/Campus_Volume.asset";
+    const string Cielo = "Assets/_Ambientacion/Ambiente/cielo.hdr";
+    const string MatCielo = "Assets/_Ambientacion/Ambiente/Cielo.mat";
+    const string Perfil = "Assets/_Ambientacion/Ambiente/Campus_Volume.asset";
 
     // Sol de una tarde de julio hacia las 17:00 en Cáceres: azimut ~250° (OSO), elevación ~43°,
     // que es la del sol del HDRI, así que el cielo y la luz cuadran
@@ -73,7 +73,7 @@ public static class AmbienteBuilder
         AjustarCamara();
         AjustarTerreno();
         MaterialesCampus.Build();
-        Entorno.Colocar("Assets/Ambiente/horizonte.mcam", "Horizonte");
+        Entorno.Colocar("Assets/_Ambientacion/Ambiente/horizonte.mcam", "Horizonte");
 
         Entorno.Guardar();
         Debug.Log("[Ambiente] Cielo, sol, niebla y postprocesado aplicados");

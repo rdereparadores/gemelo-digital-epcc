@@ -10,12 +10,12 @@ using UnityEngine.Rendering;
 // detalles (los mismos que usan las herramientas Paint Trees y Paint Details, así que se pueden
 // retocar a mano).
 //
-// Las posiciones, tamaños de copa y especies salen de Assets/Vegetacion/Datos/arboles.csv, que
+// Las posiciones, tamaños de copa y especies salen de Assets/_Ambientacion/Vegetacion/Datos/arboles.csv, que
 // genera Herramientas/detectar_arboles.py a partir de la ortofoto PNOA y OSM. La hierba se reparte
 // con el splatmap del suelo (Datos/Suelo).
 public static class VegetacionBuilder
 {
-    const string Root = "Assets/Vegetacion";
+    const string Root = "Assets/_Ambientacion/Vegetacion";
     const string TexDir = Root + "/Texturas";
     const string MatDir = Root + "/Materiales";
     const string MeshDir = Root + "/Mallas";

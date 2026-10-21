@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-// Biblioteca de materiales de las mallas generadas (Assets/Materiales/<nombre>.mat), que el
+// Biblioteca de materiales de las mallas generadas (Assets/_Ambientacion/Materiales/<nombre>.mat), que el
 // importador de .mcam asigna por nombre. Las texturas PBR llevan la máscara empaquetada como
 // R metálico, G AO, B altura, A suavidad, que encaja con los mapas de URP Lit.
 public static class MaterialesCampus
@@ -19,8 +19,8 @@ public static class MaterialesCampus
         public bool Relieve;      // sin textura propia: usa el relieve del asfalto
     }
 
-    const string Suelo = "Assets/Suelo/Texturas", Viales = "Assets/Viales/Texturas", Parque = "Assets/Parque/Texturas";
-    const string Edif = "Assets/Edificios/Texturas";
+    const string Suelo = "Assets/_Ambientacion/Suelo/Texturas", Viales = "Assets/_Ambientacion/Viales/Texturas", Parque = "Assets/_Ambientacion/Parque/Texturas";
+    const string Edif = "Assets/_Ambientacion/Edificios/Texturas";
 
     static readonly Def[] Defs =
     {
@@ -34,8 +34,8 @@ public static class MaterialesCampus
         new Def { Nombre = "Rollizo", Textura = "rough_wood", Carpeta = Parque, Metros = 1.0f, Color = Color.white },
         new Def { Nombre = "Mamposteria", Textura = "stacked_stone_wall", Carpeta = Parque, Metros = 2f, Color = Color.white },
         new Def { Nombre = "Granito", Textura = "rock_boulder_dry", Carpeta = Parque, Metros = 1.8f, Color = new Color(0.82f, 0.8f, 0.76f) },
-        new Def { Nombre = "Cartel_Norte", Imagen = "Assets/Parque/Texturas/cartel_norte.jpg", Metros = 1f, Color = Color.white, Suavidad = 0.45f },
-        new Def { Nombre = "Cartel_Sur", Imagen = "Assets/Parque/Texturas/cartel_sur.jpg", Metros = 1f, Color = Color.white, Suavidad = 0.45f },
+        new Def { Nombre = "Cartel_Norte", Imagen = "Assets/_Ambientacion/Parque/Texturas/cartel_norte.jpg", Metros = 1f, Color = Color.white, Suavidad = 0.45f },
+        new Def { Nombre = "Cartel_Sur", Imagen = "Assets/_Ambientacion/Parque/Texturas/cartel_sur.jpg", Metros = 1f, Color = Color.white, Suavidad = 0.45f },
         // Edificios
         new Def { Nombre = "Fachada_Blanca", Textura = "plastered_wall", Carpeta = Edif, Metros = 2f, Color = Color.white },
         new Def { Nombre = "Fachada_Ocre", Textura = "yellow_plaster", Carpeta = Edif, Metros = 2f, Color = Color.white },
@@ -46,8 +46,8 @@ public static class MaterialesCampus
         new Def { Nombre = "Vidrio", Color = new Color(0.13f, 0.16f, 0.19f), Suavidad = 0.92f, Metalico = 0.35f },
         new Def { Nombre = "Metal", Color = new Color(0.56f, 0.58f, 0.59f), Suavidad = 0.45f, Metalico = 0.75f },
         // Equipamiento
-        new Def { Nombre = "Malla", Imagen = "Assets/Equipamiento/Texturas/malla.png", Metros = 0.5f, Color = Color.white, Suavidad = 0.4f, Recorte = true },
-        new Def { Nombre = "Seto", Imagen = "Assets/Vegetacion/Texturas/Hojas_Arbusto.png", Metros = 0.6f, Color = Color.white, Suavidad = 0.1f, Recorte = true },
+        new Def { Nombre = "Malla", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/malla.png", Metros = 0.5f, Color = Color.white, Suavidad = 0.4f, Recorte = true },
+        new Def { Nombre = "Seto", Imagen = "Assets/_Ambientacion/Vegetacion/Texturas/Hojas_Arbusto.png", Metros = 0.6f, Color = Color.white, Suavidad = 0.1f, Recorte = true },
         new Def { Nombre = "Seto_Interior", Color = new Color(0.11f, 0.15f, 0.07f), Suavidad = 0.05f },
         new Def { Nombre = "Senal_Azul", Color = new Color(0.05f, 0.25f, 0.6f), Suavidad = 0.5f },
         new Def { Nombre = "Senal_Roja", Color = new Color(0.7f, 0.06f, 0.06f), Suavidad = 0.5f },
@@ -64,7 +64,7 @@ public static class MaterialesCampus
     [MenuItem("Tools/Materiales/Actualizar materiales del campus")]
     public static void Build()
     {
-        if (!AssetDatabase.IsValidFolder(McamImporter.MaterialesDir)) AssetDatabase.CreateFolder("Assets", "Materiales");
+        if (!AssetDatabase.IsValidFolder(McamImporter.MaterialesDir)) AssetDatabase.CreateFolder("Assets/_Ambientacion", "Materiales");
         foreach (var d in Defs) Crear(d);
         AssetDatabase.SaveAssets();
     }

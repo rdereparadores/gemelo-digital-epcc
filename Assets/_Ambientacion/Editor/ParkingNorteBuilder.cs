@@ -12,7 +12,7 @@ using UnityEngine.Rendering;
 // origen en el centro de la cubierta.
 public static class ParkingNorteBuilder
 {
-    const string Root = "Assets/Parking";
+    const string Root = "Assets/_Ambientacion/Parking";
     const string MatDir = Root + "/Materiales";
     const string MeshDir = Root + "/Mallas";
     const string PrefabDir = Root + "/Prefabs";
