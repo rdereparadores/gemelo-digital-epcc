@@ -45,3 +45,6 @@ __pycache__/
 
 # Hojas originales del CNIG (166 MB, se descargan de centrodedescargas.cnig.es)
 /Referencias/06_IGN_datos_oficiales/MDT50cm/originales_CNIG/
+
+# Descargas cacheadas (se regeneran con los scripts de Herramientas/)
+/Datos/descargas/
