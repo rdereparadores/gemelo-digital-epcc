@@ -1,0 +1,47 @@
+# Unity: carpetas generadas
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Proyectos de IDE generados por Unity
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.idea/
+
+# Restos de Unity
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Python
+__pycache__/
+*.pyc
+
+# Blender: copias de seguridad automáticas
+*.blend1
+*.blend2
+
+# Hojas originales del CNIG (166 MB, se descargan de centrodedescargas.cnig.es)
+/Referencias/06_IGN_datos_oficiales/MDT50cm/originales_CNIG/
