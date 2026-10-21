@@ -12,6 +12,7 @@ public static class MaterialesCampus
         public float Metros;      // tamaño real de la textura (las UV de las mallas van en metros)
         public Color Color;
         public float Suavidad;    // solo si no hay textura
+        public string Imagen;     // foto como color base sin repetir (carteles)
     }
 
     static readonly Def[] Defs =
@@ -21,6 +22,13 @@ public static class MaterialesCampus
         new Def { Nombre = "Bordillo", Textura = "concrete_floor_worn_001", Carpeta = "Assets/Viales/Texturas", Metros = 3f, Color = Color.white },
         // Pintura vial: blanco algo sucio con el relieve del asfalto debajo
         new Def { Nombre = "Pintura", Textura = null, Carpeta = "Assets/Suelo/Texturas", Metros = 4.04f, Color = new Color(0.86f, 0.86f, 0.84f), Suavidad = 0.3f },
+        // Parque
+        new Def { Nombre = "Madera", Textura = "weathered_brown_planks", Carpeta = "Assets/Parque/Texturas", Metros = 1.8f, Color = Color.white },
+        new Def { Nombre = "Rollizo", Textura = "rough_wood", Carpeta = "Assets/Parque/Texturas", Metros = 1.0f, Color = Color.white },
+        new Def { Nombre = "Mamposteria", Textura = "stacked_stone_wall", Carpeta = "Assets/Parque/Texturas", Metros = 2f, Color = Color.white },
+        new Def { Nombre = "Granito", Textura = "rock_boulder_dry", Carpeta = "Assets/Parque/Texturas", Metros = 1.8f, Color = new Color(0.82f, 0.8f, 0.76f) },
+        new Def { Nombre = "Cartel_Norte", Imagen = "Assets/Parque/Texturas/cartel_norte.jpg", Carpeta = "Assets/Parque/Texturas", Metros = 1f, Color = Color.white, Suavidad = 0.45f },
+        new Def { Nombre = "Cartel_Sur", Imagen = "Assets/Parque/Texturas/cartel_sur.jpg", Carpeta = "Assets/Parque/Texturas", Metros = 1f, Color = Color.white, Suavidad = 0.45f },
     };
 
     [MenuItem("Tools/Materiales/Actualizar materiales del campus")]
@@ -44,6 +52,21 @@ public static class MaterialesCampus
         mat.SetColor("_BaseColor", d.Color);
         var escala = new Vector2(1f / d.Metros, 1f / d.Metros);
 
+        if (d.Imagen != null)
+        {
+            mat.SetTexture("_BaseMap", Textura(d.Imagen, TextureImporterType.Default, true));
+            mat.SetTextureScale("_BaseMap", Vector2.one);
+            mat.SetTexture("_MetallicGlossMap", null);
+            mat.SetTexture("_OcclusionMap", null);
+            mat.SetTexture("_BumpMap", null);
+            mat.SetFloat("_Smoothness", d.Suavidad);
+            mat.SetFloat("_Metallic", 0f);
+            mat.DisableKeyword("_METALLICSPECGLOSSMAP");
+            mat.DisableKeyword("_OCCLUSIONMAP");
+            mat.DisableKeyword("_NORMALMAP");
+            EditorUtility.SetDirty(mat);
+            return;
+        }
         if (d.Textura != null)
         {
             var diff = Textura($"{d.Carpeta}/{d.Textura}_diff.jpg", TextureImporterType.Default, true);

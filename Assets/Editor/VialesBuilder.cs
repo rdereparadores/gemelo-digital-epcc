@@ -20,14 +20,7 @@ public static class VialesBuilder
         MaterialesCampus.Build();
         AplicarHeightmap(terrain.terrainData, Heightmap);
 
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Mallas);
-        if (prefab == null) { Debug.LogError($"[Viales] Falta {Mallas}: ejecuta Herramientas/generar_viales.py"); return; }
-        var entorno = Entorno.Raiz();
-        var viejo = entorno.Find("Viales");
-        if (viejo != null) Object.DestroyImmediate(viejo.gameObject);
-        var viales = (GameObject)PrefabUtility.InstantiatePrefab(prefab, entorno);
-        viales.name = "Viales";
-        Physics.SyncTransforms();
+        if (Entorno.Colocar(Mallas, "Viales") == null) return;
 
         ParkingNorteBuilder.Build();
 
@@ -62,5 +55,39 @@ public static class Entorno
         var go = GameObject.Find("Entorno");
         if (go == null) go = new GameObject("Entorno");
         return go.transform;
+    }
+
+    // Instancia un .mcam importado bajo Entorno/<nombre>, sustituyendo el anterior
+    public static GameObject Colocar(string mcam, string nombre)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(mcam);
+        if (prefab == null) { Debug.LogError($"[Entorno] Falta {mcam}: ejecuta su generador en Herramientas/"); return null; }
+        var raiz = Raiz();
+        var viejo = raiz.Find(nombre);
+        if (viejo != null) Object.DestroyImmediate(viejo.gameObject);
+        var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, raiz);
+        go.name = nombre;
+        Physics.SyncTransforms();
+        return go;
+    }
+
+    public static void Guardar()
+    {
+        var escena = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        EditorSceneManager.MarkSceneDirty(escena);
+        EditorSceneManager.SaveScene(escena);
+        AssetDatabase.SaveAssets();
+    }
+}
+
+public static class ParqueBuilder
+{
+    [MenuItem("Tools/Parque/Colocar parque y cauce")]
+    public static void Build()
+    {
+        MaterialesCampus.Build();
+        if (Entorno.Colocar("Assets/Parque/parque.mcam", "Parque") == null) return;
+        Entorno.Guardar();
+        Debug.Log("[Parque] Parque colocado");
     }
 }
