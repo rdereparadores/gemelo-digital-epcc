@@ -4,27 +4,32 @@
   {
    "nombre": "Alicatado_D9A53A",
    "color": "#EBB341",
-   "textura": "alicatado"
+   "textura": "alicatado",
+   "suavidad": 0.55
   },
   {
    "nombre": "Alicatado_E3DCC8",
    "color": "#F5EEDC",
-   "textura": "alicatado"
+   "textura": "alicatado",
+   "suavidad": 0.55
   },
   {
    "nombre": "Alicatado_EEEDE8",
    "color": "#FFFFFF",
-   "textura": "alicatado"
+   "textura": "alicatado",
+   "suavidad": 0.55
   },
   {
    "nombre": "Alicatado_F0EFEA",
    "color": "#FFFFFF",
-   "textura": "alicatado"
+   "textura": "alicatado",
+   "suavidad": 0.55
   },
   {
    "nombre": "Alicatado_F2F2F0",
    "color": "#FFFFFF",
-   "textura": "alicatado"
+   "textura": "alicatado",
+   "suavidad": 0.55
   },
   {
    "nombre": "Friso_7A6E62",
