@@ -15,8 +15,8 @@ using UnityEngine.Rendering;
 // Politécnica usan Assets/_Politecnica/Materiales) y, si no está, en Assets/_Ambientacion/Materiales.
 // Los nombres "Grupo_resto" se agrupan bajo un hijo "Grupo". Las piezas de mobiliario (carpeta
 // Mobiliario/) llevan una sola BoxCollider en la raíz en vez de MeshCollider por malla, porque se
-// instancian miles de veces.
-[ScriptedImporter(4, "mcam")]
+// instancian miles de veces, y un LODGroup que las oculta cuando se ven muy pequeñas.
+[ScriptedImporter(6, "mcam")]
 public class McamImporter : ScriptedImporter
 {
     public const string MaterialesDir = "Assets/_Ambientacion/Materiales";
@@ -83,8 +83,12 @@ public class McamImporter : ScriptedImporter
                     hayLimites = true;
                 }
                 else if (!SinCollider.Contains(material)) go.AddComponent<MeshCollider>().sharedMesh = mesh;
-                GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI |
-                                                           StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
+                var flags = StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI |
+                            StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic;
+                // Lo opaco de la arquitectura tapa lo que hay detrás (oclusión); el vidrio y los muebles, no
+                if (!mobiliario && mr.sharedMaterial != null && mr.sharedMaterial.renderQueue < 2450 && mesh.bounds.size.magnitude > 2f)
+                    flags |= StaticEditorFlags.OccluderStatic;
+                GameObjectUtility.SetStaticEditorFlags(go, flags);
             }
         }
         if (mobiliario && hayLimites)
@@ -92,6 +96,12 @@ public class McamImporter : ScriptedImporter
             var bc = root.AddComponent<BoxCollider>();
             bc.center = limites.center;
             bc.size = limites.size;
+            // Cada pieza deja de dibujarse (y de dar sombra) cuando ocupa menos del 3,5 % de la altura de la
+            // pantalla: con el lodBias 2 del proyecto, una silla a ~25 m y un armario a ~100 m. A esa distancia está dentro de un edificio y
+            // no se distingue; ahorra miles de renderers y proyectores de sombra en las vistas exteriores
+            var lod = root.AddComponent<LODGroup>();
+            lod.SetLODs(new[] { new LOD(0.035f, root.GetComponentsInChildren<Renderer>()) });
+            lod.RecalculateBounds();
         }
         ctx.AddObjectToAsset("root", root);
         ctx.SetMainObject(root);

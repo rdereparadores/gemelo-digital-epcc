@@ -401,6 +401,80 @@ public static class AuditoriaPolitecnica
         foreach (var v in celdas.Values) h("exterior", v);
     }
 
+    // Hojas de puerta abiertas: ¿chocan con muros o muebles al girar a su ángulo (y al contrario)?
+    public static string PuertasAbiertas(bool corregir = false)
+    {
+        Physics.SyncTransforms();
+        int total = 0, choca = 0, ambas = 0, invertidas = 0;
+        var sb = new StringBuilder();
+        var buf = new Collider[16];
+        var contra = new Dictionary<string, int>();
+        foreach (var pu in Object.FindObjectsByType<Puerta>())
+        {
+            total++;
+            var t = pu.transform;
+            var cerrada = t.localRotation;
+            bool Libre(float ang)
+            {
+                bool ok = true;
+                for (float a = 20f; a <= Mathf.Abs(ang) + 0.1f && ok; a += 25f)
+                {
+                    t.localRotation = cerrada * Quaternion.Euler(0f, Mathf.Sign(ang) * Mathf.Min(a, Mathf.Abs(ang)), 0f);
+                    var w = t.lossyScale.x; var hgt = t.lossyScale.y;
+                    // de 0,2 m de la bisagra (allí está el cerco) al canto, y 0,15 m sobre el suelo
+                    var c = t.position + t.right * ((w + 0.2f) / 2) + Vector3.up * (hgt / 2 + 0.05f);
+                    var medio = new Vector3((w - 0.2f) / 2 - 0.02f, hgt / 2 - 0.15f, 0.025f);
+                    int n = Physics.OverlapBoxNonAlloc(c, medio, buf, t.rotation, ~(1 << 2), QueryTriggerInteraction.Ignore);
+                    for (int i = 0; i < n; i++)
+                        if (buf[i].GetComponentInParent<Puerta>() == null && !(buf[i] is TerrainCollider))
+                        {
+                            ok = false;
+                            var k = buf[i] is BoxCollider ? "mueble:" + buf[i].name : System.Text.RegularExpressions.Regex.Replace(buf[i].name, "_[0-9A-F]{6}$", "");
+                            contra[k] = contra.TryGetValue(k, out var q) ? q + 1 : 1;
+                            break;
+                        }
+                }
+                t.localRotation = cerrada;
+                return ok;
+            }
+            bool a1 = Libre(pu.apertura), a2 = Libre(-pu.apertura);
+            if (a1) continue;
+            choca++;
+            if (!a2) { ambas++; sb.AppendLine($"ni un lado ni otro: {P(t.position)}"); }
+            else if (corregir) { pu.apertura = -pu.apertura; invertidas++; EditorUtility.SetDirty(pu); }
+        }
+        return $"{total} hojas; {choca} chocan al abrir ({ambas} en los dos sentidos); invertidas {invertidas}\n" +
+               string.Join(", ", contra.OrderByDescending(k => k.Value).Take(15).Select(k => $"{k.Key} {k.Value}")) + "\n" + sb.ToString();
+    }
+
+    // Medición de rendimiento en modo juego: Medir() arranca los contadores, Leer() da la media desde entonces
+    static Unity.Profiling.ProfilerRecorder[] contadores;
+    static readonly string[] Contadores = { "Batches Count", "SetPass Calls Count", "Triangles Count", "Shadow Casters Count",
+                                            "Render Thread", "Main Thread" };
+
+    public static void Medir()
+    {
+        if (contadores != null) foreach (var c in contadores) c.Dispose();
+        contadores = Contadores.Select((n, k) => Unity.Profiling.ProfilerRecorder.StartNew(
+            k < 4 ? Unity.Profiling.ProfilerCategory.Render : Unity.Profiling.ProfilerCategory.Internal, n, 120)).ToArray();
+    }
+
+    public static string Leer()
+    {
+        if (contadores == null) return "sin medir";
+        var sb = new StringBuilder();
+        for (int k = 0; k < contadores.Length; k++)
+        {
+            var c = contadores[k];
+            if (!c.Valid || c.Count == 0) { sb.Append($"{Contadores[k]}=? "); continue; }
+            double suma = 0;
+            for (int i = 0; i < c.Count; i++) suma += c.GetSample(i).Value;
+            double media = suma / c.Count;
+            sb.Append(k < 4 ? $"{Contadores[k]}={media:F0} " : $"{Contadores[k]}={media / 1e6:F1}ms ");
+        }
+        return sb.ToString();
+    }
+
     // Render de revisión de un punto: busca un sitio a `dist` m con vista despejada (8 rumbos, de
     // `alto` m sobre el objetivo) y guarda el PNG
     public static string Foto(Vector3 objetivo, string archivo, float dist = 2.5f, float alto = 0.8f, int ancho = 960, int altoPx = 540, float fov = 70f)

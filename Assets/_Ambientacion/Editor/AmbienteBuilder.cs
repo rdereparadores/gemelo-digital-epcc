@@ -45,7 +45,7 @@ public static class AmbienteBuilder
         EditorUtility.SetDirty(cielo);
 
         // Sol
-        var luz = Object.FindObjectsByType<Light>(FindObjectsSortMode.None).First(l => l.type == LightType.Directional);
+        var luz = Object.FindObjectsByType<Light>().First(l => l.type == LightType.Directional);
         luz.transform.rotation = Quaternion.Euler(ElevacionSol, AzimutSol - 180f, 0f);
         luz.useColorTemperature = true;
         luz.colorTemperature = 5600f;
@@ -143,7 +143,7 @@ public static class AmbienteBuilder
         viñeta.intensity.Override(0.15f);
         EditorUtility.SetDirty(perfil);
 
-        var vol = Object.FindObjectsByType<Volume>(FindObjectsSortMode.None).FirstOrDefault(v => v.isGlobal);
+        var vol = Object.FindObjectsByType<Volume>().FirstOrDefault(v => v.isGlobal);
         if (vol == null) vol = new GameObject("Global Volume").AddComponent<Volume>();
         vol.isGlobal = true;
         vol.sharedProfile = perfil;
@@ -151,7 +151,7 @@ public static class AmbienteBuilder
 
     static void AjustarCamara()
     {
-        foreach (var cam in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
+        foreach (var cam in Object.FindObjectsByType<Camera>())
         {
             cam.farClipPlane = 2000f;
             cam.nearClipPlane = 0.1f;
