@@ -167,6 +167,7 @@ public static class PolitecnicaBuilder
         }
         var inst = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(prefab), cont.transform);
         inst.transform.position = origen;
+        inst.name = $"{m.codigo} {m.nombre}";
 
         RebajarTerreno(origen, m.huella, origen.y + m.suelo_min - 0.12f);
         return $"{cod}: {m.plantas.Length} plantas, {m.locales?.Length ?? 0} locales, {m.puertas?.Length ?? 0} puertas" +

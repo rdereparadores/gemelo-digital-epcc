@@ -86,6 +86,7 @@
     {"nombre": "Laton", "color": "#B08D57", "suavidad": 0.7, "metalico": 1.0},
     {"nombre": "Metal_Marron", "color": "#3B2A20", "suavidad": 0.4, "metalico": 0.5},
     {"nombre": "Reja_Malla", "color": "#E6E2DA", "suavidad": 0.4},
+    {"nombre": "Granito_Claro", "color": "#D8D6D0", "textura": "Assets/_Ambientacion/Parque/Texturas/rock_boulder_dry", "metros": 1.2},
     {"nombre": "Rotulo_Comun_Sur", "imagen": "rotulo_comun_sur.png", "recorte": true, "suavidad": 0.6, "metalico": 0.7},
     {"nombre": "Rotulo_1902_Norte", "imagen": "rotulo_1902_norte.png", "suavidad": 0.45, "metalico": 0.3},
     {"nombre": "Rotulo_Cafeteria", "imagen": "rotulo_cafeteria.png", "suavidad": 0.4}
