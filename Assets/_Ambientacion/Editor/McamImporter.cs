@@ -11,9 +11,12 @@ using UnityEngine.Rendering;
 //
 // Formato (little endian): "MCAM", nº de mallas, y por malla: nombre, material (cadenas con
 // longitud int32), nº de vértices, posiciones float3, UV float2, nº de triángulos, índices int3.
-// El material se busca en Assets/_Ambientacion/Materiales/<material>.mat. Los nombres "Grupo_resto" se
-// agrupan bajo un hijo "Grupo".
-[ScriptedImporter(3, "mcam")]
+// El material se busca en la carpeta Materiales/ más cercana subiendo desde el .mcam (así los de la
+// Politécnica usan Assets/_Politecnica/Materiales) y, si no está, en Assets/_Ambientacion/Materiales.
+// Los nombres "Grupo_resto" se agrupan bajo un hijo "Grupo". Las piezas de mobiliario (carpeta
+// Mobiliario/) llevan una sola BoxCollider en la raíz en vez de MeshCollider por malla, porque se
+// instancian miles de veces.
+[ScriptedImporter(4, "mcam")]
 public class McamImporter : ScriptedImporter
 {
     public const string MaterialesDir = "Assets/_Ambientacion/Materiales";
@@ -25,6 +28,9 @@ public class McamImporter : ScriptedImporter
     {
         var root = new GameObject(Path.GetFileNameWithoutExtension(ctx.assetPath));
         var grupos = new Dictionary<string, Transform>();
+        bool mobiliario = ctx.assetPath.Replace('\\', '/').Contains("/Mobiliario/");
+        var limites = new Bounds();
+        bool hayLimites = false;
 
         using (var r = new BinaryReader(File.OpenRead(ctx.assetPath)))
         {
@@ -68,18 +74,46 @@ public class McamImporter : ScriptedImporter
                 go.transform.SetParent(padre, false);
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 var mr = go.AddComponent<MeshRenderer>();
-                string matPath = $"{MaterialesDir}/{material}.mat";
-                ctx.DependsOnSourceAsset(matPath);
-                var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+                var mat = BuscarMaterial(ctx, material);
                 mr.sharedMaterial = mat != null ? mat : AssetDatabase.GetBuiltinExtraResource<Material>("Default-Material.mat");
-                if (material == "Pintura") mr.shadowCastingMode = ShadowCastingMode.Off;
-                if (!SinCollider.Contains(material)) go.AddComponent<MeshCollider>().sharedMesh = mesh;
+                if (material == "Pintura" || material == "Luminaria") mr.shadowCastingMode = ShadowCastingMode.Off;
+                if (mobiliario)
+                {
+                    if (hayLimites) limites.Encapsulate(mesh.bounds); else limites = mesh.bounds;
+                    hayLimites = true;
+                }
+                else if (!SinCollider.Contains(material)) go.AddComponent<MeshCollider>().sharedMesh = mesh;
                 GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI |
                                                            StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
             }
         }
+        if (mobiliario && hayLimites)
+        {
+            var bc = root.AddComponent<BoxCollider>();
+            bc.center = limites.center;
+            bc.size = limites.size;
+        }
         ctx.AddObjectToAsset("root", root);
         ctx.SetMainObject(root);
+    }
+
+    // Materiales/<nombre>.mat en la carpeta más cercana subiendo desde el .mcam; si no, la del campus.
+    // Se declaran como dependencia todas las rutas probadas para reimportar si aparece el material.
+    static Material BuscarMaterial(AssetImportContext ctx, string nombre)
+    {
+        string dir = Path.GetDirectoryName(ctx.assetPath).Replace('\\', '/');
+        while (!string.IsNullOrEmpty(dir) && dir.StartsWith("Assets"))
+        {
+            string ruta = $"{dir}/Materiales/{nombre}.mat";
+            ctx.DependsOnSourceAsset(ruta);
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(ruta);
+            if (mat != null) return mat;
+            int i = dir.LastIndexOf('/');
+            dir = i > 0 ? dir.Substring(0, i) : null;
+        }
+        string comun = $"{MaterialesDir}/{nombre}.mat";
+        ctx.DependsOnSourceAsset(comun);
+        return AssetDatabase.LoadAssetAtPath<Material>(comun);
     }
 
     static string Cadena(BinaryReader r) => Encoding.UTF8.GetString(r.ReadBytes(r.ReadInt32()));

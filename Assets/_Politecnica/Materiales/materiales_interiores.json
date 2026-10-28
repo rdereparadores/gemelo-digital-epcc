@@ -1,0 +1,159 @@
+{
+ "nota": "Generado por Herramientas/politecnica/interiores.py; no editar a mano.",
+ "materiales": [
+  {
+   "nombre": "Alicatado_D9A53A",
+   "color": "#EBB341",
+   "textura": "alicatado"
+  },
+  {
+   "nombre": "Alicatado_E3DCC8",
+   "color": "#F5EEDC",
+   "textura": "alicatado"
+  },
+  {
+   "nombre": "Alicatado_EEEDE8",
+   "color": "#FFFFFF",
+   "textura": "alicatado"
+  },
+  {
+   "nombre": "Alicatado_F0EFEA",
+   "color": "#FFFFFF",
+   "textura": "alicatado"
+  },
+  {
+   "nombre": "Alicatado_F2F2F0",
+   "color": "#FFFFFF",
+   "textura": "alicatado"
+  },
+  {
+   "nombre": "Friso_7A6E62",
+   "color": "#7A6E62"
+  },
+  {
+   "nombre": "Friso_8A6440",
+   "color": "#8A6440"
+  },
+  {
+   "nombre": "Pintura_9C9C6E",
+   "color": "#A9AB7D",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_DFE1DF",
+   "color": "#F1F6FC",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_E4D6A6",
+   "color": "#F6EABC",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_E8E1CC",
+   "color": "#FBF6E6",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_E9E7E1",
+   "color": "#FCFDFE",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_ECE9E0",
+   "color": "#FFFFFD",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_ECEBE6",
+   "color": "#FFFFFF",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_F0EEE8",
+   "color": "#FFFFFF",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_F0EFEA",
+   "color": "#FFFFFF",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_F2F1EC",
+   "color": "#FFFFFF",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_F4F3EF",
+   "color": "#FFFFFF",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Suelo_5E5348",
+   "color": "#736A67",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_9A6B3E",
+   "color": "#BB8859",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_9C9A96",
+   "color": "#BDC2D1",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_A9A6A0",
+   "color": "#CDD1DE",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_BDB6A8",
+   "color": "#E5E5E9",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_BFB29A",
+   "color": "#E7E0D6",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_C2BBAE",
+   "color": "#EBEBF1",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_C8C6C0",
+   "color": "#F2F9FF",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_C9C7C0",
+   "color": "#F3FAFF",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_CBB9A0",
+   "color": "#F5E9DE",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_D3CBB8",
+   "color": "#FFFFFF",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  }
+ ]
+}
