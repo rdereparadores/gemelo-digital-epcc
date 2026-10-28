@@ -65,6 +65,7 @@ public static class AuditoriaPolitecnica
             Materiales(ed, Hallazgo);
             Envolvente(ed, m, Hallazgo);
             Interferencias(ed, Hallazgo);
+            Exterior(ed, m, Hallazgo);
             Terreno(ed, m, Hallazgo);
             Luces(ed, m, Hallazgo);
             resumen.AppendLine($"{ed.codigo}: " + (cuenta.Count == 0 ? "sin hallazgos"
@@ -328,6 +329,76 @@ public static class AuditoriaPolitecnica
         foreach (var l in m.luces)
             if (!locales[l.planta + "_" + l.local].Any(loc => DentroPoligono(loc.poligono, l.p[0], l.p[2])))
                 h("luz", $"{l.planta} luz del local {l.local} fuera de su polígono en {P(new Vector3(l.p[0], l.p[1], l.p[2]) + ed.transform.position)}");
+    }
+
+    // Materiales que solo se ven desde dentro: si un rayo lanzado desde fuera da primero con uno de
+    // ellos (o con un mueble), por ahí se ve el interior
+    static readonly string[] Interiores = { "Pintura_", "Suelo_", "Falso_Techo", "Alicatado_", "Zocalo_Alicatado", "Rodapie",
+                                            "Friso_", "Marco_Puerta" };
+
+    static bool EsInterior(Collider c)
+    {
+        if (c is BoxCollider) return c.transform.parent != null && c.transform.parent.name == "Mobiliario";
+        var mr = c.GetComponent<MeshRenderer>();
+        var n = mr != null && mr.sharedMaterial != null ? mr.sharedMaterial.name : "";
+        return Interiores.Any(n.StartsWith);
+    }
+
+    // Barrido desde fuera: rayos horizontales hacia las fachadas (cada 0,8 m y 0,4 m de alto) y verticales
+    // sobre la cubierta (cada 1 m). Se agrupan en celdas de 2 m para no repetir el mismo hueco
+    static void Exterior(EdificioPolitecnica ed, Manifiesto m, System.Action<string, string> h)
+    {
+        var o = ed.transform.position;
+        var poly = new List<Vector2>();
+        for (int i = 0; i + 1 < m.huella.Length; i += 2) poly.Add(new Vector2(m.huella[i] + o.x, m.huella[i + 1] + o.z));
+        var puertas = m.puertas.Where(d => d.tipo == "exterior").Select(d => new Vector3(d.p[0], d.p[1], d.p[2]) + o).ToList();
+        float techo = ed.GetComponentsInChildren<Renderer>().Max(r => r.bounds.max.y);
+        var t = Terrain.activeTerrain;
+        var celdas = new Dictionary<string, string>();
+        var cotas = m.plantas.ToDictionary(p => p.nombre, p => p.y + o.y);
+        // ¿El punto está dentro de un local cerrado (no patio ni terraza) de la planta a esa altura?
+        bool Dentro(Vector3 p) => m.locales.Any(l => !Abiertos.Contains(l.uso) && cotas.TryGetValue(l.planta, out var y0)
+            && p.y >= y0 - 0.05f && p.y <= y0 + 4.2f && DentroPoligono(l.poligono, p.x - o.x, p.z - o.z));
+        void Apunta(Vector3 p, string que)
+        {
+            string k = $"{Mathf.Floor(p.x / 2)}|{Mathf.Floor(p.y / 2)}|{Mathf.Floor(p.z / 2)}";
+            if (!celdas.ContainsKey(k)) celdas[k] = $"{que} en {P(p)}";
+        }
+        for (int i = 0, j = poly.Count - 1; i < poly.Count; j = i++)
+        {
+            Vector2 a = poly[j], b = poly[i];
+            float len = Vector2.Distance(a, b);
+            if (len < 0.3f) continue;
+            var dir = (b - a) / len;
+            var nrm = new Vector2(dir.y, -dir.x);
+            if (DentroPoligono2(poly, (a + b) / 2 + nrm * 0.3f)) nrm = -nrm;
+            for (float s = 0.4f; s < len; s += 0.8f)
+            {
+                var q = a + dir * s + nrm * 4f;
+                float y0 = t != null ? t.SampleHeight(new Vector3(q.x, 0, q.y)) + t.transform.position.y + 0.3f : o.y;
+                for (float y = y0; y < techo; y += 0.4f)
+                {
+                    var desde = new Vector3(q.x, y, q.y);
+                    var haciaDentro = new Vector3(-nrm.x, 0, -nrm.y);
+                    if (Dentro(desde) || Physics.Raycast(desde, Vector3.down, 0.2f, ~(1 << 2), QueryTriggerInteraction.Ignore)) continue;
+                    if (!Physics.Raycast(desde, haciaDentro, out var hit, 12f, ~(1 << 2), QueryTriggerInteraction.Ignore)) continue;
+                    if (!EsInterior(hit.collider)) continue;
+                    if (puertas.Any(pu => Vector3.Distance(pu, hit.point) < 3f)) continue;
+                    Apunta(hit.point, $"desde fuera se ve {hit.collider.name} (rayo desde {P(desde)})");
+                }
+            }
+        }
+        // Cubierta
+        Vector2 lo = poly[0], hi = poly[0];
+        foreach (var p in poly) { lo = Vector2.Min(lo, p); hi = Vector2.Max(hi, p); }
+        for (float x = lo.x; x < hi.x; x += 1f)
+            for (float z = lo.y; z < hi.y; z += 1f)
+            {
+                if (!DentroPoligono2(poly, new Vector2(x, z))) continue;
+                if (!Physics.Raycast(new Vector3(x, techo + 5f, z), Vector3.down, out var hit, 60f, ~(1 << 2), QueryTriggerInteraction.Ignore)) continue;
+                if (EsInterior(hit.collider)) Apunta(hit.point, $"desde arriba se ve {hit.collider.name}");
+            }
+        foreach (var v in celdas.Values) h("exterior", v);
     }
 
     // Render de revisión de un punto: busca un sitio a `dist` m con vista despejada (8 rumbos, de
