@@ -3,7 +3,7 @@
   "materiales": [
     {"nombre": "Fachada_Aplacado", "color": "#FFFFFF", "textura": "fachada_aplacado"},
     {"nombre": "Fachada_Liso", "color": "#C6B593", "suavidad": 0.2},
-    {"nombre": "Plaqueta_Ceramica", "color": "#E0B49A", "textura": "Assets/_Ambientacion/Edificios/Texturas/red_brick", "metros": 1.4},
+    {"nombre": "Plaqueta_Ceramica", "color": "#FFFFFF", "textura": "Assets/_Ambientacion/Edificios/Texturas/red_brick", "metros": 1.4},
     {"nombre": "Hormigon_Visto", "color": "#E6E4DE", "textura": "Assets/_Ambientacion/Viales/Texturas/concrete_floor_worn_001", "metros": 3.0},
     {"nombre": "Albardilla", "color": "#E8E2D4", "textura": "Assets/_Ambientacion/Viales/Texturas/concrete_floor_worn_001", "metros": 3.0},
     {"nombre": "Carpinteria_Exterior", "color": "#3C3E40", "suavidad": 0.45, "metalico": 0.5},
@@ -88,9 +88,10 @@
     {"nombre": "Reja_Malla", "color": "#E6E2DA", "suavidad": 0.4},
     {"nombre": "Granito_Claro", "color": "#D8D6D0", "textura": "Assets/_Ambientacion/Parque/Texturas/rock_boulder_dry", "metros": 1.2},
     {"nombre": "Pavimento_Patio", "color": "#FFFFFF", "textura": "Assets/_Ambientacion/Viales/Texturas/concrete_tiles", "metros": 1.85},
-    {"nombre": "Chapa_Cubierta", "color": "#F4F5F3", "textura": "chapa_grecada", "metros": 2.0},
+    {"nombre": "Chapa_Cubierta", "color": "#FFFFFF", "textura": "chapa_blanca", "metros": 2.0},
     {"nombre": "Rotulo_Comun_Sur", "imagen": "rotulo_comun_sur.png", "recorte": true, "suavidad": 0.6, "metalico": 0.7},
     {"nombre": "Rotulo_1902_Norte", "imagen": "rotulo_1902_norte.png", "suavidad": 0.45, "metalico": 0.3},
-    {"nombre": "Rotulo_Cafeteria", "imagen": "rotulo_cafeteria.png", "suavidad": 0.4}
+    {"nombre": "Rotulo_Cafeteria", "imagen": "rotulo_cafeteria.png", "suavidad": 0.4},
+    {"nombre": "Bajante_Blanco", "color": "#E8E5E1", "suavidad": 0.45}
   ]
 }

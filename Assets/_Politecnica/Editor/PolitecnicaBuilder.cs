@@ -10,13 +10,14 @@ using UnityEngine.Rendering;
 // las mallas por planta y de cubierta (.mcam) y el manifiesto <código>.json con locales, puertas,
 // luces y mobiliario. Cada edificio se guarda como prefab en Assets/_Politecnica/Prefabs/ y se
 // instancia en la escena bajo Politecnica_Edificios. También rebaja el Terrain bajo cada huella para
-// que no asome por los suelos (y vacía los semisótanos).
+// que no asome por los suelos (y vacía los semisótanos), partiendo del heightmap de la red viaria.
 public static class PolitecnicaBuilder
 {
     const string Edificios = MaterialesPolitecnica.Raiz + "/Edificios";
     const string Mobiliario = MaterialesPolitecnica.Raiz + "/Mobiliario";
     const string Prefabs = MaterialesPolitecnica.Raiz + "/Prefabs";
     const string Contenedor = "Politecnica_Edificios";
+    const string HeightmapViales = "Datos/Viales/heightmap_viales.raw";
 
 #pragma warning disable 0649
     [System.Serializable] class Planta { public string nombre, malla; public float y; }
@@ -50,6 +51,10 @@ public static class PolitecnicaBuilder
         AssetDatabase.Refresh();
         MaterialesPolitecnica.Build();
         AssetDatabase.Refresh();
+        // El rebaje del Terrain parte siempre del heightmap de la red viaria, para que repetir la
+        // construcción no vaya ahondando el terreno
+        if (Terrain.activeTerrain != null && File.Exists(HeightmapViales))
+            VialesBuilder.AplicarHeightmap(Terrain.activeTerrain.terrainData, HeightmapViales);
         foreach (var dir in Directory.GetDirectories(Edificios))
             Construir(Path.GetFileName(dir));
         EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
@@ -170,6 +175,22 @@ public static class PolitecnicaBuilder
         inst.name = $"{m.codigo} {m.nombre}";
 
         RebajarTerreno(origen, m.huella, origen.y + m.suelo_min - 0.12f);
+        // Delante de cada puerta exterior el terreno no puede quedar por encima del umbral (la hoja
+        // chocaría al abrir): se rebaja una franja de 1,5 m a cada lado de la puerta
+        foreach (var d in m.puertas ?? new PuertaDef[0])
+        {
+            if (d.tipo != "exterior") continue;
+            var rot = Quaternion.Euler(0, d.yaw, 0);
+            var bis = V(d.p) + origen;
+            var x = rot * Vector3.right * d.ancho;
+            var z = rot * Vector3.forward;
+            var c = bis + x / 2;
+            var w = x.normalized * (d.ancho / 2 + 0.3f);
+            var poly = new[] { c - w - z * 1.5f, c + w - z * 1.5f, c + w + z * 1.5f, c - w + z * 1.5f };
+            var huella = new float[8];
+            for (int i = 0; i < 4; i++) { huella[2 * i] = poly[i].x - origen.x; huella[2 * i + 1] = poly[i].z - origen.z; }
+            RebajarTerreno(origen, huella, bis.y - 0.03f, -0.2f);
+        }
         return $"{cod}: {m.plantas.Length} plantas, {m.locales?.Length ?? 0} locales, {m.puertas?.Length ?? 0} puertas" +
                (sinPrefab > 0 ? $" ({sinPrefab} sin prefab)" : "") +
                (faltan.Count > 0 ? $"; faltan piezas: {string.Join(", ", faltan)}" : "");
@@ -205,8 +226,8 @@ public static class PolitecnicaBuilder
 
     static Vector3 V(float[] a) => a == null || a.Length < 3 ? Vector3.zero : new Vector3(a[0], a[1], a[2]);
 
-    // Baja el heightmap dentro de la huella (con 0,3 m de margen) hasta la cota dada, si está por encima
-    static void RebajarTerreno(Vector3 origen, float[] huella, float yMax)
+    // Baja el heightmap dentro de la huella hasta la cota dada, si está por encima
+    static void RebajarTerreno(Vector3 origen, float[] huella, float yMax, float margen = 0.2f)
     {
         var terrain = Terrain.activeTerrain;
         if (terrain == null || huella == null || huella.Length < 6) return;
@@ -228,7 +249,9 @@ public static class PolitecnicaBuilder
             for (int i = 0; i <= x1 - x0; i++)
             {
                 var p = new Vector2(tp.x + (x0 + i) * size.x / (res - 1), tp.z + (z0 + j) * size.z / (res - 1));
-                if (h[j, i] > hmax && DistanciaDentro(poly, p) > -0.3f) { h[j, i] = hmax; cambio = true; }
+                // Solo por dentro de la huella (a más de 0,2 m de la fachada): fuera, el terreno queda
+                // como estaba y la fachada baja hasta él (zócalo), sin zanja alrededor del edificio
+                if (h[j, i] > hmax && DistanciaDentro(poly, p) > margen) { h[j, i] = hmax; cambio = true; }
             }
         if (cambio)
         {

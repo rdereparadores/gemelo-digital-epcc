@@ -59,7 +59,13 @@ public static class AmbienteBuilder
         // Cielo, luz ambiente y niebla de calima
         RenderSettings.skybox = cielo;
         RenderSettings.sun = luz;
-        RenderSettings.ambientMode = AmbientMode.Skybox;
+        // Luz ambiente de tres tonos en vez de la del HDR: el cielo HDR, con el sol de tarde, dejaba las
+        // caras este y la luz de suelo casi a cero (fachadas en sombra azul marino); así hay cielo,
+        // horizonte y rebote cálido del suelo, como en las fotos a pleno sol
+        RenderSettings.ambientMode = AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = new Color(0.66f, 0.74f, 0.86f);
+        RenderSettings.ambientEquatorColor = new Color(0.62f, 0.61f, 0.58f);
+        RenderSettings.ambientGroundColor = new Color(0.46f, 0.41f, 0.34f);
         RenderSettings.ambientIntensity = 1.0f;
         RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
         RenderSettings.fog = true;
