@@ -87,6 +87,8 @@
     {"nombre": "Metal_Marron", "color": "#3B2A20", "suavidad": 0.4, "metalico": 0.5},
     {"nombre": "Reja_Malla", "color": "#E6E2DA", "suavidad": 0.4},
     {"nombre": "Granito_Claro", "color": "#D8D6D0", "textura": "Assets/_Ambientacion/Parque/Texturas/rock_boulder_dry", "metros": 1.2},
+    {"nombre": "Pavimento_Patio", "color": "#FFFFFF", "textura": "Assets/_Ambientacion/Viales/Texturas/concrete_tiles", "metros": 1.85},
+    {"nombre": "Chapa_Cubierta", "color": "#F4F5F3", "textura": "chapa_grecada", "metros": 2.0},
     {"nombre": "Rotulo_Comun_Sur", "imagen": "rotulo_comun_sur.png", "recorte": true, "suavidad": 0.6, "metalico": 0.7},
     {"nombre": "Rotulo_1902_Norte", "imagen": "rotulo_1902_norte.png", "suavidad": 0.45, "metalico": 0.3},
     {"nombre": "Rotulo_Cafeteria", "imagen": "rotulo_cafeteria.png", "suavidad": 0.4}
