@@ -382,6 +382,8 @@ public static class AuditoriaPolitecnica
                     var haciaDentro = new Vector3(-nrm.x, 0, -nrm.y);
                     if (Dentro(desde) || Physics.Raycast(desde, Vector3.down, 0.2f, ~(1 << 2), QueryTriggerInteraction.Ignore)) continue;
                     if (!Physics.Raycast(desde, haciaDentro, out var hit, 12f, ~(1 << 2), QueryTriggerInteraction.Ignore)) continue;
+                    // un rayo que choca a menos de 30 cm sale de dentro de un muro grueso (ve sus caras internas)
+                    if (hit.distance < 0.3f) continue;
                     if (!EsInterior(hit.collider)) continue;
                     if (puertas.Any(pu => Vector3.Distance(pu, hit.point) < 3f)) continue;
                     Apunta(hit.point, $"desde fuera se ve {hit.collider.name} (rayo desde {P(desde)})");
