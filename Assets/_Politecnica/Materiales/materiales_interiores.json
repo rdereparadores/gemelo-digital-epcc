@@ -48,8 +48,18 @@
    "color": "#7A6E62"
   },
   {
+   "nombre": "Pintura_8DC63F",
+   "color": "#99D948",
+   "textura": "pintura_interior"
+  },
+  {
    "nombre": "Pintura_9A9A96",
    "color": "#A7A9AA",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_A8693C",
+   "color": "#B67445",
    "textura": "pintura_interior"
   },
   {

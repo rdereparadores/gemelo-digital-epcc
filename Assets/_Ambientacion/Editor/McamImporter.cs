@@ -16,7 +16,7 @@ using UnityEngine.Rendering;
 // Los nombres "Grupo_resto" se agrupan bajo un hijo "Grupo". Las piezas de mobiliario (carpeta
 // Mobiliario/) llevan una sola BoxCollider en la raíz en vez de MeshCollider por malla, porque se
 // instancian miles de veces, y un LODGroup que las oculta cuando se ven muy pequeñas.
-[ScriptedImporter(6, "mcam")]
+[ScriptedImporter(7, "mcam")]
 public class McamImporter : ScriptedImporter
 {
     public const string MaterialesDir = "Assets/_Ambientacion/Materiales";
@@ -31,6 +31,9 @@ public class McamImporter : ScriptedImporter
         var root = new GameObject(Path.GetFileNameWithoutExtension(ctx.assetPath));
         var grupos = new Dictionary<string, Transform>();
         bool mobiliario = ctx.assetPath.Replace('\\', '/').Contains("/Mobiliario/");
+        // Edificios de la Politécnica: techos, intradós y suelos son caras sueltas que, vistas por detrás
+        // desde el sol, no daban sombra y dejaban pasar rayas de luz por las juntas
+        bool dosCaras = ctx.assetPath.Replace('\\', '/').Contains("/_Politecnica/Edificios/");
         var limites = new Bounds();
         bool hayLimites = false;
 
@@ -79,6 +82,7 @@ public class McamImporter : ScriptedImporter
                 var mat = BuscarMaterial(ctx, material);
                 mr.sharedMaterial = mat != null ? mat : AssetDatabase.GetBuiltinExtraResource<Material>("Default-Material.mat");
                 if (material == "Pintura" || material == "Luminaria") mr.shadowCastingMode = ShadowCastingMode.Off;
+                else if (dosCaras) mr.shadowCastingMode = ShadowCastingMode.TwoSided;
                 if (mobiliario)
                 {
                     if (hayLimites) limites.Encapsulate(mesh.bounds); else limites = mesh.bounds;
