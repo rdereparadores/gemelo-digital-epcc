@@ -32,7 +32,7 @@
    "suavidad": 0.55
   },
   {
-   "nombre": "Alicatado_F0EFEA",
+   "nombre": "Alicatado_F2F2EE",
    "color": "#FFFFFF",
    "textura": "alicatado",
    "suavidad": 0.55
@@ -48,17 +48,28 @@
    "color": "#7A6E62"
   },
   {
-   "nombre": "Friso_8A6440",
-   "color": "#8A6440"
+   "nombre": "Pintura_9A9A96",
+   "color": "#A7A9AA",
+   "textura": "pintura_interior"
   },
   {
-   "nombre": "Pintura_9C9C6E",
-   "color": "#A9AB7D",
+   "nombre": "Pintura_A9B5AC",
+   "color": "#B7C6C2",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_D9DEE3",
+   "color": "#EBF3FF",
    "textura": "pintura_interior"
   },
   {
    "nombre": "Pintura_DFE1DF",
    "color": "#F1F6FC",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_E1E4E6",
+   "color": "#F3FAFF",
    "textura": "pintura_interior"
   },
   {
@@ -87,6 +98,21 @@
    "textura": "pintura_interior"
   },
   {
+   "nombre": "Pintura_ECEDEB",
+   "color": "#FFFFFF",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_EDE3B5",
+   "color": "#FFF8CD",
+   "textura": "pintura_interior"
+  },
+  {
+   "nombre": "Pintura_EEEDE8",
+   "color": "#FFFFFF",
+   "textura": "pintura_interior"
+  },
+  {
    "nombre": "Pintura_F0EEE8",
    "color": "#FFFFFF",
    "textura": "pintura_interior"
@@ -102,19 +128,18 @@
    "textura": "pintura_interior"
   },
   {
+   "nombre": "Pintura_F3F3F0",
+   "color": "#FFFFFF",
+   "textura": "pintura_interior"
+  },
+  {
    "nombre": "Pintura_F4F3EF",
    "color": "#FFFFFF",
    "textura": "pintura_interior"
   },
   {
-   "nombre": "Suelo_5E5348",
-   "color": "#736A67",
-   "textura": "terrazo",
-   "suavidad": 1.0
-  },
-  {
-   "nombre": "Suelo_9A6B3E",
-   "color": "#BB8859",
+   "nombre": "Suelo_8E8E8A",
+   "color": "#ADB3C1",
    "textura": "terrazo",
    "suavidad": 1.0
   },
@@ -131,6 +156,12 @@
    "suavidad": 1.0
   },
   {
+   "nombre": "Suelo_B9B2A6",
+   "color": "#E0E0E7",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
    "nombre": "Suelo_BDB6A8",
    "color": "#E5E5E9",
    "textura": "terrazo",
@@ -139,6 +170,12 @@
   {
    "nombre": "Suelo_BFB29A",
    "color": "#E7E0D6",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_C08550",
+   "color": "#E8A872",
    "textura": "terrazo",
    "suavidad": 1.0
   },
@@ -171,6 +208,36 @@
    "color": "#FFFFFF",
    "textura": "terrazo",
    "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_D6D0C4",
+   "color": "#FFFFFF",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_D9D4CA",
+   "color": "#FFFFFF",
+   "textura": "terrazo",
+   "suavidad": 1.0
+  },
+  {
+   "nombre": "Suelo_Madera_5E5348",
+   "color": "#79859D",
+   "textura": "haya",
+   "suavidad": 0.7
+  },
+  {
+   "nombre": "Suelo_Madera_B88A5A",
+   "color": "#E9D8C1",
+   "textura": "haya",
+   "suavidad": 0.7
+  },
+  {
+   "nombre": "Suelo_Madera_C9A57A",
+   "color": "#FEFFFF",
+   "textura": "haya",
+   "suavidad": 0.7
   }
  ]
 }

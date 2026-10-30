@@ -27,7 +27,7 @@ public static class PolitecnicaBuilder
         public float area; public int capacidad;
         public float[] centro, min, max, poligono;
     }
-    [System.Serializable] class PuertaDef { public string planta, tipo; public float[] p; public float yaw, ancho, alto, apertura; }
+    [System.Serializable] class PuertaDef { public string planta, tipo, hoja; public float[] p; public float yaw, ancho, alto, apertura; }
     [System.Serializable] class LuzDef { public string planta, local; public float[] p; public float rango; }
     [System.Serializable] class RebajeDef { public float[] huella; public float y; }
     [System.Serializable] class PiezaDef { public string tipo, planta, local; public float[] p; public float yaw, ex = 1f, ey = 1f, ez = 1f; }
@@ -126,7 +126,8 @@ public static class PolitecnicaBuilder
         foreach (var d in m.puertas ?? new PuertaDef[0])
         {
             var padre = Hijo(plantas, d.planta, "Puertas");
-            string tipo = d.tipo == "exterior" ? "Puerta_Exterior" : "Puerta_Interior";
+            // hoja: la del manifiesto (vidrio con la carpintería del edificio, o la de madera)
+            string tipo = !string.IsNullOrEmpty(d.hoja) ? d.hoja : d.tipo == "exterior" ? "Puerta_Exterior" : "Puerta_Interior";
             var go = Instanciar($"{Mobiliario}/{tipo}.mcam", padre, V(d.p), Quaternion.Euler(0, d.yaw, 0), new Vector3(d.ancho, d.alto, 1f));
             if (go == null) { sinPrefab++; continue; }
             GameObjectUtility.SetStaticEditorFlags(go, 0);
