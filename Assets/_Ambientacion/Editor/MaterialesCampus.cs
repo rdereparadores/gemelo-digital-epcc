@@ -29,6 +29,9 @@ public static class MaterialesCampus
         new Def { Nombre = "Bordillo", Textura = "concrete_floor_worn_001", Carpeta = Viales, Metros = 3f, Color = Color.white },
         // Pintura vial: blanco algo sucio con el relieve del asfalto debajo
         new Def { Nombre = "Pintura", Carpeta = Suelo, Metros = 4.04f, Color = new Color(0.86f, 0.86f, 0.84f), Suavidad = 0.3f, Relieve = true },
+        // Plazas PMR (azul) y zigzag de parada (amarillo)
+        new Def { Nombre = "Pintura_Azul", Carpeta = Suelo, Metros = 4.04f, Color = new Color(0.10f, 0.32f, 0.62f), Suavidad = 0.3f, Relieve = true },
+        new Def { Nombre = "Pintura_Amarilla", Carpeta = Suelo, Metros = 4.04f, Color = new Color(0.86f, 0.70f, 0.12f), Suavidad = 0.3f, Relieve = true },
         // Parque
         new Def { Nombre = "Madera", Textura = "weathered_brown_planks", Carpeta = Parque, Metros = 1.8f, Color = Color.white },
         new Def { Nombre = "Rollizo", Textura = "rough_wood", Carpeta = Parque, Metros = 1.0f, Color = Color.white },
@@ -52,6 +55,13 @@ public static class MaterialesCampus
         new Def { Nombre = "Senal_Azul", Color = new Color(0.05f, 0.25f, 0.6f), Suavidad = 0.5f },
         new Def { Nombre = "Senal_Roja", Color = new Color(0.7f, 0.06f, 0.06f), Suavidad = 0.5f },
         new Def { Nombre = "Senal_Blanca", Color = new Color(0.9f, 0.9f, 0.9f), Suavidad = 0.5f },
+        // Placas con dibujo (Herramientas/generar_equipamiento.py las pinta en Equipamiento/Texturas)
+        new Def { Nombre = "Senal_R301_40", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_R301_40.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
+        new Def { Nombre = "Senal_R301_50", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_R301_50.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
+        new Def { Nombre = "Senal_STOP", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_STOP.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
+        new Def { Nombre = "Senal_Parada", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_parada.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f },
+        new Def { Nombre = "Mupi", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/mupi.png", Metros = 1f, Color = Color.white, Suavidad = 0.85f },
+        new Def { Nombre = "Granate", Color = new Color(0.42f, 0.10f, 0.10f), Suavidad = 0.45f, Metalico = 0.3f },
         new Def { Nombre = "Pista_Verde", Metros = 4.04f, Color = new Color(0.22f, 0.42f, 0.28f), Suavidad = 0.25f, Relieve = true },
         new Def { Nombre = "Pista_Azul", Metros = 4.04f, Color = new Color(0.16f, 0.32f, 0.55f), Suavidad = 0.25f, Relieve = true },
         new Def { Nombre = "Pista_Roja", Metros = 4.04f, Color = new Color(0.55f, 0.24f, 0.2f), Suavidad = 0.25f, Relieve = true },
