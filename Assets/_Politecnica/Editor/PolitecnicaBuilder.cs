@@ -29,6 +29,7 @@ public static class PolitecnicaBuilder
     }
     [System.Serializable] class PuertaDef { public string planta, tipo; public float[] p; public float yaw, ancho, alto, apertura; }
     [System.Serializable] class LuzDef { public string planta, local; public float[] p; public float rango; }
+    [System.Serializable] class RebajeDef { public float[] huella; public float y; }
     [System.Serializable] class PiezaDef { public string tipo, planta, local; public float[] p; public float yaw, ex = 1f, ey = 1f, ez = 1f; }
     [System.Serializable] class Manifiesto
     {
@@ -41,6 +42,7 @@ public static class PolitecnicaBuilder
         public PuertaDef[] puertas;
         public LuzDef[] luces;
         public PiezaDef[] mobiliario;
+        public RebajeDef[] rebajes;
     }
 #pragma warning restore 0649
 
@@ -57,6 +59,8 @@ public static class PolitecnicaBuilder
             VialesBuilder.AplicarHeightmap(Terrain.activeTerrain.terrainData, HeightmapViales);
         foreach (var dir in Directory.GetDirectories(Edificios))
             Construir(Path.GetFileName(dir));
+        // Fuera la hierba que asomaría por pavimentos, aceras y escalones
+        VegetacionBuilder.QuitarHierbaBajoMallas();
         EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
     }
 
@@ -191,6 +195,9 @@ public static class PolitecnicaBuilder
             for (int i = 0; i < 4; i++) { huella[2 * i] = poly[i].x - origen.x; huella[2 * i + 1] = poly[i].z - origen.z; }
             RebajarTerreno(origen, huella, bis.y - 0.03f, -0.2f);
         }
+        // Bajo cada peldaño y rellano exterior, el terreno queda por debajo de su huella
+        foreach (var r in m.rebajes ?? new RebajeDef[0])
+            RebajarTerreno(origen, r.huella, origen.y + r.y, -0.2f);
         return $"{cod}: {m.plantas.Length} plantas, {m.locales?.Length ?? 0} locales, {m.puertas?.Length ?? 0} puertas" +
                (sinPrefab > 0 ? $" ({sinPrefab} sin prefab)" : "") +
                (faltan.Count > 0 ? $"; faltan piezas: {string.Join(", ", faltan)}" : "");

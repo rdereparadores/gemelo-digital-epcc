@@ -266,7 +266,46 @@ public static class VegetacionBuilder
         data.SetDetailLayer(0, 0, iVerde, mVerde);
         terrain.detailObjectDistance = 90f;
         EditorUtility.SetDirty(data);
-        Debug.Log($"[Vegetacion] Hierba en {celdas} celdas");
+        Debug.Log($"[Vegetacion] Hierba en {celdas} celdas, {QuitarHierbaBajoMallas()} quitadas bajo mallas");
+    }
+
+    // Vacía las celdas de hierba que quedan bajo una malla a ras de suelo (aceras, bordillos, pavimentos y
+    // escalones de los edificios): el splatmap no siempre las recoge y la hierba atravesaría la malla.
+    // Un rayo hacia abajo por celda con hierba; cuenta cualquier MeshCollider entre 0,3 m bajo el
+    // terreno y 1 m sobre él.
+    public static int QuitarHierbaBajoMallas()
+    {
+        var terrain = Terrain.activeTerrain;
+        if (terrain == null) return 0;
+        Physics.SyncTransforms();
+        var data = terrain.terrainData;
+        int res = data.detailResolution, capas = data.detailPrototypes.Length;
+        if (capas == 0) return 0;
+        Vector3 tp = terrain.transform.position, size = data.size;
+        var mapas = new int[capas][,];
+        for (int c = 0; c < capas; c++) mapas[c] = data.GetDetailLayer(0, 0, res, res, c);
+        int quitadas = 0;
+        for (int j = 0; j < res; j++)
+        for (int i = 0; i < res; i++)
+        {
+            bool hay = false;
+            for (int c = 0; c < capas && !hay; c++) hay = mapas[c][j, i] > 0;
+            if (!hay) continue;
+            var p = new Vector3(tp.x + (i + 0.5f) * size.x / res, 0, tp.z + (j + 0.5f) * size.z / res);
+            float ty = terrain.SampleHeight(p) + tp.y;
+            bool tapada = false;
+            foreach (var h in Physics.RaycastAll(new Vector3(p.x, ty + 2.5f, p.z), Vector3.down, 3.0f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+                if (h.collider is MeshCollider && h.point.y > ty - 0.3f && h.point.y < ty + 1.0f) { tapada = true; break; }
+            if (!tapada) continue;
+            for (int c = 0; c < capas; c++) mapas[c][j, i] = 0;
+            quitadas++;
+        }
+        if (quitadas > 0)
+        {
+            for (int c = 0; c < capas; c++) data.SetDetailLayer(0, 0, c, mapas[c]);
+            EditorUtility.SetDirty(data);
+        }
+        return quitadas;
     }
 
     // PNG con el norte arriba; LoadImage deja la fila 0 al sur, que es el orden del Terrain
