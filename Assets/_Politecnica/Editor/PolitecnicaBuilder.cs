@@ -43,6 +43,7 @@ public static class PolitecnicaBuilder
         public LuzDef[] luces;
         public PiezaDef[] mobiliario;
         public RebajeDef[] rebajes;
+        public RebajeDef[] suelos;
     }
 #pragma warning restore 0649
 
@@ -178,7 +179,11 @@ public static class PolitecnicaBuilder
         inst.transform.position = origen;
         inst.name = $"{m.codigo} {m.nombre}";
 
-        RebajarTerreno(origen, m.huella, origen.y + m.suelo_min - 0.12f);
+        // Bajo cada planta, hasta su suelo (los manifiestos antiguos solo traen la huella y el suelo más bajo)
+        if (m.suelos != null && m.suelos.Length > 0)
+            foreach (var s in m.suelos) RebajarTerreno(origen, s.huella, origen.y + s.y - 0.12f);
+        else
+            RebajarTerreno(origen, m.huella, origen.y + m.suelo_min - 0.12f);
         // Delante de cada puerta exterior el terreno no puede quedar por encima del umbral (la hoja
         // chocaría al abrir): se rebaja una franja de 1,5 m a cada lado de la puerta
         foreach (var d in m.puertas ?? new PuertaDef[0])

@@ -2,6 +2,18 @@
  "nota": "Generado por Herramientas/politecnica/interiores.py; no editar a mano.",
  "materiales": [
   {
+   "nombre": "Alicatado_1E5E33",
+   "color": "#216639",
+   "textura": "alicatado",
+   "suavidad": 0.55
+  },
+  {
+   "nombre": "Alicatado_D8D8D2",
+   "color": "#E9E9E7",
+   "textura": "alicatado",
+   "suavidad": 0.55
+  },
+  {
    "nombre": "Alicatado_D9A53A",
    "color": "#EBB341",
    "textura": "alicatado",

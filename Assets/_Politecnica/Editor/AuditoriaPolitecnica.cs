@@ -24,6 +24,7 @@ public static class AuditoriaPolitecnica
     [System.Serializable] class LocalDef { public string planta, num, uso; public float[] centro, min, max, poligono; }
     [System.Serializable] class PuertaDef { public string planta, tipo; public float[] p; public float yaw, ancho; }
     [System.Serializable] class LuzDef { public string planta, local; public float[] p; }
+    [System.Serializable] class SueloDef { public float[] huella; public float y; }
     [System.Serializable] class Manifiesto
     {
         public string codigo;
@@ -33,6 +34,7 @@ public static class AuditoriaPolitecnica
         public LocalDef[] locales;
         public PuertaDef[] puertas;
         public LuzDef[] luces;
+        public SueloDef[] suelos;
     }
 #pragma warning restore 0649
 
@@ -267,6 +269,20 @@ public static class AuditoriaPolitecnica
             yield return new Vector3((i & 1) == 0 ? b.min.x : b.max.x, (i & 2) == 0 ? b.min.y : b.max.y, (i & 4) == 0 ? b.min.z : b.max.z);
     }
 
+    // Cota del suelo más bajo de las plantas cuya huella contiene p (`porDefecto` si el manifiesto no las trae)
+    static float SueloEn(Manifiesto m, Vector3 o, Vector2 p, float porDefecto)
+    {
+        if (m.suelos == null || m.suelos.Length == 0) return porDefecto;
+        float y = float.MaxValue;
+        foreach (var s in m.suelos)
+        {
+            var poly = new List<Vector2>();
+            for (int i = 0; i + 1 < s.huella.Length; i += 2) poly.Add(new Vector2(s.huella[i] + o.x, s.huella[i + 1] + o.z));
+            if (DentroPoligono2(poly, p)) y = Mathf.Min(y, o.y + s.y);
+        }
+        return y == float.MaxValue ? porDefecto : y;
+    }
+
     // Terrain dentro y alrededor de la huella
     static void Terreno(EdificioPolitecnica ed, Manifiesto m, System.Action<string, string> h)
     {
@@ -277,7 +293,7 @@ public static class AuditoriaPolitecnica
         for (int i = 0; i + 1 < m.huella.Length; i += 2) poly.Add(new Vector2(m.huella[i] + o.x, m.huella[i + 1] + o.z));
         float suelo = o.y + m.suelo_min;
         int huecos = 0, asoma = 0;
-        float peorHueco = 0, peorAsoma = 0;
+        float peorHueco = 0, peorAsoma = float.MinValue;
         Vector3 dondeHueco = default, dondeAsoma = default;
         for (int i = 0, j = poly.Count - 1; i < poly.Count; j = i++)
         {
@@ -304,15 +320,17 @@ public static class AuditoriaPolitecnica
                 var dentro = q - normal * 0.6f;
                 if (!DentroPoligono2(poly, dentro)) continue;
                 float yi = t.SampleHeight(new Vector3(dentro.x, 0, dentro.y)) + t.transform.position.y;
-                if (yi > suelo - 0.02f)
+                // El suelo que hay encima de ese punto (el del semisótano solo bajo el semisótano)
+                float sueloAqui = SueloEn(m, o, dentro, suelo);
+                if (yi > sueloAqui - 0.02f)
                 {
                     asoma++;
-                    if (yi - suelo > peorAsoma) { peorAsoma = yi - suelo; dondeAsoma = new Vector3(dentro.x, yi, dentro.y); }
+                    if (yi - sueloAqui > peorAsoma) { peorAsoma = yi - sueloAqui; dondeAsoma = new Vector3(dentro.x, yi, dentro.y); }
                 }
             }
         }
         if (huecos > 0) h("terreno", $"{huecos} puntos del perímetro sin fachada a ras de terreno; el peor, terreno {peorHueco:F2} m bajo P0 en {P(dondeHueco)}");
-        if (asoma > 0) h("terreno", $"{asoma} puntos con el Terrain por encima del suelo más bajo; el peor +{peorAsoma:F2} m en {P(dondeAsoma)}");
+        if (asoma > 0) h("terreno", $"{asoma} puntos con el Terrain por encima del suelo de su planta; el peor +{peorAsoma:F2} m en {P(dondeAsoma)}");
     }
 
     static bool DentroPoligono2(List<Vector2> poly, Vector2 p)
