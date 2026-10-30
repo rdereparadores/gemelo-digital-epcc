@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
@@ -465,6 +466,77 @@ public static class AuditoriaPolitecnica
         }
         return $"{total} hojas; {choca} chocan al abrir ({ambas} en los dos sentidos); invertidas {invertidas}\n" +
                string.Join(", ", contra.OrderByDescending(k => k.Value).Take(15).Select(k => $"{k.Key} {k.Value}")) + "\n" + sb.ToString();
+    }
+
+    // ¿Pasa el jugador por cada puerta? Para cada hoja: cuánto se abre de verdad (Puerta.MedirHolguras; si no se
+    // abre hacia ningún lado se queda cerrada y bloquea) y si una cápsula como la del Player (radio 0,3 + piel,
+    // alto 1,8) cruza el hueco de 1,2 m delante a 1,2 m detrás sin tocar nada que no sea una hoja de puerta.
+    // En las puertas de dos hojas se prueba también por el centro del hueco.
+    public static string PasoPuertas(string salida = null, float radio = -1f, bool sinCerco = false, float largo = 0.7f)
+    {
+        Physics.SyncTransforms();
+        var player = GameObject.Find("Player");
+        var cc = player != null ? player.GetComponent<CharacterController>() : null;
+        float r = radio > 0 ? radio : (cc != null ? cc.radius + cc.skinWidth : 0.38f), alto = cc != null ? cc.height : 1.8f;
+        float paso = cc != null ? cc.stepOffset : 0.3f;
+        var mas = typeof(Puerta).GetField("libreMas", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var menos = typeof(Puerta).GetField("libreMenos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var cerradaF = typeof(Puerta).GetField("cerrada", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var medir = typeof(Puerta).GetMethod("MedirHolguras", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var puertas = Object.FindObjectsByType<Puerta>();
+        var hojas = new HashSet<Collider>(puertas.SelectMany(p => p.GetComponentsInChildren<Collider>()));
+        var sb = new StringBuilder();
+        int total = 0, sinAbrir = 0, noCabe = 0;
+        var golpes = new RaycastHit[32];
+        var contra = new Dictionary<string, int>();
+        string Choca(Vector3 centro, Vector3 normal)
+        {
+            // cápsula de pie, con la base a la altura del escalón que puede subir
+            var a = centro - normal * largo + Vector3.up * (paso + r);
+            var b = a + Vector3.up * (alto - paso - 2 * r);
+            int n = Physics.CapsuleCastNonAlloc(a, b, r, normal, golpes, 2 * largo, ~(1 << 2), QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < n; i++)
+            {
+                var c = golpes[i].collider;
+                if (hojas.Contains(c) || c is TerrainCollider || c is CharacterController) continue;
+                if (sinCerco && c.name.Contains("Marco_Puerta")) continue;
+                return Regex.Replace(c.name, "_[0-9A-F]{6}$", "") + "@" + P(golpes[i].point);
+            }
+            return null;
+        }
+        foreach (var pu in puertas)
+        {
+            total++;
+            var t = pu.transform;
+            // fuera del modo juego no ha pasado Awake: la rotación de cerrada es la de ahora
+            cerradaF.SetValue(pu, t.localRotation);
+            var giro = t.localRotation;
+            medir.Invoke(pu, null);
+            t.localRotation = giro;
+            float lm = (float)mas.GetValue(pu), ln = (float)menos.GetValue(pu);
+            mas.SetValue(pu, -1f); menos.SetValue(pu, -1f);
+            float w = t.lossyScale.x;
+            var centro = t.position + t.right * (w / 2f);
+            var normal = t.forward; normal.y = 0; normal.Normalize();
+            string motivo = null;
+            if (Mathf.Max(lm, ln) < 60f) { motivo = $"solo abre {Mathf.Max(lm, ln):F0}°"; sinAbrir++; }
+            // hueco: centro de la hoja, o el del par si hay otra hoja en línea al lado
+            var otra = puertas.FirstOrDefault(q => q != pu && Vector3.Distance(q.transform.position + q.transform.right * (q.transform.lossyScale.x / 2f), centro) < w + 0.2f &&
+                                                   Mathf.Abs(Vector3.Dot(q.transform.right, t.right)) > 0.95f && Mathf.Abs(q.transform.position.y - t.position.y) < 0.1f);
+            var centroHueco = otra != null ? (centro + otra.transform.position + otra.transform.right * (otra.transform.lossyScale.x / 2f)) / 2f : centro;
+            string choca = Choca(centroHueco, normal);
+            if (choca != null && otra == null) { motivo = (motivo != null ? motivo + "; " : "") + "no cabe: " + choca; noCabe++; }
+            else if (choca != null) { motivo = (motivo != null ? motivo + "; " : "") + "no cabe (2 hojas): " + choca; noCabe++; }
+            if (motivo == null) continue;
+            var k = choca != null ? choca.Split('@')[0] : "abre poco";
+            contra[k] = contra.TryGetValue(k, out var q2) ? q2 + 1 : 1;
+            var ed = t.GetComponentInParent<EdificioPolitecnica>();
+            sb.AppendLine($"{(ed != null ? ed.codigo : "?")}\t{t.parent?.parent?.name}\t{P(t.position)}\tancho {w:F2}\tyaw {t.eulerAngles.y:F0}\t{motivo}");
+        }
+        var res = $"{total} hojas; {sinAbrir} se abren menos de 60°; {noCabe} no dejan pasar al jugador (radio {r:F2}, alto {alto:F1})\n" +
+                  string.Join(", ", contra.OrderByDescending(k => k.Value).Take(15).Select(k => $"{k.Key} {k.Value}"));
+        if (salida != null) System.IO.File.WriteAllText(salida, res + "\n" + sb);
+        return res;
     }
 
     // Medición de rendimiento en modo juego: Medir() arranca los contadores, Leer() da la media desde entonces

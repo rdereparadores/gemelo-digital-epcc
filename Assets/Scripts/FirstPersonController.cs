@@ -10,6 +10,11 @@ public class FirstPersonController : MonoBehaviour
     public float lookSensitivity = 0.1f;
     public float jumpHeight = 0.5f;
     public float gravity = -9.81f;
+    // Cuerpo de una persona adulta: 0,48 m de ancho con la piel (radio 0,22 + 0,02) y 1,8 m de alto. Con 0,3 de radio
+    // y 0,08 de piel no cabía por puertas de 0,7 m (cabinas de aseo, cuartos pequeños)
+    public float radio = 0.22f;
+    public float altura = 1.8f;
+    public float piel = 0.02f;
 
     CharacterController controller;
     InputAction move, look, jump, sprint;
@@ -18,6 +23,10 @@ public class FirstPersonController : MonoBehaviour
     void Awake()
     {
         controller = GetComponent<CharacterController>();
+        controller.radius = radio;
+        controller.height = altura;
+        controller.center = new Vector3(0f, altura / 2f, 0f);
+        controller.skinWidth = piel;
         move = InputSystem.actions.FindAction("Move");
         look = InputSystem.actions.FindAction("Look");
         jump = InputSystem.actions.FindAction("Jump");
