@@ -60,6 +60,8 @@ public static class Entorno
     // Instancia un .mcam importado bajo Entorno/<nombre>, sustituyendo el anterior
     public static GameObject Colocar(string mcam, string nombre)
     {
+        // El .mcam se acaba de regenerar: sin reimportarlo se instanciaría la versión anterior
+        AssetDatabase.ImportAsset(mcam, ImportAssetOptions.ForceUpdate);
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(mcam);
         if (prefab == null) { Debug.LogError($"[Entorno] Falta {mcam}: ejecuta su generador en Herramientas/"); return null; }
         var raiz = Raiz();

@@ -17,6 +17,7 @@ public static class MaterialesCampus
         public string Imagen;     // imagen como color base (carteles, malla, seto)
         public bool Recorte;      // recorte por alfa y doble cara
         public bool Relieve;      // sin textura propia: usa el relieve del asfalto
+        public bool Transparente; // mezcla alfa con el alfa del color (vidrios)
     }
 
     const string Suelo = "Assets/_Ambientacion/Suelo/Texturas", Viales = "Assets/_Ambientacion/Viales/Texturas", Parque = "Assets/_Ambientacion/Parque/Texturas";
@@ -58,6 +59,10 @@ public static class MaterialesCampus
         // Placas con dibujo (Herramientas/generar_equipamiento.py las pinta en Equipamiento/Texturas)
         new Def { Nombre = "Senal_R301_40", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_R301_40.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
         new Def { Nombre = "Senal_R301_50", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_R301_50.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
+        new Def { Nombre = "Senal_R1", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_R1.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
+        new Def { Nombre = "Senal_S13", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_S13.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
+        // Vidrio de las marquesinas: ligeramente tintado y translúcido (fotos de las paradas, 2025)
+        new Def { Nombre = "Vidrio_Marquesina", Color = new Color(0.62f, 0.72f, 0.72f, 0.28f), Suavidad = 0.92f, Transparente = true },
         new Def { Nombre = "Senal_STOP", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_STOP.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
         new Def { Nombre = "Senal_Parada", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_parada.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f },
         new Def { Nombre = "Mupi", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/mupi.png", Metros = 1f, Color = Color.white, Suavidad = 0.85f },
@@ -92,6 +97,7 @@ public static class MaterialesCampus
         mat.SetColor("_BaseColor", d.Color);
         float metros = d.Metros > 0f ? d.Metros : 1f;
         Recorte(mat, d.Recorte);
+        Transparencia(mat, d.Transparente);
 
         if (d.Textura != null)
         {
@@ -143,6 +149,20 @@ public static class MaterialesCampus
         mat.SetOverrideTag("RenderType", si ? "TransparentCutout" : "Opaque");
         mat.renderQueue = (int)(si ? RenderQueue.AlphaTest : RenderQueue.Geometry);
         mat.doubleSidedGI = si;
+    }
+
+    static void Transparencia(Material mat, bool si)
+    {
+        if (!si) { mat.SetFloat("_Surface", 0f); mat.DisableKeyword("_SURFACE_TYPE_TRANSPARENT"); return; }
+        mat.SetFloat("_Surface", 1f);
+        mat.SetFloat("_Blend", 0f);
+        mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+        mat.SetFloat("_ZWrite", 0f);
+        mat.SetFloat("_Cull", (float)CullMode.Off);
+        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        mat.SetOverrideTag("RenderType", "Transparent");
+        mat.renderQueue = (int)RenderQueue.Transparent;
     }
 
     static Texture2D Textura(string path, TextureImporterType tipo, bool srgb)
