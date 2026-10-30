@@ -264,13 +264,32 @@ public static class ParkingNorteBuilder
             return go;
         }
 
-        // Franja de tramos de 2 m (escalados para cubrir el largo) entre x0 y x1
+        // Franja de tramos de 2 m (escalados para cubrir el largo) entre x0 y x1. El perfil se toma en las juntas
+        // y los hoyos interiores se salvan (la acera pasa por encima de la boca del caño al este, con el MDT 3 m
+        // más abajo): cada junta sube hasta el menor de los máximos a uno y otro lado
         public void Strip(GameObject prefab, Transform parent, float x0, float x1, float z, float width, float yaw)
         {
             int n = Mathf.Max(1, Mathf.RoundToInt((x1 - x0) / 2f));
             float seg = (x1 - x0) / n;
+            var b = new float[n + 1];
+            for (int k = 0; k <= n; k++) b[k] = H(new Vector3(x0 + seg * k, 0f, z));
+            var izq = new float[n + 1]; var dch = new float[n + 1];
+            izq[0] = b[0]; for (int k = 1; k <= n; k++) izq[k] = Mathf.Max(izq[k - 1], b[k]);
+            dch[n] = b[n]; for (int k = n - 1; k >= 0; k--) dch[k] = Mathf.Max(dch[k + 1], b[k]);
+            for (int k = 1; k < n; k++) b[k] = Mathf.Max(b[k], Mathf.Min(izq[k - 1], dch[k + 1]));
             for (int i = 0; i < n; i++)
-                Tilted(prefab, parent, new Vector2(x0 + seg * (i + 0.5f), z), yaw, seg / 2f, width / 2f, 0f, seg / 2f * 1.015f);   // leve solape para tapar juntas
+            {
+                var c = new Vector2(x0 + seg * (i + 0.5f), z);
+                var go = Spawn(prefab, parent);
+                var yawQ = Quaternion.Euler(0f, yaw, 0f);
+                var hDir = yawQ * Vector3.right;
+                float subida = (b[i + 1] - b[i]) * Mathf.Sign(hDir.x);     // a lo largo del +X de la pieza
+                var xDir = (hDir * seg + Vector3.up * subida).normalized;
+                var up = Vector3.Cross(yawQ * Vector3.forward, xDir).normalized;
+                go.transform.localPosition = new Vector3(c.x, (b[i] + b[i + 1]) / 2f, c.y);
+                go.transform.localRotation = Quaternion.LookRotation(Vector3.Cross(xDir, up), up);
+                go.transform.localScale = new Vector3(seg / 2f * 1.015f, 1f, 1f);   // leve solape para tapar juntas
+            }
         }
     }
 

@@ -22,7 +22,10 @@ public static class AmbienteBuilder
     public static void Build()
     {
         var imp = (TextureImporter)AssetImporter.GetAtPath(Cielo);
-        if (imp.textureShape != TextureImporterShape.Texture2D || imp.maxTextureSize != 2048)
+        // Sin mipmaps: en un panorama latitud-longitud, el salto de u en la costura elige el mip más pequeño y
+        // se ve una línea vertical en el cielo
+        if (imp.textureShape != TextureImporterShape.Texture2D || imp.maxTextureSize != 2048 || imp.mipmapEnabled ||
+            imp.wrapModeU != TextureWrapMode.Repeat)
         {
             imp.textureShape = TextureImporterShape.Texture2D;
             imp.maxTextureSize = 2048;

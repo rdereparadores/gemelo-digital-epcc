@@ -49,6 +49,51 @@ public static class AuditoriaEntorno
         return $"{mallas} mallas, {tris} triángulos -> {Salida}";
     }
 
+    public const string SalidaBarrido = "Datos/entorno_barrido.bin";
+
+    // Barrido cenital de todo el Terrain cada `paso` m: por celda, cota del Terrain, cota de lo primero que se
+    // ve desde arriba (sin vegetación del Terrain) y qué es (índice en Datos/entorno_barrido.txt; −1 nada).
+    // Formato: int ancho, int alto, float paso, y float[3] por celda (fila a fila, de sur a norte).
+    [MenuItem("Tools/Auditoría/Barrido cenital del terreno")]
+    public static string Barrido() => Barrido(0.5f);
+
+    public static string Barrido(float paso)
+    {
+        var t = Terrain.activeTerrain;
+        var size = t.terrainData.size;
+        int W = Mathf.FloorToInt(size.x / paso), H = Mathf.FloorToInt(size.z / paso);
+        var nombres = new System.Collections.Generic.Dictionary<string, int>();
+        var lista = new System.Collections.Generic.List<string>();
+        var golpes = new RaycastHit[8];
+        using (var w = new BinaryWriter(File.Create(SalidaBarrido)))
+        {
+            w.Write(W); w.Write(H); w.Write(paso);
+            for (int j = 0; j < H; j++)
+                for (int i = 0; i < W; i++)
+                {
+                    var p = new Vector3(t.transform.position.x + (i + 0.5f) * paso, 200f, t.transform.position.z + (j + 0.5f) * paso);
+                    float th = t.SampleHeight(p) + t.transform.position.y;
+                    float hy = -999f; int code = -1;
+                    if (Physics.Raycast(p, Vector3.down, out var h, 400f, ~0, QueryTriggerInteraction.Ignore))
+                    {
+                        hy = h.point.y;
+                        string clave;
+                        if (h.collider is TerrainCollider) clave = "Terrain";
+                        else
+                        {
+                            var tr = h.collider.transform;
+                            var raiz = tr; while (raiz.parent != null && raiz.parent.parent != null) raiz = raiz.parent;
+                            clave = (raiz != tr ? raiz.name + "/" : "") + (tr.parent != null ? tr.parent.name + "/" : "") + tr.name;
+                        }
+                        if (!nombres.TryGetValue(clave, out code)) { code = lista.Count; nombres[clave] = code; lista.Add(clave); }
+                    }
+                    w.Write(th); w.Write(hy); w.Write((float)code);
+                }
+        }
+        File.WriteAllLines("Datos/entorno_barrido.txt", lista);
+        return $"{W}x{H} celdas, {lista.Count} superficies -> {SalidaBarrido}";
+    }
+
     static void Cadena(BinaryWriter w, string s)
     {
         var b = Encoding.UTF8.GetBytes(s);
