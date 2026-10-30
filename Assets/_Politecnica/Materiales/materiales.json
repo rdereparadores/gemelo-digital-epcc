@@ -67,6 +67,7 @@
     {"nombre": "Tela_Verde", "color": "#2F4A42", "textura": "tela"},
     {"nombre": "Tela_Gris_Butaca", "color": "#6B6E70", "textura": "tela"},
     {"nombre": "Plastico_Lima", "color": "#9DC43C", "suavidad": 0.45},
+    {"nombre": "Puerta_Verde", "color": "#7E8C4E", "suavidad": 0.45},
     {"nombre": "Paves", "color": "#DCEBEC", "alfa": 0.8, "suavidad": 0.75},
     {"nombre": "Plastico_Verde", "color": "#1F8A3E", "suavidad": 0.45},
     {"nombre": "Formica_Verde", "color": "#C9D58E", "suavidad": 0.6},
@@ -107,6 +108,8 @@
     {"nombre": "Amarillo_Seguridad", "color": "#EBB700", "suavidad": 0.5},
     {"nombre": "Tela_Gris_Oscuro", "color": "#404247", "textura": "tela"},
     {"nombre": "Ladrillo", "color": "#A8573D", "suavidad": 0.15},
-    {"nombre": "Aislante", "color": "#DDBE55", "suavidad": 0.05}
+    {"nombre": "Aislante", "color": "#DDBE55", "suavidad": 0.05},
+    {"nombre": "Metacrilato", "color": "#DCE9EC", "suavidad": 0.95, "alfa": 0.35},
+    {"nombre": "Lacado_Verde", "color": "#2E8B3E", "suavidad": 0.6, "metalico": 0.1}
   ]
 }

@@ -232,6 +232,24 @@
    "suavidad": 1.0
   },
   {
+   "nombre": "Suelo_Hormigon_8E8E8A",
+   "color": "#BABCBB",
+   "textura": "panel_hormigon",
+   "suavidad": 0.35
+  },
+  {
+   "nombre": "Suelo_Hormigon_A9A6A0",
+   "color": "#DCDBD9",
+   "textura": "panel_hormigon",
+   "suavidad": 0.35
+  },
+  {
+   "nombre": "Suelo_Hormigon_BDB6A8",
+   "color": "#F6EFE3",
+   "textura": "panel_hormigon",
+   "suavidad": 0.35
+  },
+  {
    "nombre": "Suelo_Madera_5E5348",
    "color": "#79859D",
    "textura": "haya",
