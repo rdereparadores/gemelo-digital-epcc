@@ -52,3 +52,7 @@ __pycache__/
 /Datos/Viales/*.raw
 /Datos/Viales/*_preview.png
 /Datos/Viales/mascara_viales.png
+
+# Salidas de las auditorías (se regeneran con Herramientas/auditar*.py y Tools ▸ Auditoría)
+/Datos/auditoria_*
+/Datos/entorno_*

@@ -53,8 +53,6 @@ public static class MaterialesCampus
         new Def { Nombre = "Malla", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/malla.png", Metros = 0.5f, Color = Color.white, Suavidad = 0.4f, Recorte = true },
         new Def { Nombre = "Seto", Imagen = "Assets/_Ambientacion/Vegetacion/Texturas/Hojas_Arbusto.png", Metros = 0.6f, Color = Color.white, Suavidad = 0.1f, Recorte = true },
         new Def { Nombre = "Seto_Interior", Color = new Color(0.11f, 0.15f, 0.07f), Suavidad = 0.05f },
-        new Def { Nombre = "Senal_Azul", Color = new Color(0.05f, 0.25f, 0.6f), Suavidad = 0.5f },
-        new Def { Nombre = "Senal_Roja", Color = new Color(0.7f, 0.06f, 0.06f), Suavidad = 0.5f },
         new Def { Nombre = "Senal_Blanca", Color = new Color(0.9f, 0.9f, 0.9f), Suavidad = 0.5f },
         // Placas con dibujo (Herramientas/generar_equipamiento.py las pinta en Equipamiento/Texturas)
         new Def { Nombre = "Senal_R301_40", Imagen = "Assets/_Ambientacion/Equipamiento/Texturas/senal_R301_40.png", Metros = 1f, Color = Color.white, Suavidad = 0.5f, Recorte = true },
