@@ -96,6 +96,7 @@
     {"nombre": "Metal_Marron", "color": "#3B2A20", "suavidad": 0.4, "metalico": 0.5},
     {"nombre": "Reja_Malla", "color": "#E6E2DA", "suavidad": 0.4},
     {"nombre": "Granito_Claro", "color": "#FFFFFF", "textura": "granito"},
+    {"nombre": "Asfalto_Explanada", "color": "#FFFFFF", "textura": "Assets/_Ambientacion/Suelo/Texturas/asphalt_04", "metros": 4.04},
     {"nombre": "Pavimento_Patio", "color": "#FFFFFF", "textura": "Assets/_Ambientacion/Viales/Texturas/concrete_tiles", "metros": 1.85},
     {"nombre": "Chapa_Cubierta", "color": "#FFFFFF", "textura": "chapa_blanca", "metros": 2.0},
     {"nombre": "Rotulo_Comun_Sur", "imagen": "rotulo_comun_sur.png", "recorte": true, "suavidad": 0.6, "metalico": 0.7},
