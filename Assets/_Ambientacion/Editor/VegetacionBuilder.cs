@@ -191,6 +191,20 @@ public static class VegetacionBuilder
 
     // Hierba en todo el suelo natural: seca donde el splatmap marca pasto o tierra, verde en el
     // césped regado y bajo el bosque de ribera
+    // Solo la hierba, con las texturas que ya tiene el Terrain (tras regenerar el splatmap), sin recolocar
+    // los árboles
+    [MenuItem("Tools/Vegetación/Rehacer solo la hierba")]
+    public static void RehacerHierba()
+    {
+        var terrain = Terrain.activeTerrain;
+        if (terrain == null) return;
+        var tex = terrain.terrainData.detailPrototypes.Select(p => p.prototypeTexture).ToArray();
+        var seca = tex.FirstOrDefault(t => t != null && t.name == "Hierba_Seca");
+        var verde = tex.FirstOrDefault(t => t != null && t.name == "Hierba_Verde");
+        if (seca == null || verde == null) { Debug.LogError("[Vegetacion] El Terrain no tiene las texturas de hierba: usa Generar y colocar"); return; }
+        ColocarHierba(terrain, seca, verde);
+    }
+
     static void ColocarHierba(Terrain terrain, Texture2D seca, Texture2D verde)
     {
         var data = terrain.terrainData;

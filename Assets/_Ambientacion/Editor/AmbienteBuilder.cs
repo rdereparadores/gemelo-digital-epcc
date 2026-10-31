@@ -64,11 +64,14 @@ public static class AmbienteBuilder
         RenderSettings.sun = luz;
         // Luz ambiente de tres tonos en vez de la del HDR: el cielo HDR, con el sol de tarde, dejaba las
         // caras este y la luz de suelo casi a cero (fachadas en sombra azul marino); así hay cielo,
-        // horizonte y rebote cálido del suelo, como en las fotos a pleno sol
+        // horizonte y rebote cálido del suelo, como en las fotos a pleno sol.
+        // Intensidad ×1,6 calibrada con Street View (jul. 2025, fachada norte de Informática a la sombra): el
+        // aplacado a la sombra se ve crema claro (≈ 158,143,120) y con ×1 salía marrón oliva (≈ 77,70,53)
+        const float Ambiente = 1.6f;
         RenderSettings.ambientMode = AmbientMode.Trilight;
-        RenderSettings.ambientSkyColor = new Color(0.66f, 0.74f, 0.86f);
-        RenderSettings.ambientEquatorColor = new Color(0.62f, 0.61f, 0.58f);
-        RenderSettings.ambientGroundColor = new Color(0.46f, 0.41f, 0.34f);
+        RenderSettings.ambientSkyColor = new Color(0.66f, 0.74f, 0.86f) * Ambiente;
+        RenderSettings.ambientEquatorColor = new Color(0.62f, 0.61f, 0.58f) * Ambiente;
+        RenderSettings.ambientGroundColor = new Color(0.46f, 0.41f, 0.34f) * Ambiente;
         RenderSettings.ambientIntensity = 1.0f;
         RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
         RenderSettings.fog = true;
