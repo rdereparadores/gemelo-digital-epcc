@@ -89,6 +89,7 @@
     {"nombre": "Intrados_Blanco", "color": "#EFEDE6", "suavidad": 0.35},
     {"nombre": "Pilar_Crema", "color": "#E0CDA0", "suavidad": 0.3},
     {"nombre": "Pilar_Ocre", "color": "#C8861E", "suavidad": 0.35},
+    {"nombre": "Barandilla_Ocre", "color": "#C8861E", "suavidad": 0.45, "metalico": 0.3},
     {"nombre": "Perfil_Bronce", "color": "#5A4A3C", "suavidad": 0.45, "metalico": 0.6},
     {"nombre": "Policarbonato_Bronce", "color": "#8A6A4E", "suavidad": 0.75, "alfa": 0.6},
     {"nombre": "Laton", "color": "#B08D57", "suavidad": 0.7, "metalico": 1.0},
