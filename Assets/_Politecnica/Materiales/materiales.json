@@ -74,6 +74,7 @@
     {"nombre": "Plastico_Verde", "color": "#1F8A3E", "suavidad": 0.45},
     {"nombre": "Formica_Verde", "color": "#C9D58E", "suavidad": 0.6},
     {"nombre": "Mimbre", "color": "#B79565", "textura": "tela", "suavidad": 0.25},
+    {"nombre": "Polipiel_Verde", "color": "#2C7A48", "suavidad": 0.55},
     {"nombre": "Verde_Barra", "color": "#1F4A2C", "suavidad": 0.5},
     {"nombre": "Acero_Azul", "color": "#2F527F", "suavidad": 0.45, "metalico": 0.6},
     {"nombre": "Libros", "color": "#7A5C48", "suavidad": 0.3},
