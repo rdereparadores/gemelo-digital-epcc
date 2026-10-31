@@ -1,0 +1,5 @@
+foto_bn_1.png y foto_bn_2.png: recortes en blanco y negro de fotos de Wikimedia Commons en dominio público
+(CC0 1.0), del usuario Zarateman:
+- https://commons.wikimedia.org/wiki/File:C%C3%A1ceres_-_Iglesia_de_San_Mateo_2.jpg
+- https://commons.wikimedia.org/wiki/File:Caceres_-_Arco_de_la_Estrella_1.JPG
+Láminas del Salón de Grados del Pabellón de Telecomunicación (fotos de Cáceres en blanco y negro, OB006 p112).
