@@ -187,6 +187,7 @@ public static class PolitecnicaBuilder
             RebajarTerreno(origen, m.huella, origen.y + m.suelo_min - 0.12f);
         // Delante de cada puerta exterior el terreno no puede quedar por encima del umbral (la hoja
         // chocaría al abrir): se rebaja una franja de 1,5 m a cada lado de la puerta
+        var cortes = new List<(List<Vector2> poly, float y)>();
         foreach (var d in m.puertas ?? new PuertaDef[0])
         {
             if (d.tipo != "exterior") continue;
@@ -200,10 +201,15 @@ public static class PolitecnicaBuilder
             var huella = new float[8];
             for (int i = 0; i < 4; i++) { huella[2 * i] = poly[i].x - origen.x; huella[2 * i + 1] = poly[i].z - origen.z; }
             RebajarTerreno(origen, huella, bis.y - 0.03f, -0.2f);
+            cortes.Add((Poligono(huella, origen), bis.y - 0.03f));
         }
         // Bajo cada peldaño y rellano exterior, el terreno queda por debajo de su huella
         foreach (var r in m.rebajes ?? new RebajeDef[0])
+        {
             RebajarTerreno(origen, r.huella, origen.y + r.y, -0.2f);
+            cortes.Add((Poligono(r.huella, origen), origen.y + r.y));
+        }
+        RebajarSotanos(m, origen, inst.transform, cortes);
         return $"{cod}: {m.plantas.Length} plantas, {m.locales?.Length ?? 0} locales, {m.puertas?.Length ?? 0} puertas" +
                (sinPrefab > 0 ? $" ({sinPrefab} sin prefab)" : "") +
                (faltan.Count > 0 ? $"; faltan piezas: {string.Join(", ", faltan)}" : "");
@@ -271,6 +277,129 @@ public static class PolitecnicaBuilder
             td.SetHeights(x0, z0, h);
             EditorUtility.SetDirty(td);
         }
+    }
+
+    static List<Vector2> Poligono(float[] huella, Vector3 origen)
+    {
+        var poly = new List<Vector2>();
+        for (int i = 0; i + 1 < huella.Length; i += 2) poly.Add(new Vector2(huella[i] + origen.x, huella[i + 1] + origen.z));
+        return poly;
+    }
+
+    static float[,] baseViales;
+
+    // Locales bajo rasante: el terreno baja hasta debajo de su suelo en todas las celdas del heightmap que
+    // los tocan. Con el margen de la huella, la última fila de celdas quedaba alta y el terreno entraba en
+    // cuña por sus muros (el heightmap tiene celdas de 0,46 m). Fuera del edificio, la franja que queda
+    // rebajada se tapa con una acera a la cota que tenía el terreno (o la de las puertas y peldaños de
+    // `cortes`), que sigue el talud y no deja zanja junto a la fachada
+    static void RebajarSotanos(Manifiesto m, Vector3 origen, Transform padre, List<(List<Vector2> poly, float y)> cortes)
+    {
+        var terrain = Terrain.activeTerrain;
+        if (terrain == null || m.locales == null) return;
+        var td = terrain.terrainData;
+        int res = td.heightmapResolution;
+        Vector3 tp = terrain.transform.position, size = td.size;
+        float dx = size.x / (res - 1), dz = size.z / (res - 1);
+        if (baseViales == null && File.Exists(HeightmapViales))
+        {
+            var bytes = File.ReadAllBytes(HeightmapViales);
+            if (bytes.Length == res * res * 2)
+            {
+                baseViales = new float[res, res];
+                for (int z = 0; z < res; z++)
+                    for (int x = 0; x < res; x++)
+                    {
+                        int i = (z * res + x) * 2;
+                        baseViales[z, x] = (bytes[i] | (bytes[i + 1] << 8)) / 65535f;
+                    }
+            }
+        }
+        var edificio = new List<List<Vector2>>();
+        foreach (var s in m.suelos ?? new RebajeDef[0]) edificio.Add(Poligono(s.huella, origen));
+        var zona = new HashSet<long>();
+        foreach (var l in m.locales)
+        {
+            if (l.min == null || l.min.Length < 3 || l.min[1] > -0.5f || l.poligono == null || l.poligono.Length < 6) continue;
+            var poly = Poligono(l.poligono, origen);
+            float hmax = (origen.y + l.min[1] - 0.12f - tp.y) / size.y;
+            Vector2 lo = poly[0], hi = poly[0];
+            foreach (var p in poly) { lo = Vector2.Min(lo, p); hi = Vector2.Max(hi, p); }
+            int x0 = Mathf.Clamp(Mathf.FloorToInt((lo.x - 1 - tp.x) / dx), 1, res - 2);
+            int x1 = Mathf.Clamp(Mathf.CeilToInt((hi.x + 1 - tp.x) / dx), 1, res - 2);
+            int z0 = Mathf.Clamp(Mathf.FloorToInt((lo.y - 1 - tp.z) / dz), 1, res - 2);
+            int z1 = Mathf.Clamp(Mathf.CeilToInt((hi.y + 1 - tp.z) / dz), 1, res - 2);
+            var h = td.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+            bool cambio = false;
+            for (int j = 0; j <= z1 - z0; j++)
+                for (int i = 0; i <= x1 - x0; i++)
+                {
+                    // vértices de las cuatro celdas que pueden tocar el local (media diagonal de celda y algo más)
+                    if (DistanciaDentro(poly, new Vector2(tp.x + (x0 + i) * dx, tp.z + (z0 + j) * dz)) < -0.7f) continue;
+                    float hb = baseViales != null ? baseViales[z0 + j, x0 + i] : h[j, i];
+                    if (hb > hmax + 0.01f / size.y)
+                        for (int a = -1; a <= 0; a++)
+                            for (int b = -1; b <= 0; b++)
+                                zona.Add(((long)(x0 + i + a) << 32) | (uint)(z0 + j + b));
+                    if (h[j, i] > hmax) { h[j, i] = hmax; cambio = true; }
+                }
+            if (cambio) { td.SetHeights(x0, z0, h); EditorUtility.SetDirty(td); }
+        }
+        if (zona.Count == 0 || baseViales == null) return;
+
+        // Cota de referencia en un punto: la del terreno de partida, sin pasar de las puertas y peldaños
+        float Ref(float x, float z)
+        {
+            float fx = Mathf.Clamp((x - tp.x) / dx, 0, res - 1.001f), fz = Mathf.Clamp((z - tp.z) / dz, 0, res - 1.001f);
+            int i = (int)fx, j = (int)fz;
+            float u = fx - i, v = fz - j;
+            float hb = Mathf.Lerp(Mathf.Lerp(baseViales[j, i], baseViales[j, i + 1], u),
+                                  Mathf.Lerp(baseViales[j + 1, i], baseViales[j + 1, i + 1], u), v) * size.y + tp.y;
+            var q = new Vector2(x, z);
+            foreach (var c in cortes)
+                if (c.y < hb && DistanciaDentro(c.poly, q) > -0.2f) hb = c.y;
+            return hb;
+        }
+        const int n = 5;   // subceldas por lado de celda (~9 cm): el borde dentro del muro no se ve
+        var verts = new List<Vector3>();
+        var uvs = new List<Vector2>();
+        var tris = new List<int>();
+        foreach (var k in zona)
+        {
+            int ci = (int)(k >> 32), cj = (int)(k & 0xffffffff);
+            for (int a = 0; a < n; a++)
+                for (int b = 0; b < n; b++)
+                {
+                    float xa = tp.x + (ci + a / (float)n) * dx, xb = xa + dx / n;
+                    float za = tp.z + (cj + b / (float)n) * dz, zb = za + dz / n;
+                    var c = new Vector2((xa + xb) / 2, (za + zb) / 2);
+                    bool dentro = false;
+                    foreach (var e in edificio) if (DistanciaDentro(e, c) > 0) { dentro = true; break; }
+                    if (dentro) continue;
+                    if (Ref(c.x, c.y) - (terrain.SampleHeight(new Vector3(c.x, 0, c.y)) + tp.y) < 0.02f) continue;
+                    int v0 = verts.Count;
+                    foreach (var (x, z) in new[] { (xa, za), (xa, zb), (xb, zb), (xb, za) })
+                    {
+                        verts.Add(new Vector3(x, Ref(x, z) + 0.02f, z) - padre.position);
+                        uvs.Add(new Vector2(x, z) / 2f);
+                    }
+                    tris.AddRange(new[] { v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3 });
+                }
+        }
+        if (tris.Count == 0) return;
+        var mesh = new Mesh { name = $"{m.codigo}_Acera_Sotanos", indexFormat = IndexFormat.UInt32 };
+        mesh.SetVertices(verts);
+        mesh.SetUVs(0, uvs);
+        mesh.SetTriangles(tris, 0);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        var go = new GameObject("Acera sótanos");
+        go.transform.SetParent(padre, false);
+        go.transform.localPosition = Vector3.zero;
+        go.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var mr = go.AddComponent<MeshRenderer>();
+        mr.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{MaterialesPolitecnica.Carpeta}/Pavimento_Patio.mat");
+        GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
     }
 
     // >0 dentro del polígono (distancia al borde), <0 fuera
