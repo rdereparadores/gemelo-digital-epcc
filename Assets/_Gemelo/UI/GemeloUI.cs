@@ -221,8 +221,6 @@ namespace Gemelo
 
         void AplicarGlobales(Ajustes a)
         {
-            if (a.calidad >= 0 && a.calidad < QualitySettings.names.Length && QualitySettings.GetQualityLevel() != a.calidad)
-                QualitySettings.SetQualityLevel(a.calidad, true);
             if (!Application.isEditor && Screen.fullScreen != a.pantallaCompleta) Screen.fullScreen = a.pantallaCompleta;
             Application.targetFrameRate = a.fpsMaximo > 0 ? a.fpsMaximo : -1;
             QualitySettings.vSyncCount = a.fpsMaximo > 0 ? 0 : 1;

@@ -5,8 +5,7 @@
 //    sustituidos por los URP/Lit de Personajes/<Nombre>/Materiales/ (los crea ConstructorMixamo) con AddRemap, y LOD
 //    de malla generados al importar (Mesh LOD);
 //  · animaciones (Animaciones/*.fbx): Humanoid con su propio avatar (esqueleto de Y Bot), sin materiales; raíz
-//    horneada en la pose (giro, altura y posición, con la referencia original): son «in place»; en bucle salvo los
-//    paso de sentarse y levantarse;
+//    horneada en la pose (giro, altura y posición, con la referencia original): son «in place» y en bucle;
 //  · texturas: 1024 px como mucho; normales como Normal map; máscaras (brillo en A) lineales; el color con alfa
 //    conserva la cobertura en los mipmaps para que el pelo no se deshaga de lejos.
 using System.IO;
@@ -21,7 +20,6 @@ namespace Gemelo
         public const string CarpetaPersonajes = Carpeta + "/Personajes";
         public const string CarpetaAnimaciones = Carpeta + "/Animaciones";
         public const float RecorteAlfa = 0.45f;
-        static readonly string[] SinBucle = { "StandToSit", "SitToStand" };
 
         [System.Serializable]
         public class InfoMaterial { public string nombre, color, normal, mascara; public bool recorte; }
@@ -83,13 +81,12 @@ namespace Gemelo
             if (!assetPath.StartsWith(CarpetaAnimaciones + "/")) return;
             var mi = (ModelImporter)assetImporter;
             var nombre = Path.GetFileNameWithoutExtension(assetPath);
-            bool bucle = System.Array.IndexOf(SinBucle, nombre) < 0;
             var clips = mi.defaultClipAnimations;
             for (int i = 0; i < clips.Length; i++)
             {
                 var c = clips[i];
                 c.name = clips.Length == 1 ? nombre : nombre + "_" + i;
-                c.loopTime = bucle;
+                c.loopTime = true;
                 c.loopPose = false;
                 c.lockRootRotation = true;
                 c.lockRootHeightY = true;

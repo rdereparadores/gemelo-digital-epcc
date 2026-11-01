@@ -71,20 +71,26 @@ namespace Gemelo
             return k;
         }
 
-        /// <summary>La más cercana a menos de radio, o null.</summary>
-        public Persona MasCercana(Vector3 p, float radio, float dyMax)
+        /// <summary>La persona de pie más cercana al hueco de una puerta dentro del rectángulo de paso: a menos de
+        /// <c>alcance</c> por delante o por detrás (según <c>normal</c>, horizontal y unitaria) y a menos de
+        /// <c>semiAncho</c> a lo largo del muro, con |dy| &lt; dyMax; o null. Los sentados no cuentan (no van a pasar).</summary>
+        public Persona EnPaso(Vector3 c, Vector3 normal, float semiAncho, float alcance, float dyMax)
         {
             Persona mejor = null;
-            float m = radio * radio;
-            int x0 = (int)((p.x - radio - origen.x) / Celda), x1 = (int)((p.x + radio - origen.x) / Celda);
-            int z0 = (int)((p.z - radio - origen.y) / Celda), z1 = (int)((p.z + radio - origen.y) / Celda);
+            float m = float.MaxValue, radio = Mathf.Max(semiAncho, alcance);
+            var lado = new Vector2(normal.z, -normal.x);
+            int x0 = (int)((c.x - radio - origen.x) / Celda), x1 = (int)((c.x + radio - origen.x) / Celda);
+            int z0 = (int)((c.z - radio - origen.y) / Celda), z1 = (int)((c.z + radio - origen.y) / Celda);
             for (int z = Mathf.Max(0, z0); z <= Mathf.Min(nz - 1, z1); z++)
             for (int x = Mathf.Max(0, x0); x <= Mathf.Min(nx - 1, x1); x++)
                 for (int i = cabeza[z * nx + x]; i >= 0; i = siguiente[i])
                 {
                     var q = personas[i];
-                    if (Mathf.Abs(q.pos.y - p.y) > dyMax) continue;
-                    float dx = q.pos.x - p.x, dz = q.pos.z - p.z, d = dx * dx + dz * dz;
+                    if (q.sentada || Mathf.Abs(q.pos.y - c.y) > dyMax) continue;
+                    float dx = q.pos.x - c.x, dz = q.pos.z - c.z;
+                    float frente = Mathf.Abs(dx * normal.x + dz * normal.z), largo = Mathf.Abs(dx * lado.x + dz * lado.y);
+                    if (frente > alcance || largo > semiAncho) continue;
+                    float d = dx * dx + dz * dz;
                     if (d < m) { m = d; mejor = q; }
                 }
             return mejor;

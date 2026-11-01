@@ -56,8 +56,9 @@ núcleo como evento o propiedad de `GemeloApp`.
   - `ParamAvatar.Escribiendo` (float, añadido el 01-11-2026): en el estado `SentadoMovil` (sentado con `Movil`),
     0 = teclea en un ordenador y 1 = escribe en la mesa. Lo pone Personas según el puesto; el jugador no lo usa.
   - `PersonasEnEscena`: NPCs simulados ahora mismo, para el HUD.
-  - Puertas: `Puerta.Presencia` (estático de `_Politecnica/Runtime/Puerta.cs`) es una consulta «¿hay alguien cerca?»
-    que registra Personas (sus NPCs y `GemeloApp.Jugador`); las puertas se abren con eso y con la cámara principal.
+  - Puertas: `Puerta.Presencia` (estático de `_Politecnica/Runtime/Puerta.cs`) es una consulta «¿va alguien a pasar
+    por este hueco?» (rectángulo delante y detrás de la puerta cerrada, poco más ancho que ella) que registra Personas
+    con sus NPCs de pie y `GemeloApp.Jugador`. Con la consulta registrada, la cámara ya no abre puertas.
   - **Local actual:** `LocalActual`, `PonerLocalActual(l)` y el evento `LocalActualCambiado` (dónde está el jugador o
     la cámara).
   - `Jugador`: Transform del avatar en tercera persona.
@@ -93,7 +94,11 @@ núcleo como evento o propiedad de `GemeloApp`.
   Solo se quedan sin local los tres patios descubiertos de 1905.
 - **`Ajustes`** (`Ajustes.Actual`, `Ajustes.Aplicar()` y el evento `Ajustes.Cambiados`): se guardan en JSON en
   `persistentDataPath`. `avatarJugador` (0 = Brian, 1 = Megan; Ajustes ▸ Controles) cambia el cuerpo del jugador al
-  momento, sin reiniciar.
+  momento, sin reiniciar. `Aplicar(false)` avisa sin guardar (pruebas).
+- **`Graficos`**: opciones gráficas de Ajustes ▸ Gráficos (antialiasing, sombras del sol, oclusión ambiental, resolución
+  3D con FSR, nivel de detalle y distancia de la hierba) y sus preajustes Bajo/Medio/Alto/Ultra (de fábrica, Alto). Las
+  aplica al asset de URP en uso, a la cámara principal, a `QualitySettings.lodBias` y al Terrain; en el editor restaura
+  el asset de URP al salir de Play Mode.
 - **`Escalas`**: nombre, unidad, rango, valor y color de cada capa, más los colores del confort y de la severidad.
   La paleta es la de la UEx.
 
@@ -144,7 +149,11 @@ selección y, si no hay, pausa. Esc se lee en `LateUpdate` y se ignora si la UI 
   de pie de cintura para abajo.
 - **Medidor de rendimiento** (`MedidorRendimiento`, solo para pruebas): `MedidorRendimiento.Medir(s, nombre)` y
   `MedidorRendimiento.AB(nombre, on => …, tandas, s)` (tandas intercaladas, media y mediana por parejas, más
-  contadores de dibujo); el resultado queda en `MedidorRendimiento.Resultado`.
+  contadores de dibujo); `MedidorRendimiento.Marcadores(s)` desglosa el frame por marcadores del profiler (editor o
+  build de desarrollo). El resultado queda en `MedidorRendimiento.Resultado`.
+- **Recorrido de rendimiento** (`RecorridoRendimiento`, solo para pruebas): con `-recorrido <carpeta>` la build pasa por
+  vistas fijas de los tres modos y deja `recorrido.json` (frame, GPU, hilos, contadores) y una captura por vista;
+  admite `-preajuste N`, `-ajustes '{json}'`, `-vistas a,b` y los interruptores de `BenchmarkRendimiento`.
 
 ## UI (`UI/`)
 
@@ -164,7 +173,7 @@ licencia OFL en `Resources/GemeloUI/Fuentes/`) y el imagotipo y el sello de la U
   al final del fotograma, salvo en el mismo frame en que se pausó). Rellena `GemeloApp.PunteroSobreUI` con
   `panel.Pick` (los contenedores de maquetación no recogen el puntero). Crea un `EventSystem` con
   `InputSystemUIInputModule` si la escena no tiene ninguno. Con un menú delante deja el cursor libre y visible.
-- **Ajustes globales** que aplica la UI al recibir `Ajustes.Cambiados`: calidad, pantalla completa (solo fuera del
+- **Ajustes globales** que aplica la UI al recibir `Ajustes.Cambiados`: pantalla completa (solo fuera del
   editor), FPS objetivo y sincronía vertical, `AudioListener.volume` y la escala de la interfaz.
 - **Gráficas**: `Historial.Pedir` lee `GET /api/v1/{spaces|buildings}/{id}/history` (series agregadas como el
   estado; ver el contrato) y `Grafica` las dibuja con Painter2D (área, rejilla, ejes en hora local, banda de

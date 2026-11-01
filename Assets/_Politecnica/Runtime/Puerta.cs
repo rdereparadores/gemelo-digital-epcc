@@ -8,9 +8,10 @@ using UnityEngine;
 // Las dos hojas de una puerta de dos hojas (`pareja`, la asigna el constructor) se mueven como una sola puerta:
 // manda la `principal`, que mira quién llega desde el centro del hueco, elige el lado con la holgura de las dos
 // y gira las dos a la vez, simétricas; la otra hoja no hace nada por su cuenta (queda desactivada).
-// Se abre para la cámara principal y, si alguien la registra, para lo que diga la consulta estática Presencia
-// (el gemelo registra ahí a sus NPCs y al avatar del jugador). Con la puerta cerrada y nadie cerca solo se
-// pregunta cada pocos fotogramas.
+// Se abre para quien vaya a pasar por el hueco: lo que diga la consulta estática Presencia si alguien la registra
+// (el gemelo registra ahí a sus NPCs de pie y al avatar del jugador) o, si no, la cámara principal (el jugador en
+// primera persona de la escena de trabajo). Con la puerta cerrada y nadie cerca solo se pregunta cada pocos
+// fotogramas.
 public class Puerta : MonoBehaviour
 {
     public float apertura = 95f;     // ángulo máximo; el signo es el sentido del plano (+: hacia −Z local)
@@ -22,6 +23,8 @@ public class Puerta : MonoBehaviour
     public bool principal;           // en una de dos hojas, la que manda
 
     Quaternion cerrada;
+    Vector3 centroHueco, normalHueco;
+    float semiAnchoHueco;
     float angulo, objetivo, factorPareja;
     float libreMas = -1f, libreMenos = -1f;   // ángulo libre hacia +Y y hacia −Y (−1: sin medir)
     Collider[] propios;
@@ -35,9 +38,11 @@ public class Puerta : MonoBehaviour
     // Con 70° una hoja que se toparía pronto con un inodoro o un muro de través abre hacia el otro lado
     const float LibreMinimo = 70f;
 
-    /// <summary>¿Hay alguien (además de la cámara) a menos de <c>radio</c> metros en horizontal de <c>centro</c>, y
-    /// a una altura de paso? Devuelve el más cercano. La registra quien tenga personas que mover (p. ej. el gemelo).</summary>
-    public delegate bool ConsultaPresencia(Vector3 centro, float radio, out Vector3 posicion);
+    /// <summary>¿Hay alguien que vaya a pasar por el hueco con centro <c>centro</c> (a ras de suelo): a menos de
+    /// <c>alcance</c> metros por delante o por detrás según <c>normal</c> (horizontal), a menos de <c>semiAncho</c> a lo
+    /// largo del muro y a una altura de paso? Devuelve el más cercano. La registra quien tenga personas que mover
+    /// (p. ej. el gemelo), y entonces la cámara ya no cuenta.</summary>
+    public delegate bool ConsultaPresencia(Vector3 centro, Vector3 normal, float semiAncho, float alcance, out Vector3 posicion);
     public static ConsultaPresencia Presencia;
 
     /// <summary>¿Tiene la otra hoja de su puerta y van juntas?</summary>
@@ -46,6 +51,9 @@ public class Puerta : MonoBehaviour
     void Awake()
     {
         cerrada = transform.localRotation;
+        centroHueco = Centro();
+        semiAnchoHueco = transform.lossyScale.x / 2f;
+        normalHueco = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
         propios = GetComponentsInChildren<Collider>();
         turno = contador++ & 3;
         lista = true;
@@ -59,31 +67,39 @@ public class Puerta : MonoBehaviour
         // Cerrada: basta con mirar uno de cada cuatro fotogramas (se abre igual de a tiempo a paso de persona)
         bool quieta = Mathf.Approximately(angulo, 0f);
         if (quieta && ((Time.frameCount + turno) & 3) != 0) return;
-        if (jugador == null || !jugador.gameObject.activeInHierarchy)
-        {
-            var cam = Camera.main;
-            jugador = cam != null ? cam.transform : null;
-        }
-        // Centro del hueco: el de la hoja o, en las de dos hojas, entre las dos
-        var centro = Centro();
-        if (doble) centro = (centro + pareja.Centro()) * 0.5f;
+        // Hueco fijo (el de la hoja cerrada; en las de dos hojas, entre las dos): si siguiera a la hoja, al abrirse se
+        // alejaría de quien llega a la distancia justa, se cerraría y volvería a abrirse sin parar
+        var centro = centroHueco;
+        float semiAncho = semiAnchoHueco;
+        if (doble) { centro = (centroHueco + pareja.centroHueco) * 0.5f; semiAncho = semiAnchoHueco + pareja.semiAnchoHueco; }
+        // Rectángulo de paso: delante y detrás del hueco y poco más ancho que él (no abre a quien va por el pasillo
+        // pegado al muro ni a quien está al otro lado de un tabique); abierta, aguanta algo más antes de cerrarse
+        float alcance = distancia + (quieta ? 0f : 0.6f);
+        semiAncho += 0.5f;
+        var normal = normalHueco;
         bool cerca = false;
         Vector3 d = default;
         if (!bloqueada && !(doble && pareja.bloqueada))
         {
-            float mejor = distancia * distancia;
-            if (jugador != null)
+            if (Presencia != null)
             {
-                var dj = jugador.position - centro;
-                float h = dj.x * dj.x + dj.z * dj.z;
-                if (Mathf.Abs(dj.y - 1.5f) < 2f && h < mejor) { mejor = h; d = dj; cerca = true; }
+                // Quien registra la consulta (el gemelo: sus personas y el avatar del jugador; mira a ras de suelo,
+                // con los pies a la cota de la puerta) manda; la cámara no abre puertas
+                if (Presencia(centro, normal, semiAncho, alcance, out var quien)) { d = quien - centro + Vector3.up * 1.5f; cerca = true; }
             }
-            // Personas: la consulta mira a ras de suelo (los pies a la cota de la puerta)
-            if (Presencia != null && Presencia(centro, distancia, out var quien))
+            else
             {
-                var dq = quien - centro;
-                float h = dq.x * dq.x + dq.z * dq.z;
-                if (h < mejor) { d = dq + Vector3.up * 1.5f; cerca = true; }
+                if (jugador == null || !jugador.gameObject.activeInHierarchy)
+                {
+                    var cam = Camera.main;
+                    jugador = cam != null ? cam.transform : null;
+                }
+                if (jugador != null)
+                {
+                    var dj = jugador.position - centro;
+                    float frente = Mathf.Abs(Vector3.Dot(dj, normal)), largo = Mathf.Abs(dj.x * normal.z - dj.z * normal.x);
+                    if (Mathf.Abs(dj.y - 1.5f) < 2f && frente <= alcance && largo <= semiAncho) { d = dj; cerca = true; }
+                }
             }
         }
 

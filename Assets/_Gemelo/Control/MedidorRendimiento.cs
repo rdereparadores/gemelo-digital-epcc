@@ -9,6 +9,7 @@
 using System;
 using System.Text;
 using Unity.Profiling;
+using Unity.Profiling.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace Gemelo
@@ -46,6 +47,46 @@ namespace Gemelo
 
         /// <summary>Mide durante unos segundos lo que hay ahora.</summary>
         public static void Medir(float segundos = 5f, string nombre = "") => Lanzar(nombre, null, 1, segundos);
+
+        /// <summary>Desglose del hilo principal: los marcadores del profiler que más tiempo se llevan por frame (media de
+        /// unos segundos, en ms). Solo da datos en el editor o en builds de desarrollo.</summary>
+        public static void Marcadores(float segundos = 4f, int cuantos = 30)
+        {
+            var app = GemeloApp.Instancia;
+            if (app == null) { Resultado = "sin GemeloApp"; return; }
+            Resultado = "midiendo…";
+            app.StartCoroutine(MedirMarcadores(segundos, cuantos));
+        }
+
+        static System.Collections.IEnumerator MedirMarcadores(float segundos, int cuantos)
+        {
+            var handles = new System.Collections.Generic.List<ProfilerRecorderHandle>();
+            ProfilerRecorderHandle.GetAvailable(handles);
+            var recs = new System.Collections.Generic.List<(string n, ProfilerRecorder r)>();
+            foreach (var h in handles)
+            {
+                var d = ProfilerRecorderHandle.GetDescription(h);
+                if (d.UnitType != ProfilerMarkerDataUnit.TimeNanoseconds) continue;
+                recs.Add((d.Name, new ProfilerRecorder(h, 1, ProfilerRecorderOptions.Default | ProfilerRecorderOptions.StartImmediately)));
+            }
+            var suma = new double[recs.Count];
+            int frames = 0;
+            float t = Time.realtimeSinceStartup + segundos;
+            yield return null;
+            while (Time.realtimeSinceStartup < t)
+            {
+                yield return null;
+                for (int i = 0; i < recs.Count; i++) suma[i] += recs[i].r.LastValue;
+                frames++;
+            }
+            var orden = new System.Collections.Generic.List<int>();
+            for (int i = 0; i < recs.Count; i++) { orden.Add(i); recs[i].r.Dispose(); }
+            orden.Sort((a, b) => suma[b].CompareTo(suma[a]));
+            var sb = new StringBuilder($"{frames} frames, {recs.Count} marcadores\n");
+            for (int k = 0; k < Mathf.Min(cuantos, orden.Count); k++)
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "{0,7:F2} ms  {1}\n", suma[orden[k]] / frames / 1e6, recs[orden[k]].n);
+            Resultado = sb.ToString();
+        }
 
         /// <summary>Alterna `tandas` veces con poner(true) y poner(false) y compara.</summary>
         public static void AB(string nombre, Action<bool> poner, int tandas = 3, float segundos = 3f) =>

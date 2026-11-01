@@ -1,6 +1,6 @@
 // Ajustes (desde el menú inicial o el de pausa), por pestañas: Gráficos, Personas, Controles, Audio y Gemelo.
-// Escriben en Ajustes.Actual y llaman a Ajustes.Aplicar(); los globales (calidad, pantalla completa, FPS, volumen
-// y escala de la UI) los aplica GemeloUI al recibir Ajustes.Cambiados.
+// Escriben en Ajustes.Actual y llaman a Ajustes.Aplicar(); los globales (pantalla completa, FPS, volumen y escala de
+// la UI) los aplica GemeloUI al recibir Ajustes.Cambiados, y las opciones gráficas, Graficos.
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,7 +23,7 @@ namespace Gemelo
             raiz = El(padre, "capa", "velo-oscuro");
             Mostrar(raiz, false);
             dialogo = Panel(raiz, "dialogo", "panel--fuerte");
-            dialogo.style.height = 560;
+            dialogo.style.height = 600;
             dialogo.style.paddingLeft = 28; dialogo.style.paddingRight = 28; dialogo.style.paddingTop = 22; dialogo.style.paddingBottom = 20;
             Animable(dialogo, "anim--oculto-escala");
 
@@ -38,10 +38,20 @@ namespace Gemelo
 
             // ─── Gráficos
             var g = Contenido(tabs.Agregar("Gráficos"));
-            var calidades = new List<string> { "Del proyecto" };
-            calidades.AddRange(QualitySettings.names);
-            Segmentos(g, "Calidad", "Nivel de calidad de Unity (sombras, reflejos, distancia de dibujado)",
-                calidades.ToArray(), () => A.calidad + 1, i => A.calidad = i - 1);
+            Segmentos(g, "Preajuste", "Fija todas las opciones gráficas de abajo; si cambias alguna, queda personalizado",
+                new[] { "Bajo", "Medio", "Alto", "Ultra" }, () => Graficos.PreajusteDe(A), i => Graficos.Poner(A, (Graficos.Preajuste)i));
+            Segmentos(g, "Antialiasing", "Suaviza los bordes dentados. MSAA es el más nítido y el que más cuesta; FXAA y SMAA, filtros de imagen más baratos",
+                Graficos.NombresAntialias, () => A.antialias, i => A.antialias = i);
+            Segmentos(g, "Sombras del sol", "Alcance, nitidez y suavizado de las sombras. Ultra: mapa de 4096 px",
+                Graficos.NombresSombras, () => A.sombras, i => A.sombras = i);
+            Segmentos(g, "Oclusión ambiental", "Sombreado de rincones y contactos (SSAO); a media resolución es algo más blanda",
+                new[] { "No", "Media", "Completa" }, () => A.oclusion, i => A.oclusion = i);
+            Deslizador(g, "Resolución 3D", "Por debajo del 100 % la escena se dibuja a menos resolución y se reescala con FSR (la interfaz no cambia)",
+                0.5f, 1f, 0.05f, () => A.escalaRender, v => A.escalaRender = v, Porcentaje);
+            Deslizador(g, "Nivel de detalle", "Distancia a la que muebles, árboles y personas pasan a versiones simplificadas", 1f, 3f, 0.1f,
+                () => A.detalle, v => A.detalle = v, v => Formato.Num(v, 1) + "×");
+            Deslizador(g, "Distancia de la hierba", "Hasta dónde se dibuja la hierba del terreno", 0, 150, 10,
+                () => A.distanciaHierba, v => A.distanciaHierba = v, v => Formato.Num(v) + " m");
             Interruptor(g, "Pantalla completa", "Solo en la aplicación compilada", () => A.pantallaCompleta, v => A.pantallaCompleta = v);
             var fps = new[] { 0, 30, 60, 120 };
             Segmentos(g, "Límite de FPS", "Sin límite = sincronía vertical", new[] { "Sin límite", "30", "60", "120" },
@@ -89,6 +99,7 @@ namespace Gemelo
             // Pie
             var pie = El(dialogo, "fila");
             pie.style.marginTop = 14;
+            pie.style.flexShrink = 0;   // que la lista de ajustes no lo aplaste
             Boton(pie, "Restablecer valores de fábrica", () =>
             {
                 Ajustes.Restablecer();
@@ -119,6 +130,14 @@ namespace Gemelo
             a?.Invoke();
         }
 
+        // Tras cada cambio: guardar y avisar, y repintar los controles (el preajuste depende de las demás opciones
+        // gráficas, y un preajuste las cambia todas)
+        void Hecho()
+        {
+            Ajustes.Aplicar();
+            foreach (var r in refrescos) r();
+        }
+
         static string Porcentaje(float v) => Formato.Num(v * 100) + " %";
 
         static VisualElement Contenido(VisualElement pestana)
@@ -144,7 +163,7 @@ namespace Gemelo
             ctl.Add(d);
             var valor = Txt(ctl, formato(leer()), "ajuste__valor");
             d.Cambiado += v => valor.text = formato(v);
-            d.Soltado += v => { escribir(v); Ajustes.Aplicar(); };
+            d.Soltado += v => { escribir(v); Hecho(); };
             refrescos.Add(() => { d.Valor = leer(); valor.text = formato(leer()); });
         }
 
@@ -153,7 +172,7 @@ namespace Gemelo
             var ctl = Fila(padre, nombre, ayuda);
             var i = new Interruptor(leer());
             ctl.Add(i);
-            i.Cambiado += v => { escribir(v); Ajustes.Aplicar(); };
+            i.Cambiado += v => { escribir(v); Hecho(); };
             refrescos.Add(() => i.Valor = leer());
         }
 
@@ -162,7 +181,7 @@ namespace Gemelo
             var ctl = Fila(padre, nombre, ayuda);
             var s = new Segmentado(opciones, leer());
             ctl.Add(s);
-            s.Elegido += k => { escribir(k); Ajustes.Aplicar(); };
+            s.Elegido += k => { escribir(k); Hecho(); };
             refrescos.Add(() => s.Activo = leer());
         }
 

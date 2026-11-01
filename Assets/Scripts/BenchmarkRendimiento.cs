@@ -70,7 +70,7 @@ public class BenchmarkRendimiento : MonoBehaviour
     // Ajustes que se pueden cambiar sin recompilar, para medir cuánto cuesta cada cosa:
     //   -grd 0|1 (GPU Resident Drawer), -gpuocc 0|1 (oclusión por GPU), -msaa 1|2|4|8, -ssao 0|1,
     //   -sombras <distancia>, -cascadas 1..4, -sombraRes <px>, -escala <renderScale>, -streaming 0|1
-    static string AplicarAjustes()
+    public static string AplicarAjustes()
     {
         var ci = System.Globalization.CultureInfo.InvariantCulture;
         var urp = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
@@ -85,6 +85,25 @@ public class BenchmarkRendimiento : MonoBehaviour
         if ((a = Arg("-sombraRes")) != null) urp.mainLightShadowmapResolution = int.Parse(a);
         if ((a = Arg("-escala")) != null) urp.renderScale = float.Parse(a, ci);
         if ((a = Arg("-streaming")) != null) QualitySettings.streamingMipmapsActive = a == "1";
+        if ((a = Arg("-opaca")) != null) { urp.supportsCameraOpaqueTexture = a == "1"; hecho.Append("opaca=" + a + " "); }
+        if ((a = Arg("-lodBias")) != null) { QualitySettings.lodBias = float.Parse(a, ci); hecho.Append("lodBias=" + a + " "); }
+        if ((a = Arg("-suaves")) != null)
+        {
+            var fld = typeof(UniversalRenderPipelineAsset).GetField("m_SoftShadowQuality", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (fld != null) { fld.SetValue(urp, System.Enum.ToObject(fld.FieldType, int.Parse(a))); hecho.Append("suaves=" + a + " "); }
+        }
+        if ((a = Arg("-ssaoMedia")) != null)
+        {
+            const System.Reflection.BindingFlags bf = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+            var prop = typeof(ScriptableRenderer).GetProperty("rendererFeatures", bf);
+            if (prop?.GetValue(urp.GetRenderer(0)) is List<ScriptableRendererFeature> fs)
+                foreach (var f in fs)
+                {
+                    var set = f.GetType().GetField("m_Settings", bf)?.GetValue(f);
+                    var ds = set?.GetType().GetField("Downsample", bf);
+                    if (ds != null) { ds.SetValue(set, a == "1"); hecho.Append("ssaoMedia=" + a + " "); }
+                }
+        }
         if ((a = Arg("-ssao")) != null)
         {
             var renderer = urp.GetRenderer(0);

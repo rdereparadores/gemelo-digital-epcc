@@ -159,7 +159,7 @@ namespace Gemelo
                 Coser(ini, perfil.Count);
             }
 
-            public Mesh Crear(string nombre, bool submallas, bool pesos = true)
+            public Mesh Crear(string nombre, bool pesos = true)
             {
                 var m = new Mesh { name = nombre };
                 m.SetVertices(v);
@@ -296,8 +296,8 @@ namespace Gemelo
             GameObject modeloH = null;
             foreach (var (nombre, mujer, mochila) in variantes)
             {
-                var malla = Guardar(Cuerpo(mujer, mochila, false, false).Crear("Maniqui_" + nombre, true), $"{Carpeta}/Maniqui_{nombre}.asset");
-                lejanas.Add(Guardar(Cuerpo(mujer, mochila, true, true).Crear("Lejano_" + nombre, false, false), $"{Carpeta}/Lejano_{nombre}.asset"));
+                var malla = Guardar(Cuerpo(mujer, mochila, false, false).Crear("Maniqui_" + nombre), $"{Carpeta}/Maniqui_{nombre}.asset");
+                lejanas.Add(Guardar(Cuerpo(mujer, mochila, true, true).Crear("Lejano_" + nombre, false), $"{Carpeta}/Lejano_{nombre}.asset"));
                 var go = Esqueleto("Maniqui_" + nombre, mujer, out var huesos);
                 // Pesos: los índices de BoneWeight siguen el orden de Huesos
                 var bind = new Matrix4x4[Huesos.Length];
@@ -325,7 +325,7 @@ namespace Gemelo
                 mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 tel.SetActive(false);
 
-                var avatar = CrearAvatar(go, mujer);
+                var avatar = CrearAvatar(go);
                 avatar.name = "Avatar_" + nombre;
                 avatar = Guardar(avatar, $"{Carpeta}/Avatar_{nombre}.asset");
                 var anim = go.AddComponent<Animator>();
@@ -388,7 +388,7 @@ namespace Gemelo
             return raiz;
         }
 
-        static Avatar CrearAvatar(GameObject raiz, bool mujer)
+        static Avatar CrearAvatar(GameObject raiz)
         {
             var humanos = new List<HumanBone>();
             foreach (var h in Huesos)
@@ -702,7 +702,7 @@ namespace Gemelo
             m.Pieza(0, 0, 0, Vector3.zero, Vector3.zero);
             // Losa de 7 × 14,5 × 0,8 cm como cápsula aplastada
             m.Capsula(new Vector3(0, -0.055f, 0), new Vector3(0, 0.055f, 0), 0.036f, 0.036f, 0.12f);
-            return m.Crear("Movil", false, false);
+            return m.Crear("Movil", false);
         }
 
         static T Guardar<T>(T obj, string ruta) where T : Object

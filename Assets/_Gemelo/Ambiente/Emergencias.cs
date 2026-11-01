@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace Gemelo
 {
@@ -291,6 +292,14 @@ namespace Gemelo
                     }
                     charcos.Remove(l);
                 }
+            // El agua deja ver el suelo con la textura opaca de la cámara, que cuesta una copia de la imagen por frame:
+            // el asset de URP no la pide y la cámara solo la pide mientras hay algún charco
+            var cam = Camera.main;
+            if (cam != null && cam.TryGetComponent<UniversalAdditionalCameraData>(out var datos))
+            {
+                var quiere = charcos.Count > 0 ? CameraOverrideOption.On : CameraOverrideOption.UsePipelineSettings;
+                if (datos.requiresColorOption != quiere) datos.requiresColorOption = quiere;
+            }
         }
 
         /// <summary>Disco irregular de radio ~1 (contorno con ruido) sobre el plano XZ.</summary>

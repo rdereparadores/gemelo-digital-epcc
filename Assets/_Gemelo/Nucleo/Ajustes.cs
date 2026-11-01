@@ -13,11 +13,17 @@ namespace Gemelo
         public string urlServicio = "http://127.0.0.1:8800";
 
         // Gráficos
-        public int calidad = -1;               // índice de QualitySettings; −1 = el del proyecto
         public bool pantallaCompleta = true;
         public int fpsMaximo = 0;              // 0 = sin límite (vSync)
         public bool mostrarFps;
         public float escalaUI = 1f;
+        // (los valores de fábrica son los del preajuste Alto: ver Graficos.Poner)
+        public int antialias = 3;              // Graficos.NombresAntialias: no, FXAA, SMAA, MSAA 2×, MSAA 4×
+        public int sombras = 3;                // Graficos.NombresSombras: no, bajas, medias, altas, ultra
+        public int oclusion = 1;               // oclusión ambiental: no, media resolución, completa
+        public float escalaRender = 1f;        // resolución 3D respecto a la de la pantalla (por debajo de 1, FSR)
+        public float detalle = 2f;             // QualitySettings.lodBias: distancia a la que se simplifican las mallas
+        public float distanciaHierba = 90f;    // m
 
         // Personas
         public int maxPersonas = 2000;         // tope de NPCs simulados (1:1 hasta este número)
@@ -56,11 +62,13 @@ namespace Gemelo
             return new Ajustes();
         }
 
-        /// <summary>Guarda y avisa a los módulos. Llamar tras cambiar campos de Actual.</summary>
-        public static void Aplicar()
+        /// <summary>Guarda y avisa a los módulos. Llamar tras cambiar campos de Actual (guardar = false: solo para
+        /// esta sesión, como en las pruebas).</summary>
+        public static void Aplicar(bool guardar = true)
         {
-            try { File.WriteAllText(Ruta, JsonUtility.ToJson(Actual, true)); }
-            catch (Exception e) { Debug.LogWarning($"[Gemelo] No se pudieron guardar los ajustes: {e.Message}"); }
+            if (guardar)
+                try { File.WriteAllText(Ruta, JsonUtility.ToJson(Actual, true)); }
+                catch (Exception e) { Debug.LogWarning($"[Gemelo] No se pudieron guardar los ajustes: {e.Message}"); }
             Cambiados?.Invoke(Actual);
         }
 

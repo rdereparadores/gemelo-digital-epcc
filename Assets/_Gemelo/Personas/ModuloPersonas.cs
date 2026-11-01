@@ -109,18 +109,19 @@ namespace Gemelo
         }
 
         // Para las puertas: la persona (o el jugador) más cerca, a ras de la puerta
-        bool Presencia(Vector3 centro, float radio, out Vector3 pos)
+        bool Presencia(Vector3 centro, Vector3 normal, float semiAncho, float alcance, out Vector3 pos)
         {
             pos = default;
-            float mejor = radio * radio;
             bool hay = false;
+            float mejor = float.MaxValue;
             var j = app != null ? app.Jugador : null;
-            if (j != null)
+            if (j != null && j.gameObject.activeInHierarchy)
             {
                 var d = j.position - centro;
-                if (Mathf.Abs(d.y) < 1.2f && d.x * d.x + d.z * d.z < mejor) { mejor = d.x * d.x + d.z * d.z; pos = j.position; hay = true; }
+                float frente = Mathf.Abs(d.x * normal.x + d.z * normal.z), largo = Mathf.Abs(d.x * normal.z - d.z * normal.x);
+                if (Mathf.Abs(d.y) < 1.2f && frente <= alcance && largo <= semiAncho) { mejor = d.x * d.x + d.z * d.z; pos = j.position; hay = true; }
             }
-            var p = Multitud?.rejilla.MasCercana(centro, radio, 1.2f);
+            var p = Multitud?.rejilla.EnPaso(centro, normal, semiAncho, alcance, 1.2f);
             if (p != null)
             {
                 var d = p.pos - centro;

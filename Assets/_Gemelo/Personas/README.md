@@ -90,7 +90,9 @@ edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y 
   exterior que le cae más a mano— hasta un punto de reunión fuera (a ~16 m del edificio, lejos de las calzadas), y espera
   allí charlando o con el móvil. No entra nadie nuevo. Al acabar la alarma, vuelven a sus sitios según los datos o se van.
 - **Puertas**: `Puerta.Presencia` (estático en `_Politecnica/Runtime/Puerta.cs`) lo registra este módulo con una
-  consulta a la rejilla: las puertas se abren para los NPCs y para `GemeloApp.Jugador`, además de para la cámara.
+  consulta a la rejilla (`Rejilla.EnPaso`): las puertas se abren para los NPCs de pie y para `GemeloApp.Jugador` que
+  estén en el rectángulo de paso de la puerta (delante o detrás del hueco, no a lo largo del muro); los sentados y la
+  cámara no cuentan.
 
 ## Dibujo
 
@@ -167,7 +169,7 @@ lleva cada personaje.
 3. En Unity, al importar, `ImportadorMixamo` aplica: Humanoid con *Create From This Model* (también las animaciones,
    con el avatar de su esqueleto de Y Bot), escala del archivo (Remy viene a 3,8 m y se importa a 1,78), LOD de
    malla, tangentes, sin cámaras ni blendshapes; clips con giro, altura y posición horneados en la pose (referencia
-   original) y en bucle salvo `StandToSit`/`SitToStand`; texturas a 1024 como mucho, normales como *Normal map*,
+   original) y en bucle; texturas a 1024 como mucho, normales como *Normal map*,
    máscaras lineales y el color con alfa conservando la cobertura en los mipmaps.
 4. **Tools ▸ Gemelo ▸ Personajes de Mixamo** (`ConstructorMixamo.Construir()`, ~30 s): materiales URP/Lit en
    `Personajes/<N>/Materiales/` (pelo y pestañas con *Alpha Clipping* 0,45 y a dos caras; smoothness 0,5 × gloss),
@@ -207,7 +209,7 @@ Mixamo no tiene «texting» sentado: sentado, el gesto del móvil teclea o escri
 ponen la cadera en el mismo sitio: «Writing» se sienta 20 cm más adelante (las piernas atravesaban la mesa) y
 «Still In A Chair», «Talking» y «Writing», 5-8 cm más altas. `ConstructorMixamo` guarda copias `*_Centrado.anim`
 con el cuerpo llevado a la cadera de «Typing» en planta y a medio camino en altura (del todo hundía los pies), con
-las claves reducidas. `Walk_Standard`, `StandToSit` y `SitToStand` quedan importados pero sin usar: los NPC llegan a
+las claves reducidas. `Walk_Standard`, `StandToSit` y `SitToStand` se descargaron pero no se versionan: los NPC llegan a
 la plaza y se sientan en el sitio (con la transición de 0,55 s del controlador), y las animaciones de sentarse
 necesitan empezar delante de la silla y desplazar la raíz, lo que complicaría la máquina de estados y el paso.
 
