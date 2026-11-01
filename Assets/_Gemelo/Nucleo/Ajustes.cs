@@ -21,7 +21,7 @@ namespace Gemelo
 
         // Personas
         public int maxPersonas = 2000;         // tope de NPCs simulados (1:1 hasta este número)
-        public int maxAnimadas = 120;          // NPCs con animación completa cerca de la cámara
+        public int maxAnimadas = 40;           // NPCs con animación completa cerca de la cámara
         public float distanciaPersonas = 250f; // más allá no se dibujan
 
         // Controles
