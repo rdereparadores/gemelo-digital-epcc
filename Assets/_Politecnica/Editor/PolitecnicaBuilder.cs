@@ -34,6 +34,7 @@ public static class PolitecnicaBuilder
     [System.Serializable] class LuzDef { public string planta, local; public float[] p; public float rango, i; }
     [System.Serializable] class RebajeDef { public float[] huella; public float y; }
     [System.Serializable] class PiezaDef { public string tipo, planta, local; public float[] p; public float yaw, ex = 1f, ey = 1f, ez = 1f; }
+    [System.Serializable] class CartelDef { public string planta, local, texto; public float[] p, n, uv; public float ancho, alto; }
     [System.Serializable] class Manifiesto
     {
         public string codigo, nombre, cubierta;
@@ -47,6 +48,7 @@ public static class PolitecnicaBuilder
         public PiezaDef[] mobiliario;
         public RebajeDef[] rebajes;
         public RebajeDef[] suelos;
+        public CartelDef[] carteles;
     }
 #pragma warning restore 0649
 
@@ -190,6 +192,8 @@ public static class PolitecnicaBuilder
             if (l.local != null && locales.TryGetValue((l.planta, l.local), out var dueño)) Anadir(ref dueño.luces, luz);
         }
 
+        Carteles(m, cod, plantas, root.transform, origen);
+
         // Prefab y escena
         if (!AssetDatabase.IsValidFolder(Prefabs)) AssetDatabase.CreateFolder(MaterialesPolitecnica.Raiz, "Prefabs");
         string prefab = $"{Prefabs}/{m.codigo}.prefab";
@@ -241,6 +245,214 @@ public static class PolitecnicaBuilder
         return $"{cod}: {m.plantas.Length} plantas, {m.locales?.Length ?? 0} locales, {m.puertas?.Length ?? 0} puertas" +
                (sinPrefab > 0 ? $" ({sinPrefab} sin prefab)" : "") +
                (faltan.Count > 0 ? $"; faltan piezas: {string.Join(", ", faltan)}" : "");
+    }
+
+    // Carteles verdes con el nombre del aula sobre la puerta (Herramientas/politecnica/carteles.py): el generador da
+    // la posición (centro del borde inferior, en la cara del muro), la normal hacia el pasillo, el tamaño y el
+    // rectángulo de su texto en <código>_Carteles.png. Una malla por planta (se corta con ella) y un material por
+    // edificio: un solo lote por planta, sin sombra ni collider. Las mallas van en <código>_Carteles_<planta>.asset
+    // (se rellenan en el sitio para que el prefab no cambie de referencia al reconstruir)
+    const float GruesoCartel = 0.008f;
+    static void Carteles(Manifiesto m, string cod, Dictionary<string, Transform> plantas, Transform root, Vector3 origen)
+    {
+        string dir = $"{Edificios}/{cod}";
+        var carteles = m.carteles ?? new CartelDef[0];
+        var porPlanta = new Dictionary<string, List<CartelDef>>();
+        foreach (var c in carteles)
+        {
+            if (!porPlanta.TryGetValue(c.planta, out var l)) porPlanta[c.planta] = l = new List<CartelDef>();
+            l.Add(c);
+        }
+        // Mallas de plantas que ya no tienen carteles
+        foreach (var guid in AssetDatabase.FindAssets($"{cod}_Carteles_ t:Mesh", new[] { dir }))
+        {
+            var ruta = AssetDatabase.GUIDToAssetPath(guid);
+            var pl = Path.GetFileNameWithoutExtension(ruta).Substring($"{cod}_Carteles_".Length);
+            if (!porPlanta.ContainsKey(pl)) AssetDatabase.DeleteAsset(ruta);
+        }
+        if (carteles.Length == 0) return;
+
+        string rutaTex = $"{dir}/{cod}_Carteles.png";
+        if (AssetImporter.GetAtPath(rutaTex) is TextureImporter ti)
+        {
+            // Texto nítido de cerca y de lado: con mipmaps (sin ellos parpadea de lejos), anisótropo y sin repetir
+            // (las celdas vecinas son del mismo verde, así que el filtrado no mezcla colores)
+            if (ti.anisoLevel != 8 || ti.wrapMode != TextureWrapMode.Clamp || !ti.mipmapEnabled ||
+                ti.textureCompression != TextureImporterCompression.CompressedHQ || ti.maxTextureSize < 2048 || !ti.sRGBTexture)
+            {
+                ti.textureType = TextureImporterType.Default;
+                ti.sRGBTexture = true;
+                ti.mipmapEnabled = true;
+                ti.anisoLevel = 8;
+                ti.wrapMode = TextureWrapMode.Clamp;
+                ti.filterMode = FilterMode.Trilinear;
+                ti.maxTextureSize = 2048;
+                ti.textureCompression = TextureImporterCompression.CompressedHQ;
+                ti.SaveAndReimport();
+            }
+        }
+        else
+        {
+            AssetDatabase.ImportAsset(rutaTex);
+            if (!(AssetImporter.GetAtPath(rutaTex) is TextureImporter)) { Debug.LogWarning($"{cod}: falta {rutaTex}"); return; }
+            Carteles(m, cod, plantas, root, origen);
+            return;
+        }
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(rutaTex);
+        string rutaMat = $"{dir}/{cod}_Carteles.mat";
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(rutaMat);
+        if (mat == null)
+        {
+            mat = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = $"{cod}_Carteles" };
+            AssetDatabase.CreateAsset(mat, rutaMat);
+        }
+        // Placa de aluminio lacado o PVC: mate satinado
+        mat.SetTexture("_BaseMap", tex);
+        mat.SetColor("_BaseColor", Color.white);
+        mat.SetFloat("_Metallic", 0f);
+        mat.SetFloat("_Smoothness", 0.35f);
+        mat.enableInstancing = false;
+        EditorUtility.SetDirty(mat);
+
+        // La cara del muro se mide con rayos contra las mallas de la planta (con su capa de pintura): la del plano,
+        // que da el generador, queda a veces unos cm por detrás (enlucido, escalones de grueso junto al hueco).
+        // El edificio se lleva un momento a su sitio para que sus colliders no coincidan con nada de alrededor
+        root.position = origen;
+        Physics.SyncTransforms();
+        // Desplazamiento de la cara del muro respecto a `c` (centro del cartel) y lo que varía bajo él (5 puntos a lo
+        // ancho y 2 a lo alto): si varía, el cartel queda sobre una esquina o un escalón del muro
+        float Cara(Transform planta, Vector3 c, Vector3 n, float ancho, float alto, out float varia)
+        {
+            var der = Vector3.Cross(Vector3.up, -n);
+            float mx = float.NegativeInfinity, mn = float.PositiveInfinity;
+            bool falta = false;
+            var puntos = new List<Vector3>();
+            foreach (var x in new[] { -0.5f, -0.25f, 0f, 0.25f, 0.5f }) puntos.Add(c + der * (x * (ancho - 0.03f)));
+            puntos.Add(c + Vector3.up * (alto / 2 - 0.015f));
+            puntos.Add(c - Vector3.up * (alto / 2 - 0.015f));
+            foreach (var p in puntos)
+            {
+                float mejor = float.NegativeInfinity;
+                foreach (var h in Physics.RaycastAll(p + n * 0.6f, -n, 1.2f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    var t = h.collider.transform;
+                    if (!t.IsChildOf(planta) || Vector3.Dot(h.normal, n) < 0.7f) continue;
+                    bool pieza = false;
+                    for (var q = t; q != null && q != planta; q = q.parent)
+                        if (q.name == "Mobiliario" || q.name == "Puertas") pieza = true;
+                    if (pieza) continue;
+                    float off = Vector3.Dot(h.point - c, n);
+                    // (de 25 cm por detrás a 30 cm por delante de la del plano: no lo que haya más allá en el pasillo; un
+                    // pilar o un tablón dentro de ese margen hace que la cara varíe y el cartel se corre o se omite)
+                    if (off > -0.25f && off < 0.3f) mejor = Mathf.Max(mejor, off);
+                }
+                if (float.IsNegativeInfinity(mejor)) { falta = true; continue; }
+                mx = Mathf.Max(mx, mejor); mn = Mathf.Min(mn, mejor);
+            }
+            varia = falta || float.IsNegativeInfinity(mx) ? float.PositiveInfinity : mx - mn;
+            return float.IsNegativeInfinity(mx) ? 0f : mx;
+        }
+        // Normal (horizontal) de la cara del muro bajo el centro del cartel, o la de la puerta si no se encuentra
+        Vector3 NormalMuro(Transform planta, Vector3 c, Vector3 n)
+        {
+            float mejor = float.NegativeInfinity;
+            var r = n;
+            foreach (var h in Physics.RaycastAll(c + n * 0.6f, -n, 1.2f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                var t = h.collider.transform;
+                if (!t.IsChildOf(planta) || Vector3.Dot(h.normal, n) < 0.5f) continue;
+                bool pieza = false;
+                for (var q = t; q != null && q != planta; q = q.parent)
+                    if (q.name == "Mobiliario" || q.name == "Puertas") pieza = true;
+                float off = Vector3.Dot(h.point - c, n);
+                if (pieza || off <= -0.25f || off >= 0.3f || off <= mejor) continue;
+                mejor = off;
+                r = new Vector3(h.normal.x, 0, h.normal.z).normalized;
+            }
+            return r;
+        }
+        int ajustados = 0, omitidos = 0;
+
+        foreach (var kv in porPlanta)
+        {
+            if (!plantas.ContainsKey(kv.Key)) continue;
+            var v = new List<Vector3>(); var nn = new List<Vector3>(); var uv = new List<Vector2>(); var tri = new List<int>();
+            void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal, Vector2 ua, Vector2 ub, Vector2 uc, Vector2 ud)
+            {
+                int i = v.Count;
+                v.AddRange(new[] { a, b, c, d });
+                nn.AddRange(new[] { normal, normal, normal, normal });
+                uv.AddRange(new[] { ua, ub, uc, ud });
+                // cara delantera en el sentido de las agujas del reloj vista de frente (Unity)
+                if (Vector3.Dot(Vector3.Cross(b - a, c - a), normal) >= 0) tri.AddRange(new[] { i, i + 1, i + 2, i, i + 2, i + 3 });
+                else tri.AddRange(new[] { i, i + 2, i + 1, i, i + 3, i + 2 });
+            }
+            foreach (var c in kv.Value)
+            {
+                var n0 = new Vector3(c.n[0], 0, c.n[1]).normalized;   // normal de la puerta, hacia el pasillo
+                var der0 = Vector3.Cross(Vector3.up, -n0);
+                var up = Vector3.up * c.alto;
+                var b0 = V(c.p);                                  // trasera, en la cara del muro del plano
+                // Paralelo al muro de verdad (el plano da algunas puertas giradas unos grados respecto a su muro) y sobre
+                // muro plano: si bajo el centro hay una esquina o un escalón, se corre hasta 15 cm a un lado
+                Vector3 n = n0, b = b0;
+                float aj = 0f, varia = float.PositiveInfinity;
+                foreach (var desp in new[] { 0f, 0.05f, -0.05f, 0.1f, -0.1f, 0.15f, -0.15f })
+                {
+                    var cc = origen + b0 + der0 * desp + up / 2;
+                    var n2 = NormalMuro(plantas[kv.Key], cc, n0);
+                    aj = Cara(plantas[kv.Key], cc, n2, c.ancho, c.alto, out varia);
+                    if (varia < 0.02f) { n = n2; b = b0 + der0 * desp; break; }
+                }
+                var der = Vector3.Cross(Vector3.up, -n);          // derecha de quien lo mira desde el pasillo
+                var w = der * (c.ancho / 2);
+                if (varia >= 0.02f)
+                {
+                    Debug.LogWarning($"{cod} {c.planta} {c.local}: sin muro plano sobre la puerta para el cartel «{c.texto}» (se omite)");
+                    omitidos++;
+                    continue;
+                }
+                if (Mathf.Abs(aj) > 0.003f) ajustados++;
+                b += n * (aj + 0.001f);
+                var f = b + n * GruesoCartel;                     // cara con el texto
+                Vector2 u00 = new Vector2(c.uv[0], c.uv[1]), u01 = new Vector2(c.uv[0], c.uv[3]),
+                        u11 = new Vector2(c.uv[2], c.uv[3]), u10 = new Vector2(c.uv[2], c.uv[1]);
+                // cantos con el verde del margen de la celda
+                var g = new Vector2(Mathf.Lerp(c.uv[0], c.uv[2], 0.03f), Mathf.Lerp(c.uv[1], c.uv[3], 0.1f));
+                Quad(f - w, f - w + up, f + w + up, f + w, n, u00, u01, u11, u10);
+                Quad(b - w + up, b + w + up, f + w + up, f - w + up, Vector3.up, g, g, g, g);
+                Quad(b - w, f - w, f + w, b + w, Vector3.down, g, g, g, g);
+                Quad(b - w, b - w + up, f - w + up, f - w, -der, g, g, g, g);
+                Quad(b + w, f + w, f + w + up, b + w + up, der, g, g, g, g);
+            }
+            string ruta = $"{dir}/{cod}_Carteles_{kv.Key}.asset";
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(ruta);
+            bool nueva = mesh == null;
+            if (nueva) mesh = new Mesh();
+            mesh.Clear();
+            mesh.name = $"{cod}_Carteles_{kv.Key}";
+            mesh.SetVertices(v);
+            mesh.SetNormals(nn);
+            mesh.SetUVs(0, uv);
+            mesh.SetTriangles(tri, 0);
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            if (nueva) AssetDatabase.CreateAsset(mesh, ruta); else EditorUtility.SetDirty(mesh);
+
+            var go = new GameObject("Carteles");
+            go.transform.SetParent(plantas[kv.Key], false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = ShadowCastingMode.Off;
+            mr.lightProbeUsage = LightProbeUsage.Off;
+            mr.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic);
+        }
+        root.position = Vector3.zero;
+        Physics.SyncTransforms();
+        Debug.Log($"{cod}: {carteles.Length - omitidos} carteles ({ajustados} ajustados a la cara del muro, {omitidos} omitidos)");
+        AssetDatabase.SaveAssets();
     }
 
     // ¿Son las dos hojas de una puerta de dos hojas? (mismo hueco: misma planta y casi el mismo ancho, giradas
