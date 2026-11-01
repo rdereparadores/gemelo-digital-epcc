@@ -361,30 +361,138 @@ public static class PolitecnicaBuilder
             return hb;
         }
         const int n = 5;   // subceldas por lado de celda (~9 cm): el borde dentro del muro no se ve
-        var verts = new List<Vector3>();
-        var uvs = new List<Vector2>();
-        var tris = new List<int>();
+        // La acera es una franja de ancho fijo junto a la fachada en los tramos rebajados, no la mancha de celdas
+        // rebajadas: esa tenía el borde en escalera de 0,46 m contra el talud de las celdas vecinas (dientes de
+        // sierra en las fachadas giradas de Teleco). A 1,4 m de la fachada ninguna celda queda rebajada, así que
+        // su borde exterior queda a ras del terreno
+        const float Ancho = 1.4f;
+        bool RebajeCerca(Vector2 c)
+        {
+            int ic = Mathf.FloorToInt((c.x - tp.x) / dx), jc = Mathf.FloorToInt((c.y - tp.z) / dz);
+            int r = Mathf.CeilToInt((Ancho + 0.3f) / Mathf.Min(dx, dz));
+            for (int a = -r; a <= r; a++)
+                for (int b = -r; b <= r; b++)
+                {
+                    if (!zona.Contains(((long)(ic + a) << 32) | (uint)(jc + b))) continue;
+                    var centro = new Vector2(tp.x + (ic + a + 0.5f) * dx, tp.z + (jc + b + 0.5f) * dz);
+                    if (Vector2.Distance(centro, c) < Ancho + 0.3f) return true;
+                }
+            return false;
+        }
+        // Tramos de fachada (lados de las huellas) con rebaje a menos de 1,7 m: la franja va entera a lo largo de ellos
+        var tramos = new List<(Vector2 a, Vector2 b, bool rebaje)>();
+        foreach (var e in edificio)
+            for (int i = 0, j = e.Count - 1; i < e.Count; j = i++)
+            {
+                Vector2 a = e[j], b = e[i];
+                bool r = false;
+                float lg = Vector2.Distance(a, b);
+                for (float t = 0; t <= lg && !r; t += 0.4f) r = RebajeCerca(Vector2.Lerp(a, b, lg > 0 ? t / lg : 0));
+                tramos.Add((a, b, r));
+            }
+        bool EnFranja(Vector2 c)
+        {
+            foreach (var (a, b, reb) in tramos)
+            {
+                if (!reb) continue;
+                var ab = b - a;
+                float t = Mathf.Clamp01(Vector2.Dot(c - a, ab) / Mathf.Max(ab.sqrMagnitude, 1e-6f));
+                if (Vector2.Distance(c, a + ab * t) <= Ancho) return true;
+            }
+            return false;
+        }
+        var cubrir = new HashSet<long>();
+        foreach (var (a, b, reb) in tramos)
+        {
+            if (!reb) continue;
+            float lg = Vector2.Distance(a, b);
+            for (float t = 0; t <= lg + 0.01f; t += Mathf.Min(dx, dz) * 0.5f)
+            {
+                var q = Vector2.Lerp(a, b, lg > 0 ? Mathf.Min(1f, t / lg) : 0);
+                int qi = Mathf.FloorToInt((q.x - tp.x) / dx), qj = Mathf.FloorToInt((q.y - tp.z) / dz);
+                int rr = Mathf.CeilToInt((Ancho + 0.2f) / Mathf.Min(dx, dz));
+                for (int a2 = -rr; a2 <= rr; a2++)
+                    for (int b2 = -rr; b2 <= rr; b2++)
+                        cubrir.Add(((long)(qi + a2) << 32) | (uint)(qj + b2));
+            }
+        }
+        int rad = Mathf.CeilToInt((Ancho + 0.5f) / Mathf.Min(dx, dz));
         foreach (var k in zona)
         {
             int ci = (int)(k >> 32), cj = (int)(k & 0xffffffff);
+            for (int a = -rad; a <= rad; a++)
+                for (int b = -rad; b <= rad; b++)
+                    cubrir.Add(((long)(ci + a) << 32) | (uint)(cj + b));
+        }
+        // Subceldas de la acera (índice global de subcelda): las de siempre (celdas rebajadas en las que el terreno
+        // queda por debajo de la cota de referencia) y, para enderezar el borde, las de la franja donde el terreno sigue
+        // a ras (no se alarga sobre terreno más bajo: quedaría volando)
+        float dsx = dx / n, dsz = dz / n;
+        float Terr(float x, float z) => terrain.SampleHeight(new Vector3(x, 0, z)) + tp.y;
+        var sub = new HashSet<long>();
+        foreach (var k in cubrir)
+        {
+            int ci = (int)(k >> 32), cj = (int)(k & 0xffffffff);
+            if (ci < 0 || cj < 0 || ci >= res - 1 || cj >= res - 1) continue;
+            bool rebajada = zona.Contains(k);
             for (int a = 0; a < n; a++)
                 for (int b = 0; b < n; b++)
                 {
-                    float xa = tp.x + (ci + a / (float)n) * dx, xb = xa + dx / n;
-                    float za = tp.z + (cj + b / (float)n) * dz, zb = za + dz / n;
-                    var c = new Vector2((xa + xb) / 2, (za + zb) / 2);
-                    bool dentro = false;
-                    foreach (var e in edificio) if (DistanciaDentro(e, c) > 0) { dentro = true; break; }
-                    if (dentro) continue;
-                    if (Ref(c.x, c.y) - (terrain.SampleHeight(new Vector3(c.x, 0, c.y)) + tp.y) < 0.02f) continue;
-                    int v0 = verts.Count;
-                    foreach (var (x, z) in new[] { (xa, za), (xa, zb), (xb, zb), (xb, za) })
+                    var c = new Vector2(tp.x + (ci * n + a + 0.5f) * dsx, tp.z + (cj * n + b + 0.5f) * dsz);
+                    bool dentro = false, cerca = false;
+                    foreach (var e in edificio)
                     {
-                        verts.Add(new Vector3(x, Ref(x, z) + 0.02f, z) - padre.position);
-                        uvs.Add(new Vector2(x, z) / 2f);
+                        float dd = DistanciaDentro(e, c);
+                        if (dd > 0) { dentro = true; break; }
+                        if (dd > -Ancho) cerca = true;
                     }
-                    tris.AddRange(new[] { v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3 });
+                    if (dentro) continue;
+                    float dif = Ref(c.x, c.y) - Terr(c.x, c.y);
+                    bool vale = (rebajada && dif >= 0.02f) || (cerca && dif > -0.3f && dif < 0.06f && EnFranja(c));
+                    if (vale) sub.Add(((long)(ci * n + a) << 32) | (uint)(cj * n + b));
                 }
+        }
+        // Cota de la acera: la de referencia o, si el terreno queda más alto, la del terreno (en las pendientes la
+        // bilineal de la referencia y los triángulos del Terrain difieren unos cm y el terreno asomaba por encima)
+        float Cota(float x, float z) => Mathf.Max(Ref(x, z), Terr(x, z)) + 0.02f;
+        var verts = new List<Vector3>();
+        var uvs = new List<Vector2>();
+        var tris = new List<int>();
+        foreach (var k in sub)
+        {
+            int si = (int)(k >> 32), sj = (int)(k & 0xffffffff);
+            float xa = tp.x + si * dsx, xb = xa + dsx, za = tp.z + sj * dsz, zb = za + dsz;
+            int v0 = verts.Count;
+            foreach (var (x, z) in new[] { (xa, za), (xa, zb), (xb, zb), (xb, za) })
+            {
+                verts.Add(new Vector3(x, Cota(x, z), z) - padre.position);
+                uvs.Add(new Vector2(x, z) / 2f);
+            }
+            tris.AddRange(new[] { v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3 });
+            // Canto: en los lados sin vecina, si la acera queda por encima del terreno, una cara vertical hasta él
+            // (si no, se veía el hueco por debajo del borde)
+            foreach (var (di, dj) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+            {
+                if (sub.Contains(((long)(si + di) << 32) | (uint)(sj + dj))) continue;
+                Vector2 p0, p1;
+                if (di == 1) { p0 = new Vector2(xb, za); p1 = new Vector2(xb, zb); }
+                else if (di == -1) { p0 = new Vector2(xa, zb); p1 = new Vector2(xa, za); }
+                else if (dj == 1) { p0 = new Vector2(xb, zb); p1 = new Vector2(xa, zb); }
+                else { p0 = new Vector2(xa, za); p1 = new Vector2(xb, za); }
+                float y0 = Cota(p0.x, p0.y), y1 = Cota(p1.x, p1.y);
+                float t0 = Terr(p0.x, p0.y), t1 = Terr(p1.x, p1.y);
+                if (y0 - t0 < 0.03f && y1 - t1 < 0.03f) continue;
+                int w0 = verts.Count;
+                verts.Add(new Vector3(p0.x, y0, p0.y) - padre.position);
+                verts.Add(new Vector3(p1.x, y1, p1.y) - padre.position);
+                verts.Add(new Vector3(p1.x, Mathf.Min(t1, y1) - 0.1f, p1.y) - padre.position);
+                verts.Add(new Vector3(p0.x, Mathf.Min(t0, y0) - 0.1f, p0.y) - padre.position);
+                float l = Vector2.Distance(p0, p1) / 2f;
+                uvs.Add(new Vector2(0, y0 / 2f)); uvs.Add(new Vector2(l, y1 / 2f));
+                uvs.Add(new Vector2(l, (Mathf.Min(t1, y1) - 0.1f) / 2f)); uvs.Add(new Vector2(0, (Mathf.Min(t0, y0) - 0.1f) / 2f));
+                // hacia fuera de la subcelda (p0 → p1 deja la subcelda a la izquierda vista desde arriba)
+                tris.AddRange(new[] { w0, w0 + 1, w0 + 2, w0, w0 + 2, w0 + 3 });
+            }
         }
         if (tris.Count == 0) return;
         var mesh = new Mesh { name = $"{m.codigo}_Acera_Sotanos", indexFormat = IndexFormat.UInt32 };
