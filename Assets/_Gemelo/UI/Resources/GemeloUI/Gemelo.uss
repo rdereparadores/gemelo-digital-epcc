@@ -1,0 +1,399 @@
+/* Interfaz del gemelo digital de la Escuela Politécnica de Cáceres.
+ *
+ * Identidad «UEx moderna»: la del Manual de Identidad Corporativa de la UEx, igual que el panel web
+ * del servicio (ServicioSensores/panel/css/panel.css), con paneles translúcidos tipo cristal.
+ *   Amarillo #F4B223 (acción principal y selección; texto negro encima) y negro #222222.
+ *   Verde de interfaz #0B8068 (#00B189 sobre oscuro). Aviso en naranja para no confundirlo con el amarillo.
+ *   Verde = dato real; violeta = dato simulado.
+ *   Charis SIL para la denominación del centro; Montserrat para el resto.
+ */
+
+.raiz {
+    --amarillo: #F4B223;
+    --amarillo-claro: #FFC845;
+    --negro: #222222;
+    --verde: #00B189;
+    --verde-interfaz: #0B8068;
+    --sim: #A597F2;
+    --aviso: #F2924A;
+    --critico: #F06A6A;
+    --info: #6FA8F5;
+    --texto: #F4F4F4;
+    --texto-2: #C9C9C9;
+    --tenue: #9A9A9A;
+    --cristal: rgba(20, 20, 22, 0.80);
+    --cristal-fuerte: rgba(16, 16, 18, 0.92);
+    --borde: rgba(255, 255, 255, 0.10);
+    --borde-fuerte: rgba(255, 255, 255, 0.18);
+    --hueco: rgba(255, 255, 255, 0.06);
+    --hueco-2: rgba(255, 255, 255, 0.11);
+
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    color: var(--texto);
+    font-size: 14px;
+    -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Regular");
+}
+
+/* ---------- Tipografía ---------- */
+.f-medio { -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Medium"); }
+.f-semi { -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.f-negrita { -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Bold"); }
+.f-serif { -unity-font-definition: resource("GemeloUI/Fuentes/CharisSIL-Regular"); }
+.f-serif-negrita { -unity-font-definition: resource("GemeloUI/Fuentes/CharisSIL-Bold"); }
+
+.t-xs { font-size: 11px; }
+.t-s { font-size: 12px; }
+.t-m { font-size: 14px; }
+.t-l { font-size: 17px; }
+.t-xl { font-size: 22px; }
+.t-xxl { font-size: 30px; }
+.t-gigante { font-size: 44px; }
+.tenue { color: var(--tenue); }
+.texto-2 { color: var(--texto-2); }
+.mayus { letter-spacing: 1.2px; }
+.c-amarillo { color: var(--amarillo); }
+.c-verde { color: var(--verde); }
+.c-sim { color: var(--sim); }
+.c-aviso { color: var(--aviso); }
+.c-critico { color: var(--critico); }
+
+Label { padding: 0; margin: 0; }
+.unity-label { padding: 0; margin: 0; }
+
+/* ---------- Disposición ---------- */
+.fila { flex-direction: row; align-items: center; }
+.columna { flex-direction: column; }
+.crece { flex-grow: 1; flex-shrink: 1; }
+.espacio { flex-grow: 1; }
+.capa { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.sep { height: 1px; background-color: var(--borde); margin: 10px 0; }
+.sep-v { width: 1px; align-self: stretch; background-color: var(--borde); margin: 0 12px; }
+
+/* ---------- Cristal ---------- */
+.panel {
+    background-color: var(--cristal);
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: var(--borde);
+    border-top-color: rgba(255, 255, 255, 0.16);
+    padding: 14px 16px;
+}
+.panel--fuerte { background-color: var(--cristal-fuerte); }
+.panel--compacto { padding: 10px 12px; border-radius: 12px; }
+.brillo {
+    position: absolute; left: 0; right: 0; top: 0; height: 60px;
+    border-top-left-radius: 16px; border-top-right-radius: 16px;
+}
+.sombra { position: absolute; }
+
+.titulo-panel { font-size: 11px; color: var(--tenue); letter-spacing: 1.4px; margin-bottom: 8px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+
+/* ---------- Aparecer / desaparecer ---------- */
+.anim {
+    transition-property: opacity, translate, scale;
+    transition-duration: 0.28s, 0.32s, 0.32s;
+    transition-timing-function: ease-out-cubic, ease-out-cubic, ease-out-cubic;
+}
+.anim--oculto { opacity: 0; translate: 0 14px; }
+.anim--oculto-izq { opacity: 0; translate: -24px 0; }
+.anim--oculto-der { opacity: 0; translate: 24px 0; }
+.anim--oculto-arriba { opacity: 0; translate: 0 -16px; }
+.anim--oculto-escala { opacity: 0; scale: 0.96 0.96; }
+
+/* ---------- Botones ---------- */
+.boton {
+    flex-direction: row; align-items: center; justify-content: center;
+    padding: 9px 16px;
+    margin: 0;
+    border-radius: 11px;
+    border-width: 1px;
+    border-color: var(--borde);
+    background-color: var(--hueco);
+    color: var(--texto);
+    font-size: 14px;
+    -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold");
+    transition-property: background-color, border-color, scale, color, translate;
+    transition-duration: 0.15s, 0.15s, 0.12s, 0.15s, 0.15s;
+}
+.boton:hover { background-color: var(--hueco-2); border-color: var(--borde-fuerte); }
+.boton:active { scale: 0.97 0.97; }
+.boton Label { -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.boton .icono { margin-right: 8px; }
+.boton--primario { background-color: var(--amarillo); border-color: var(--amarillo); color: var(--negro); }
+.boton--primario:hover { background-color: var(--amarillo-claro); border-color: var(--amarillo-claro); }
+.boton--fantasma { background-color: rgba(0, 0, 0, 0); border-color: rgba(0, 0, 0, 0); }
+.boton--fantasma:hover { background-color: var(--hueco); border-color: var(--borde); }
+.boton--peligro:hover { background-color: rgba(240, 106, 106, 0.18); border-color: var(--critico); color: #FFD3D3; }
+.boton--grande { padding: 16px 20px; border-radius: 14px; font-size: 16px; justify-content: flex-start; }
+.boton--grande .icono { width: 24px; height: 24px; margin-right: 14px; }
+.boton--icono { padding: 7px; width: 34px; height: 34px; border-radius: 10px; }
+.boton--icono .icono { margin-right: 0; }
+.boton--mini { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
+.boton--deshabilitado { opacity: 0.4; }
+
+.boton-menu {
+    flex-direction: row; align-items: center;
+    padding: 14px 18px; margin-bottom: 10px;
+    border-radius: 14px; border-width: 1px; border-color: var(--borde);
+    background-color: rgba(255, 255, 255, 0.05);
+    transition-property: background-color, border-color, translate;
+    transition-duration: 0.18s, 0.18s, 0.22s;
+    transition-timing-function: ease-out-cubic;
+}
+.boton-menu:hover { background-color: rgba(255, 255, 255, 0.10); border-color: var(--borde-fuerte); translate: 4px 0; }
+.boton-menu .icono { width: 26px; height: 26px; margin-right: 16px; color: var(--texto-2); }
+.boton-menu__titulo { font-size: 17px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.boton-menu__sub { font-size: 12px; color: var(--tenue); margin-top: 2px; }
+.boton-menu--primario { background-color: var(--amarillo); border-color: var(--amarillo); color: var(--negro); }
+.boton-menu--primario:hover { background-color: var(--amarillo-claro); border-color: var(--amarillo-claro); }
+.boton-menu--primario .icono { color: var(--negro); }
+.boton-menu--primario .boton-menu__sub { color: rgba(34, 34, 34, 0.88); }
+
+/* ---------- Chips y segmentados ---------- */
+.chip {
+    flex-direction: row; align-items: center;
+    padding: 5px 11px; margin: 0 6px 6px 0;
+    border-radius: 999px; border-width: 1px; border-color: var(--borde);
+    background-color: var(--hueco);
+    font-size: 12px; color: var(--texto-2);
+    -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Medium");
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.15s;
+}
+.chip:hover { background-color: var(--hueco-2); color: var(--texto); }
+.chip--activo { background-color: var(--amarillo); border-color: var(--amarillo); color: var(--negro); -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.chip--activo:hover { background-color: var(--amarillo-claro); color: var(--negro); }
+.chip .icono { width: 14px; height: 14px; margin-right: 6px; }
+
+.segmentado { flex-direction: row; background-color: rgba(0, 0, 0, 0.30); border-radius: 10px; padding: 3px; border-width: 1px; border-color: var(--borde); }
+.segmento {
+    padding: 5px 10px; border-radius: 8px; font-size: 12px; color: var(--texto-2);
+    -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold");
+    -unity-text-align: middle-center;
+    transition-property: background-color, color; transition-duration: 0.15s;
+}
+.segmento:hover { background-color: var(--hueco-2); color: var(--texto); }
+.segmento--activo { background-color: var(--amarillo); color: var(--negro); }
+.segmento--activo:hover { background-color: var(--amarillo-claro); color: var(--negro); }
+
+/* ---------- Pestañas ---------- */
+.pestanas { flex-direction: row; border-bottom-width: 1px; border-color: var(--borde); margin-bottom: 14px; }
+.pestana {
+    padding: 10px 14px; margin-bottom: -1px; font-size: 13px; color: var(--texto-2);
+    border-bottom-width: 2px; border-color: rgba(0, 0, 0, 0);
+    -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold");
+    transition-property: color, border-color; transition-duration: 0.15s;
+}
+.pestana:hover { color: var(--texto); }
+.pestana--activa { color: var(--texto); border-color: var(--amarillo); }
+
+/* ---------- Controles de ajustes ---------- */
+.ajuste { flex-direction: row; align-items: center; padding: 10px 0; border-bottom-width: 1px; border-color: rgba(255, 255, 255, 0.05); min-height: 48px; }
+.ajuste__textos { flex-grow: 1; flex-shrink: 1; padding-right: 16px; }
+.ajuste__nombre { font-size: 14px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Medium"); }
+.ajuste__ayuda { font-size: 11px; color: var(--tenue); margin-top: 2px; white-space: normal; }
+.ajuste__control { flex-direction: row; align-items: center; flex-shrink: 0; }
+.ajuste__valor { width: 64px; -unity-text-align: middle-right; font-size: 13px; color: var(--texto-2); -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+
+.deslizador { width: 220px; height: 24px; justify-content: center; }
+.deslizador__pista { height: 6px; border-radius: 3px; background-color: rgba(255, 255, 255, 0.14); }
+.deslizador__relleno { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background-color: var(--amarillo); }
+.deslizador__mando {
+    position: absolute; width: 18px; height: 18px; top: 3px; margin-left: -9px;
+    border-radius: 9px; background-color: #FFFFFF; border-width: 3px; border-color: var(--amarillo);
+    transition-property: scale; transition-duration: 0.12s;
+}
+.deslizador:hover .deslizador__mando { scale: 1.15 1.15; }
+
+.interruptor { width: 44px; height: 24px; border-radius: 12px; background-color: rgba(255, 255, 255, 0.18); transition-property: background-color; transition-duration: 0.2s; }
+.interruptor__bola {
+    position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 9px; background-color: #FFFFFF;
+    transition-property: translate; transition-duration: 0.2s; transition-timing-function: ease-out-cubic;
+}
+.interruptor--on { background-color: var(--amarillo); }
+.interruptor--on .interruptor__bola { translate: 20px 0; }
+
+/* Campo de texto (URL del servicio) */
+.campo { width: 260px; margin: 0; }
+.campo .unity-base-text-field__input, .campo .unity-text-field__input {
+    background-color: rgba(0, 0, 0, 0.35); border-color: var(--borde-fuerte); border-radius: 8px;
+    color: var(--texto); padding: 6px 8px; font-size: 13px;
+    -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Regular");
+}
+.campo:focus .unity-base-text-field__input { border-color: var(--amarillo); }
+
+/* ---------- Menú inicial ---------- */
+.velo { background-color: rgba(10, 10, 12, 0.25); }
+.menu-lateral {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 520px;
+    padding: 56px 48px 40px 56px;
+    background-color: rgba(14, 14, 16, 0.82);
+    border-right-width: 1px; border-color: var(--borde);
+}
+.filete { height: 4px; width: 64px; background-color: var(--amarillo); border-radius: 2px; margin: 22px 0 18px 0; }
+.imagotipo { width: 300px; height: 73px; -unity-background-scale-mode: scale-to-fit; background-position-x: left; }
+.sello { width: 46px; height: 46px; -unity-background-scale-mode: scale-to-fit; }
+.denominacion { font-size: 34px; white-space: normal; -unity-font-definition: resource("GemeloUI/Fuentes/CharisSIL-Bold"); }
+.subtitulo { font-size: 15px; color: var(--texto-2); margin-top: 6px; white-space: normal; }
+
+.estado-conexion { flex-direction: row; align-items: center; padding: 6px 12px; border-radius: 999px; background-color: var(--hueco); border-width: 1px; border-color: var(--borde); align-self: flex-start; }
+.punto { width: 8px; height: 8px; border-radius: 4px; margin-right: 8px; background-color: var(--tenue); }
+.punto--ok { background-color: var(--verde); }
+.punto--mal { background-color: var(--critico); }
+.punto--sim { background-color: var(--sim); }
+.punto--real { background-color: var(--verde); }
+
+/* Bloque Simulación */
+.simulacion { width: 420px; }
+.reloj-grande { font-size: 40px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.reloj-fecha { font-size: 13px; color: var(--texto-2); }
+.directo { flex-direction: row; align-items: center; padding: 3px 10px; border-radius: 999px; background-color: rgba(0, 177, 137, 0.18); }
+.directo--demo { background-color: rgba(244, 178, 35, 0.16); }
+.paso { flex-direction: row; align-items: center; background-color: rgba(0, 0, 0, 0.3); border-radius: 10px; border-width: 1px; border-color: var(--borde); }
+.paso__boton { width: 30px; height: 32px; -unity-text-align: middle-center; font-size: 16px; color: var(--texto-2); border-radius: 8px; }
+.paso__boton:hover { background-color: var(--hueco-2); color: var(--texto); }
+.paso__texto { min-width: 130px; -unity-text-align: middle-center; font-size: 13px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+
+/* ---------- Diálogos (pausa, ajustes) ---------- */
+.velo-oscuro { background-color: rgba(8, 8, 10, 0.55); align-items: center; justify-content: center; }
+.dialogo { width: 860px; max-height: 88%; }
+.dialogo--pausa { width: 900px; flex-direction: row; padding: 0; }
+.dialogo__cabecera { flex-direction: row; align-items: center; margin-bottom: 6px; }
+.dialogo__titulo { font-size: 22px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+
+/* ---------- HUD ---------- */
+.hud-reloj { flex-direction: row; align-items: center; }
+.hud-hora { font-size: 30px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.velocidad { padding: 2px 8px; border-radius: 6px; background-color: rgba(244, 178, 35, 0.18); color: var(--amarillo); font-size: 11px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Bold"); margin-left: 10px; }
+.ubicacion__edificio { font-size: 12px; color: var(--tenue); letter-spacing: 1px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.ubicacion__local { font-size: 20px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+
+.ficha { width: 330px; }
+.metrica { width: 50%; flex-direction: row; align-items: center; padding: 7px 0; }
+.metrica .icono { width: 20px; height: 20px; margin-right: 10px; color: var(--texto-2); }
+.metrica__valor { font-size: 17px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.metrica__nombre { font-size: 11px; color: var(--tenue); }
+.metricas { flex-direction: row; flex-wrap: wrap; }
+
+.barra { height: 6px; border-radius: 3px; background-color: rgba(255, 255, 255, 0.10); overflow: hidden; }
+.barra__relleno { height: 100%; border-radius: 3px; background-color: var(--amarillo); transition-property: width; transition-duration: 0.6s; transition-timing-function: ease-out-cubic; }
+
+.insignia { flex-direction: row; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.insignia--real { background-color: rgba(0, 177, 137, 0.18); color: #39D3AE; }
+.insignia--sim { background-color: rgba(165, 151, 242, 0.18); color: #C3B9FF; }
+.insignia--mixto { background-color: rgba(255, 255, 255, 0.10); color: var(--texto-2); }
+.insignia--ok { background-color: rgba(0, 177, 137, 0.18); color: #39D3AE; }
+.insignia--aviso { background-color: rgba(242, 146, 74, 0.18); color: #FFB27A; }
+.insignia--critico { background-color: rgba(240, 106, 106, 0.20); color: #FF9C9C; }
+.insignia--info { background-color: rgba(111, 168, 245, 0.18); color: #A9CBFF; }
+
+.alerta { flex-direction: row; align-items: flex-start; padding: 7px 9px; border-radius: 9px; margin-top: 6px; border-left-width: 3px; background-color: rgba(255, 255, 255, 0.04); }
+.alerta .icono { width: 16px; height: 16px; margin-right: 8px; margin-top: 1px; }
+.alerta__texto { font-size: 12px; white-space: normal; flex-shrink: 1; flex-grow: 1; }
+.alerta--critico { border-color: var(--critico); background-color: rgba(240, 106, 106, 0.07); }
+.alerta--critico .icono { color: var(--critico); }
+.alerta--aviso { border-color: var(--aviso); background-color: rgba(242, 146, 74, 0.06); }
+.alerta--aviso .icono { color: var(--aviso); }
+.alerta--info { border-color: var(--info); }
+.alerta--info .icono { color: var(--info); }
+.alerta--clic:hover { background-color: rgba(255, 255, 255, 0.10); }
+
+.tecla {
+    min-width: 26px; height: 26px; padding: 0 7px; margin-right: 10px; border-radius: 7px;
+    background-color: rgba(255, 255, 255, 0.92); color: var(--negro);
+    -unity-text-align: middle-center; font-size: 13px;
+    -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Bold");
+    border-bottom-width: 3px; border-color: rgba(0, 0, 0, 0.35);
+}
+.tecla--principal { background-color: var(--amarillo); }
+.interaccion { flex-direction: row; align-items: center; padding: 6px 12px 6px 6px; margin-top: 6px; border-radius: 12px; background-color: var(--cristal); border-width: 1px; border-color: var(--borde); }
+.interaccion .icono { width: 18px; height: 18px; margin-right: 8px; color: var(--texto-2); }
+.interaccion__texto { font-size: 14px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Medium"); }
+
+.minimapa { width: 220px; height: 220px; border-radius: 110px; overflow: hidden; background-color: rgba(18, 20, 22, 0.86); border-width: 2px; border-color: rgba(255, 255, 255, 0.16); }
+.minimapa__norte { position: absolute; width: 20px; height: 20px; margin-left: -10px; margin-top: -10px; border-radius: 10px; background-color: var(--negro); border-width: 1px; border-color: var(--amarillo); color: var(--amarillo); font-size: 10px; -unity-text-align: middle-center; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Bold"); }
+
+.conexion { flex-direction: row; align-items: center; padding: 5px 10px; border-radius: 999px; background-color: var(--cristal); border-width: 1px; border-color: var(--borde); font-size: 11px; }
+.fps { font-size: 11px; color: var(--texto-2); padding: 4px 8px; border-radius: 6px; background-color: rgba(0, 0, 0, 0.5); -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+
+/* ---------- Avisos (toasts) ---------- */
+.avisos { position: absolute; top: 96px; left: 0; right: 0; align-items: center; }
+.toast {
+    flex-direction: row; align-items: center; padding: 10px 16px 10px 12px; margin-bottom: 8px; border-radius: 12px;
+    background-color: var(--cristal-fuerte); border-width: 1px; border-color: var(--borde); border-left-width: 4px;
+    max-width: 560px;
+    transition-property: opacity, translate; transition-duration: 0.35s; transition-timing-function: ease-out-back;
+}
+.toast .icono { width: 18px; height: 18px; margin-right: 10px; }
+.toast__texto { font-size: 14px; white-space: normal; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Medium"); }
+.toast--info { border-left-color: var(--info); }
+.toast--info .icono { color: var(--info); }
+.toast--exito { border-left-color: var(--verde); }
+.toast--exito .icono { color: var(--verde); }
+.toast--aviso { border-left-color: var(--aviso); }
+.toast--aviso .icono { color: var(--aviso); }
+.toast--critico { border-left-color: var(--critico); background-color: rgba(60, 16, 16, 0.92); }
+.toast--critico .icono { color: var(--critico); }
+
+/* ---------- Tooltip ---------- */
+.tooltip {
+    position: absolute; padding: 8px 12px; border-radius: 10px; background-color: var(--cristal-fuerte);
+    border-width: 1px; border-color: var(--borde-fuerte);
+    transition-property: opacity; transition-duration: 0.12s;
+}
+.tooltip__titulo { font-size: 13px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.tooltip__sub { font-size: 11px; color: var(--tenue); }
+.tooltip__valor { font-size: 15px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); margin-top: 3px; }
+
+/* ---------- Centro de control ---------- */
+.barra-superior { position: absolute; left: 16px; right: 16px; top: 14px; height: 66px; flex-direction: row; align-items: center; padding: 0 16px; }
+.kpi { flex-direction: row; align-items: center; padding: 0 14px; border-left-width: 1px; border-color: var(--borde); }
+.kpi .icono { width: 22px; height: 22px; margin-right: 10px; color: var(--texto-2); }
+.kpi__valor { font-size: 18px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.kpi__nombre { font-size: 10px; color: var(--tenue); letter-spacing: 0.8px; }
+.kpi--alerta .kpi__valor { color: var(--critico); }
+
+.lateral-izq { position: absolute; left: 16px; top: 94px; bottom: 16px; width: 300px; }
+.lateral-der { position: absolute; right: 16px; top: 94px; bottom: 16px; width: 400px; }
+.capa-boton { flex-direction: row; align-items: center; padding: 7px 10px; border-radius: 9px; margin-bottom: 2px; transition-property: background-color; transition-duration: 0.15s; }
+.capa-boton:hover { background-color: var(--hueco); }
+.capa-boton .icono { width: 18px; height: 18px; margin-right: 10px; color: var(--texto-2); }
+.capa-boton--activa { background-color: rgba(244, 178, 35, 0.16); }
+.capa-boton--activa .icono { color: var(--amarillo); }
+.capa-boton--activa Label { color: var(--amarillo); -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.leyenda__gradiente { height: 10px; border-radius: 5px; margin: 6px 0 4px 0; }
+.edificio-item { flex-direction: row; align-items: center; padding: 8px 10px; border-radius: 10px; margin-bottom: 4px; background-color: rgba(255, 255, 255, 0.03); border-width: 1px; border-color: rgba(0, 0, 0, 0); transition-property: background-color, border-color; transition-duration: 0.15s; }
+.edificio-item:hover { background-color: var(--hueco-2); }
+.edificio-item--sel { border-color: var(--amarillo); background-color: rgba(244, 178, 35, 0.10); }
+.edificio-item__codigo { width: 42px; height: 30px; border-radius: 8px; background-color: rgba(255, 255, 255, 0.08); -unity-text-align: middle-center; font-size: 12px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Bold"); margin-right: 10px; }
+.edificio-item--sel .edificio-item__codigo { background-color: var(--amarillo); color: var(--negro); }
+
+.planta-barra { flex-direction: row; align-items: center; margin-top: 7px; }
+.planta-barra__nombre { width: 36px; font-size: 12px; color: var(--texto-2); -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.planta-barra__valor { width: 84px; -unity-text-align: middle-right; font-size: 12px; color: var(--texto-2); }
+
+.grafica { height: 170px; margin-top: 6px; }
+.grafica__eje { position: absolute; font-size: 10px; color: var(--tenue); }
+.grafica__tip { position: absolute; padding: 4px 8px; border-radius: 7px; background-color: var(--cristal-fuerte); border-width: 1px; border-color: var(--borde-fuerte); font-size: 11px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
+.grafica__vacio { position: absolute; left: 0; right: 0; top: 0; bottom: 0; -unity-text-align: middle-center; color: var(--tenue); font-size: 12px; }
+
+.evento-boton { width: 32%; margin: 0 1.3% 6px 0; padding: 7px 8px; flex-direction: row; border-radius: 10px; background-color: var(--hueco); border-width: 1px; border-color: var(--borde); align-items: center; min-height: 40px; transition-property: background-color, border-color; transition-duration: 0.15s; }
+.evento-boton:hover { background-color: var(--hueco-2); border-color: var(--borde-fuerte); }
+.evento-boton .icono { width: 18px; height: 18px; margin-right: 7px; color: var(--texto-2); }
+.evento-boton Label { font-size: 11px; white-space: normal; flex-shrink: 1; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-Medium"); }
+.evento-boton--peligro .icono { color: var(--critico); }
+.evento-activo { flex-direction: row; align-items: center; padding: 6px 8px; border-radius: 9px; margin-top: 5px; background-color: rgba(255, 255, 255, 0.05); }
+
+.desplazable { flex-grow: 1; flex-shrink: 1; }
+.desplazable .unity-scroller--vertical { width: 6px; }
+.desplazable .unity-scroller { background-color: rgba(0, 0, 0, 0); border-width: 0; }
+.desplazable .unity-base-slider__tracker { background-color: rgba(0, 0, 0, 0); border-width: 0; }
+.desplazable .unity-base-slider__dragger { background-color: rgba(255, 255, 255, 0.22); border-width: 0; border-radius: 3px; width: 6px; left: 0; }
+.desplazable .unity-scroller__low-button, .desplazable .unity-scroller__high-button { display: none; }
+.desplazable .unity-scroll-view__vertical-scroller { width: 6px; }
+
+.popover { position: absolute; padding: 6px; border-radius: 12px; background-color: var(--cristal-fuerte); border-width: 1px; border-color: var(--borde-fuerte); }
+.popover__item { padding: 8px 12px; border-radius: 8px; font-size: 13px; }
+.popover__item:hover { background-color: var(--hueco-2); }
+.popover__item--activo { color: var(--amarillo); -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }

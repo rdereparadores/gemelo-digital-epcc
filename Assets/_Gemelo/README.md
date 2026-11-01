@@ -37,17 +37,25 @@ núcleo como evento o propiedad de `GemeloApp`.
   - **Corte:** `CortarEdificio(e, indicePlanta)` (−1 = completo), `Corte(e)`, `QuitarCortes()` y el evento
     `CorteCambiado`. Usa `EdificioPolitecnica.MostrarHasta`.
   - **Interacciones:** `OfrecerInteracciones(lista)` y el evento `InteraccionesCambiadas`. Cada interacción lleva
-    texto, icono y acción. Control las ofrece y lee las teclas: E ejecuta la primera y 1–9 las demás. La UI solo
-    las muestra.
+    texto, icono y acción. Control las ofrece y lee las teclas: E ejecuta la primera y cada cifra 1–9 la de su
+    número (1 = la primera, como E). La UI solo las muestra.
   - **Bajo el cursor:** `Sobre`, `PonerSobre(s)` y el evento `SobreCambiado` (vista cenital). Control lo pone y la
     UI saca el tooltip.
   - **Avatar:** `GemeloApp.FabricaAvatar` (estático, `Func<int, GameObject>`). Lo registra Personas y lo usa
     Control para el jugador. Devuelve un avatar con `Animator` y los parámetros de `ParamAvatar`: `Velocidad`,
-    `Sentado`, `Hablando`, `EnSuelo` y `Saltar`.
+    `Sentado`, `Hablando`, `EnSuelo` y `Saltar` (el controlador de Personas trae además `Movil`, bool; el móvil va en
+    la mano derecha, en un hijo «Movil» apagado). La escala del objeto es la estatura (1 ≈ 1,81 m).
   - `PersonasEnEscena`: NPCs simulados ahora mismo, para el HUD.
+  - Puertas: `Puerta.Presencia` (estático de `_Politecnica/Runtime/Puerta.cs`) es una consulta «¿hay alguien cerca?»
+    que registra Personas (sus NPCs y `GemeloApp.Jugador`); las puertas se abren con eso y con la cámara principal.
   - **Local actual:** `LocalActual`, `PonerLocalActual(l)` y el evento `LocalActualCambiado` (dónde está el jugador o
     la cámara).
   - `Jugador`: Transform del avatar en tercera persona.
+  - **`PunteroSobreUI`** (estático, `Func<Vector2, bool>`): la UI lo rellena y dice si un punto de la pantalla (en
+    píxeles, como `Mouse.current.position`, con el origen abajo a la izquierda) cae sobre un panel. Control no hace
+    clic, arrastre, zoom ni pan por el borde ahí.
+  - **`EscapeConsumido`** (estático, `int`): la UI pone `Time.frameCount` cuando usa Esc para algo suyo (cerrar un
+    desplegable o un popover). Control lee Esc en `LateUpdate` y no hace nada con el Esc de ese frame.
   - **Avisos:** `Avisar(texto, NivelAviso)` y el evento `Aviso`.
 - **`ClienteGemelo`** (`GemeloApp.Instancia.Cliente`, o `ClienteGemelo.Instancia`)
   - Sondea `/api/v1/state` cada segundo con ETag.
@@ -73,6 +81,72 @@ núcleo como evento o propiedad de `GemeloApp`.
 - **`Escalas`**: nombre, unidad, rango, valor y color de cada capa, más los colores del confort y de la severidad.
   La paleta es la de la UEx.
 
+## Control (`Control/`)
+
+`ControlGemelo` (en el objeto Gemelo) es el dueño de la cámara: suelta la `Main Camera` de la escena del
+`FirstPersonController` aparcado (conserva su posprocesado) y, según `GemeloApp.Modo`, activa un controlador que
+le propone la pose de cada frame; al cambiar de modo hay un fundido en arco de 1,6 s. También lleva el cursor
+(bloqueado solo en tercera persona jugando) y Esc: en tercera persona pausa; en la vista cenital quita la
+selección y, si no hay, pausa. Esc se lee en `LateUpdate` y se ignora si la UI lo marcó en
+`GemeloApp.EscapeConsumido` ese frame. **En pausa Control no lee Esc** (la UI lo usa para continuar).
+
+- **Menú** (`CamaraMenu`): sobrevuelo lento por una Catmull-Rom cerrada que pasa por los siete edificios.
+- **Tercera persona** (`JugadorTerceraPersona`): avatar de `FabricaAvatar` (o un maniquí de cápsulas) con
+  CharacterController de 0,22 m de radio, 0,02 de piel y 1,8 de alto, en la capa 2 (Ignore Raycast). WASD o
+  flechas, Mayús corre, Espacio salta, ratón para mirar (sensibilidad, invertir y FOV de `Ajustes`), rueda para
+  la distancia (0,9–8 m). La cámara va por detrás del hombro y se acerca con un spherecast si algo se interpone;
+  pegada a la cabeza, el cuerpo solo da sombra. Aparece en la plaza de la cafetería del Común y al volver al modo
+  sigue donde estaba. Pone `GemeloApp.Jugador` y `LocalActual`. Para pruebas y recorridos: `Ruta` (lista de
+  puntos que recorre solo), `MarchaForzada`, `Rumbo`, `Inclinacion`, `Distancia` y `Colocar(punto, mirarA)`.
+- **Interacciones** (`InteraccionesJugador`): según el local y su estado ofrece clase (empezar con el 85 % de la
+  capacidad / terminar, en aulas, laboratorios y salas de reuniones), ventanas (abrir/cerrar, 30 min),
+  calefacción (encender/apagar, 1 h) y, en el edificio, alarma de incendio (15 min) y apagón (10 min), o
+  desactivarlos si están en marcha. Antes de crear un evento termina los activos del mismo tipo o del contrario
+  sobre la misma estancia.
+- **Vista cenital** (`CamaraCenital`): pan con WASD/flechas, botón central o borde de la pantalla; rueda hacia el
+  cursor (15–600 m); giro con Q/E o Alt + arrastre; inclinación (30°–89°) y giro con el botón derecho; Mayús
+  acelera; Inicio vuelve a la vista general; F o doble clic centra lo seleccionado. `Centrar(seleccion)` y
+  `EntrarGeneral()` son públicos (para botones de la UI).
+- **Selección** (`SeleccionCenital`): clic en un edificio lo selecciona; si está cortado, el clic en su planta
+  visible selecciona el local. Clic en vacío quita la selección. AvPág baja el corte del edificio seleccionado y
+  RePág lo sube (por encima de la última planta vuelve a ponerse la cubierta). `SeleccionCenital.Elegir(punto)`
+  da lo que hay bajo un punto de la pantalla.
+- **Capa de color y resaltado** (`CapaColor`, sombreador `Resources/GemeloControl/Superposicion.shader`): en la
+  planta visible de los edificios cortados, un plano por local a 1 m del suelo (por encima de mesas y sillas,
+  por debajo de las cabezas), con borde opaco y costados que se desvanecen; gris si no hay dato. En los demás
+  edificios, un aura en su contorno (anillo en el suelo de ancho constante en pantalla y banda vertical) con el
+  valor agregado del edificio: ocupación total entre capacidad total, el confort más extendido o la media por
+  superficie. El edificio seleccionado lleva el aura en amarillo (sin capa) y pulsa; el de bajo el cursor, en
+  blanco. Los colores pasan de uno a otro en ~1 s. Las mallas (`GeometriaControl`: ear clipping de
+  `Local.poligono`, huella de cada edificio rasterizando sus locales) se calculan una vez.
+
+## UI (`UI/`)
+
+UI Toolkit montada por código (sin UXML) en un solo `UIDocument` hijo del objeto Gemelo (`GemeloUI`). El
+`PanelSettings` se crea en ejecución con el tema `Resources/GemeloUI/Tema.tss` (el de serie de Unity) y la hoja
+`Resources/GemeloUI/Gemelo.uss`, con la estética «UEx moderna»: la del panel web del servicio (amarillo
+`#F4B223` para la acción principal y la selección, con texto negro encima; verde de interfaz; aviso en naranja;
+verde = dato real y violeta = simulado), paneles translúcidos con sombra suave, Montserrat y Charis SIL (TTF con
+licencia OFL en `Resources/GemeloUI/Fuentes/`) y el imagotipo y el sello de la UEx en negativo
+(`Resources/GemeloUI/Marca/`). Escala con la resolución (referencia 1920 × 1080 dividida por `Ajustes.escalaUI`).
+
+- **Capas** (según `GemeloApp.Modo` y `Pausado`): `MenuInicial`, `HudTercera` (con `FichaLocal` y `Minimapa`),
+  `CentroControl` (con `FichaSeleccion`, `PanelEventos` y la `Grafica`), `MenuPausa`, `PanelAjustes`, avisos
+  (`GemeloApp.Aviso`) y el tooltip de `GemeloApp.Sobre`. `PanelSimulacion` es el bloque de reloj, escenario y
+  velocidad que comparten el menú inicial y el de pausa (Unity manda en el reloj del servicio).
+- **Entrada**: la UI solo atiende Esc con un menú abierto (cierra los ajustes o el desplegable; en pausa reanuda
+  al final del fotograma, salvo en el mismo frame en que se pausó). Rellena `GemeloApp.PunteroSobreUI` con
+  `panel.Pick` (los contenedores de maquetación no recogen el puntero). Crea un `EventSystem` con
+  `InputSystemUIInputModule` si la escena no tiene ninguno. Con un menú delante deja el cursor libre y visible.
+- **Ajustes globales** que aplica la UI al recibir `Ajustes.Cambiados`: calidad, pantalla completa (solo fuera del
+  editor), FPS objetivo y sincronía vertical, `AudioListener.volume` y la escala de la interfaz.
+- **Gráficas**: `Historial.Pedir` lee `GET /api/v1/{spaces|buildings}/{id}/history` (series agregadas como el
+  estado; ver el contrato) y `Grafica` las dibuja con Painter2D (área, rejilla, ejes en hora local, banda de
+  confort o umbral de CO₂ y tooltip).
+- **Iconos**: `Icono` dibuja trayectos SVG de 24 × 24 con Painter2D (catálogo en `Icono.Trazos`).
+- **Capturas de prueba con la UI**: `Gemelo.CapturaUI.Tomar("/ruta.png", 1920, 1080)` en Play Mode (cámara
+  principal y panel en dos RenderTexture, compuestas).
+
 ## Convenciones
 
 - Código y comentarios en español, como el resto del proyecto. Entrada con el Input System (el proyecto no tiene
@@ -82,3 +156,24 @@ núcleo como evento o propiedad de `GemeloApp`.
   editor en `<módulo>/Editor/`.
 - Rendimiento: la escena ya va al límite de la GPU (~25 ms en la Radeon 780M; ver `Referencias/Rendimiento.md`).
   Hay que instanciar en vez de crear miles de objetos y no añadir luces con sombra.
+
+## Ambiente (`Ambiente/`)
+
+`AmbienteGemelo` (hijo «Ambiente» del objeto Gemelo) guarda la hora y el tiempo efectivos y los eventos activos de la
+simulación (los sondea cada 2 s en `/api/v1/simulation/events`: incendio, apagón y fuga por edificio o estancia), y
+crea el resto:
+
+- `CieloYSol`: sol o luna en la `Directional Light`, cielo `Gemelo/Cielo` (el HDR de `Cielo.mat` con sol propio,
+  ocaso, nubes, estrellas y luna), Trilight y niebla. Con el sol alto y despejado deja lo calibrado de
+  `AmbienteBuilder`; con `Ajustes.sincronizarSol = false` lo devuelve todo como estaba.
+- `Lluvia` (trazos en la GPU alrededor de la cámara) y `Farolas` (destellos en las luminarias y las luces más cercanas).
+- `LucesInteriores`: intensidad de `Local.luces` (`EdificioPolitecnica` sigue decidiendo `enabled` por distancia),
+  ventanas iluminadas de noche, apagón y señales verdes de salida.
+- `Ventanas`: hojas y persianas de las estancias con sensor, a partir de `Resources/Ambiente/Ventanas/<código>.json`
+  (lo escribe `Herramientas/politecnica/generar_politecnica.py`).
+- `Indicadores` (insignias de las alertas), `Emergencias` (sirena, estroboscópicos, balizas y charcos) y
+  `AudioAmbiente` (viento, pájaros, lluvia y rumor de gente; sonidos sintetizados en `SintesisAudio`).
+
+Modo de prueba (solo para este módulo, no toca el servicio): `Gemelo.AmbienteGemelo.Prueba.hora`, `nubes`,
+`lluvia`, `viento`, `persianas[clave]`, `destellos` y `camara`; `Prueba.Quitar()` lo deshace.
+`Gemelo.CapturaPrueba.Tomar(pos, mira, ruta)` guarda un PNG en Play Mode con el postprocesado de la cámara principal.
