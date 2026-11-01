@@ -36,7 +36,7 @@ public static class PolitecnicaBuilder
         public string codigo, nombre, cubierta;
         public string[] extras;
         public float[] origen, huella;
-        public float cota_p0, suelo_min;
+        public float cota_p0, suelo_min, giro;
         public Planta[] plantas;
         public LocalDef[] locales;
         public PuertaDef[] puertas;
@@ -455,6 +455,9 @@ public static class PolitecnicaBuilder
         // Cota de la acera: la de referencia o, si el terreno queda más alto, la del terreno (en las pendientes la
         // bilineal de la referencia y los triángulos del Terrain difieren unos cm y el terreno asomaba por encima)
         float Cota(float x, float z) => Mathf.Max(Ref(x, z), Terr(x, z)) + 0.02f;
+        // UV en los ejes del edificio (las baldosas, paralelas a las fachadas)
+        float cg = Mathf.Cos(m.giro * Mathf.Deg2Rad), sg = Mathf.Sin(m.giro * Mathf.Deg2Rad);
+        Vector2 UV(float x, float z) => new Vector2(x * cg + z * sg, -x * sg + z * cg) / 2f;
         var verts = new List<Vector3>();
         var uvs = new List<Vector2>();
         var tris = new List<int>();
@@ -466,7 +469,7 @@ public static class PolitecnicaBuilder
             foreach (var (x, z) in new[] { (xa, za), (xa, zb), (xb, zb), (xb, za) })
             {
                 verts.Add(new Vector3(x, Cota(x, z), z) - padre.position);
-                uvs.Add(new Vector2(x, z) / 2f);
+                uvs.Add(UV(x, z));
             }
             tris.AddRange(new[] { v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3 });
             // Canto: en los lados sin vecina, si la acera queda por encima del terreno, una cara vertical hasta él

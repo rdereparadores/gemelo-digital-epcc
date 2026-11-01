@@ -23,7 +23,7 @@
     {"nombre": "Rotulo_Letra", "color": "#F2F2EE", "suavidad": 0.4},
     {"nombre": "Equipo_Cubierta", "color": "#C9CBCB", "suavidad": 0.35, "metalico": 0.4},
     {"nombre": "Terrazo", "color": "#FFFFFF", "textura": "terrazo"},
-    {"nombre": "Terrazo_Peldano", "color": "#E2DED4", "textura": "terrazo", "metros": 1.6},
+    {"nombre": "Terrazo_Peldano", "color": "#E2DED4", "textura": "terrazo", "metros": 3.2},
     {"nombre": "Peldano_Ceramico", "color": "#D9AF92", "textura": "alicatado", "metros": 0.6},
     {"nombre": "Rodapie", "color": "#C4BBA7", "suavidad": 0.6},
     {"nombre": "Pintura_Pared", "color": "#EEEAE0", "textura": "pintura_interior"},

@@ -253,19 +253,19 @@
   {
    "nombre": "Suelo_Madera_5E5348",
    "color": "#79859D",
-   "textura": "haya",
+   "textura": "tarima",
    "suavidad": 0.7
   },
   {
    "nombre": "Suelo_Madera_B88A5A",
    "color": "#E9D8C1",
-   "textura": "haya",
+   "textura": "tarima",
    "suavidad": 0.7
   },
   {
    "nombre": "Suelo_Madera_C9A57A",
    "color": "#FEFFFF",
-   "textura": "haya",
+   "textura": "tarima",
    "suavidad": 0.7
   }
  ]
