@@ -105,6 +105,7 @@ public static class PolitecnicaBuilder
         }
 
         // Locales: volumen como trigger con sus datos
+        var locales = new Dictionary<(string, string), Local>();
         foreach (var l in m.locales ?? new LocalDef[0])
         {
             var padre = Hijo(plantas, l.planta, "Locales");
@@ -119,6 +120,10 @@ public static class PolitecnicaBuilder
             var loc = go.AddComponent<Local>();
             loc.edificio = m.codigo; loc.planta = l.planta; loc.numero = l.num; loc.codigo = l.codigo;
             loc.rotulo = l.rotulo; loc.uso = l.uso; loc.superficie = l.area; loc.capacidad = l.capacidad;
+            // Para el gemelo: planta exacta (las cajas son envolventes alineadas con el mundo y se solapan)
+            loc.poligono = Contorno(l.poligono, origen);
+            loc.cotaSuelo = origen.y + l.min[1];
+            locales[(l.planta, l.num)] = loc;
         }
 
         // Hojas de puerta (pivote en las bisagras, giran solas al acercarse)
@@ -134,6 +139,7 @@ public static class PolitecnicaBuilder
             foreach (Transform h in go.GetComponentsInChildren<Transform>()) GameObjectUtility.SetStaticEditorFlags(h.gameObject, 0);
             var pu = go.AddComponent<Puerta>();
             pu.apertura = d.apertura;
+            pu.exterior = d.tipo == "exterior";
         }
 
         // Mobiliario e instalaciones
@@ -142,8 +148,10 @@ public static class PolitecnicaBuilder
         {
             var padre = Hijo(plantas, p.planta, "Mobiliario");
             var esc = new Vector3(p.ex == 0 ? 1 : p.ex, p.ey == 0 ? 1 : p.ey, p.ez == 0 ? 1 : p.ez);
-            if (Instanciar($"{Mobiliario}/{p.tipo}.mcam", padre, V(p.p), Quaternion.Euler(0, p.yaw, 0), esc) == null)
-                faltan.Add(p.tipo);
+            var pieza = Instanciar($"{Mobiliario}/{p.tipo}.mcam", padre, V(p.p), Quaternion.Euler(0, p.yaw, 0), esc);
+            if (pieza == null) faltan.Add(p.tipo);
+            else if (EsAsiento(p.tipo) && p.local != null && locales.TryGetValue((p.planta, p.local), out var dueño))
+                Anadir(ref dueño.asientos, pieza.transform);
         }
 
         // Una luz puntual por local; EdificioPolitecnica las enciende solo con la cámara cerca
@@ -160,6 +168,7 @@ public static class PolitecnicaBuilder
             luz.color = Mathf.CorrelatedColorTemperatureToRGB(4000f);
             luz.shadows = LightShadows.None;
             luz.lightmapBakeType = LightmapBakeType.Realtime;
+            if (l.local != null && locales.TryGetValue((l.planta, l.local), out var dueño)) Anadir(ref dueño.luces, luz);
         }
 
         // Prefab y escena
@@ -228,6 +237,25 @@ public static class PolitecnicaBuilder
     }
 
     static readonly Dictionary<string, GameObject> cache = new Dictionary<string, GameObject>();
+
+    // Piezas en las que se sienta la gente (los NPCs del gemelo ocupan estos puestos)
+    static readonly string[] Asientos = { "Silla_", "Taburete", "Butaca_", "Banco_Corrido", "Banco_Hall", "Banco_Tapizado", "Sofa", "Sillon_" };
+    static bool EsAsiento(string tipo) => System.Array.Exists(Asientos, a => tipo.StartsWith(a));
+
+    static void Anadir<T>(ref T[] lista, T x)
+    {
+        var l = new List<T>(lista ?? new T[0]) { x };
+        lista = l.ToArray();
+    }
+
+    // Polígono del manifiesto (x, z relativos al origen del edificio) en XZ del mundo
+    static Vector2[] Contorno(float[] xz, Vector3 origen)
+    {
+        if (xz == null) return new Vector2[0];
+        var r = new Vector2[xz.Length / 2];
+        for (int i = 0; i < r.Length; i++) r[i] = new Vector2(origen.x + xz[2 * i], origen.z + xz[2 * i + 1]);
+        return r;
+    }
 
     // Instancia el prefab importado de un .mcam en coordenadas locales del edificio
     static GameObject Instanciar(string ruta, Transform padre, Vector3 posEdificio, Quaternion rot, Vector3 escala)

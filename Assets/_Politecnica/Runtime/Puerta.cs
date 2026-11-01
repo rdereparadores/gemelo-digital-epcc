@@ -11,6 +11,7 @@ public class Puerta : MonoBehaviour
     public float distancia = 2.4f;   // radio de detección (m)
     public float velocidad = 240f;   // grados por segundo
     public bool bloqueada;
+    public bool exterior;            // da a la calle (puerta de fachada)
 
     Quaternion cerrada;
     float angulo, objetivo;
