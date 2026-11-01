@@ -24,6 +24,14 @@ namespace Gemelo
         public RuntimeAnimatorController controlador;
         [Tooltip("Si es true, los renderers del avatar se tiñen por submalla con colores de ropa aleatorios (maniquíes)")]
         public bool colorearAvatares = true;
+        [Tooltip("Personajes (Mixamo): sexo, papel y colores dominantes de cada prefab de Avatares (mismo índice). Vacío con los maniquíes")]
+        public PerfilPersonaje[] perfiles = new PerfilPersonaje[0];
+        [Tooltip("Cuerpos para el jugador en tercera persona (Ajustes.avatarJugador: 0 = Brian, 1 = Megan). No salen como NPCs")]
+        public GameObject[] jugadores = new GameObject[0];
+        [Tooltip("Altura sobre el suelo del asiento en la postura sentada del controlador, para una persona de escala 1 (1,81 m)")]
+        public float alturaAsientoClip = 0.46f;
+        [Tooltip("Si es false, sentado no se saca el móvil: el estado SentadoMovil teclea o escribe (Mixamo no tiene «texting» sentado)")]
+        public bool movilSentado = true;
         [Tooltip("Malla del móvil que se pone en la mano derecha al mirarlo")]
         public Mesh movil;
         public Material materialMovil;
@@ -32,7 +40,25 @@ namespace Gemelo
         public Mesh[] mallasLejanas = new Mesh[0];
         public Material materialLejano;
 
+        /// <summary>Perfil del avatar i (null con los maniquíes).</summary>
+        public PerfilPersonaje Perfil(int i) => perfiles != null && i >= 0 && i < perfiles.Length ? perfiles[i] : null;
+
         static RecursosPersonas cargado;
         public static RecursosPersonas Cargar() => cargado != null ? cargado : cargado = Resources.Load<RecursosPersonas>("RecursosPersonas");
+    }
+
+    public enum PapelPersonaje { Alumnado, Profesorado, Mantenimiento, Vigilancia }
+
+    /// <summary>Lo que la multitud necesita de un personaje: sexo (paso y malla lejana), papel (dónde sale), altura
+    /// del modelo y sus colores dominantes (para que el maniquí lejano lleve los mismos).</summary>
+    [System.Serializable]
+    public class PerfilPersonaje
+    {
+        public string nombre;
+        public bool mujer;
+        public PapelPersonaje papel;
+        [Tooltip("Altura del modelo importado (m)")]
+        public float altura = 1.78f;
+        public Color32 piel, top, mangas, bajo, zapatos, pelo;
     }
 }

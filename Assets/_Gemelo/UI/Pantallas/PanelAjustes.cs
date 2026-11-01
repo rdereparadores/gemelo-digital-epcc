@@ -63,12 +63,14 @@ namespace Gemelo
             var c = Contenido(tabs.Agregar("Controles"));
             Deslizador(c, "Sensibilidad del ratón", null, 0.2f, 3f, 0.05f,
                 () => A.sensibilidadRaton, v => A.sensibilidadRaton = v, v => Formato.Num(v, 2) + "×");
+            Segmentos(c, "Avatar en tercera persona", "Cuerpo con el que recorres el campus (se cambia al momento)",
+                new[] { "Brian", "Megan" }, () => Mathf.Clamp(A.avatarJugador, 0, 1), i => A.avatarJugador = i);
             Interruptor(c, "Invertir el eje Y", "Mover el ratón hacia arriba mira hacia abajo", () => A.invertirY, v => A.invertirY = v);
             Deslizador(c, "Campo de visión", "Cámara de tercera persona", 40, 90, 1,
                 () => A.campoVision, v => A.campoVision = v, v => Formato.Num(v) + "°");
             Deslizador(c, "Velocidad de la cámara cenital", "Desplazamiento y zoom del centro de control", 0.25f, 3f, 0.05f,
                 () => A.velocidadCamaraCenital, v => A.velocidadCamaraCenital = v, v => Formato.Num(v, 2) + "×");
-            var ayuda = Txt(c, "Tercera persona: WASD para moverse, ratón para mirar, Mayús para correr, espacio para saltar, E y 1–9 para las acciones, Esc para la pausa.\nCentro de control: arrastrar para desplazar, rueda para el zoom, clic para seleccionar.", "t-xs", "tenue");
+            var ayuda = Txt(c, "Tercera persona: WASD para moverse, ratón para mirar, Mayús para correr, espacio para saltar, C para sentarse, E y 1–9 para las acciones, Esc para la pausa.\nCentro de control: arrastrar para desplazar, rueda para el zoom, clic para seleccionar.", "t-xs", "tenue");
             ayuda.style.whiteSpace = WhiteSpace.Normal;
             ayuda.style.marginTop = 14;
 

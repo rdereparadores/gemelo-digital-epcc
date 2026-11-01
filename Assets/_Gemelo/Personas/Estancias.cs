@@ -13,6 +13,7 @@ namespace Gemelo
         public float rumbo;        // rad (0 = +Z)
         public float altura;       // altura del asiento sobre el suelo
         public int ocupante;       // id de la persona o −1
+        public bool ordenador;     // hay un ordenador delante (se teclea en vez de escribir)
     }
 
     public class Estancia
@@ -25,6 +26,7 @@ namespace Gemelo
         public bool sentados;            // se está sentado (aulas, despachos, laboratorios, cafetería…)
         public bool cafeteria;
         public bool alAireLibre;         // patios y terrazas: sin techo (el sol da sombra a quien está ahí)
+        public bool mesas;               // se sienta a una mesa (aulas, despachos, laboratorios…): puede escribir o teclear
         public Plaza[] plazas = new Plaza[0];
         public readonly List<Persona> miembros = new();
         List<Vector3> puntos;            // sitios para estar de pie (se buscan la primera vez)
@@ -46,6 +48,7 @@ namespace Gemelo
             sentados = conAsientos.Contains(uso) || uso.StartsWith("lab");
             cafeteria = uso == "cafeteria" || uso == "comedor";
             alAireLibre = uso == "patio" || uso == "terraza";
+            mesas = sentados && !cafeteria && uso != "salon_actos" && uso != "sala_descanso" && uso != "sala_estudiantes";
         }
 
         public int PlazaLibre(System.Random r)

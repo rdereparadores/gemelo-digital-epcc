@@ -1,0 +1,27 @@
+{
+  "nombre": "Bryce",
+  "altura": 1.801,
+  "colores": {
+    "piel": "#987267",
+    "top": "#b01d20",
+    "mangas": "#b01c20",
+    "bajo": "#89a4b8",
+    "zapatos": "#b6b6b7",
+    "pelo": "#0e0a08"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch42_Body",
+      "recorte": false,
+      "color": "Bryce_Ch42_1001_Diffuse_Color.jpg",
+      "normal": "Bryce_Ch42_1001_Normal_Normal.jpg",
+      "mascara": "Bryce_Ch42_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch42_Hair",
+      "recorte": true,
+      "color": "Bryce_Ch42_1002_Diffuse_Color.png",
+      "normal": "Bryce_Ch42_1001_Normal_Normal.jpg"
+    }
+  ]
+}

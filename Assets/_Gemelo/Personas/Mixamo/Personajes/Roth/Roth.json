@@ -1,0 +1,27 @@
+{
+  "nombre": "Roth",
+  "altura": 1.762,
+  "colores": {
+    "piel": "#a96e68",
+    "top": "#e6e6e6",
+    "mangas": "#e8e8e8",
+    "bajo": "#26262f",
+    "zapatos": "#0c0c0c",
+    "pelo": "#281a10"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch13_body",
+      "recorte": false,
+      "color": "Roth_Ch13_1001_Diffuse_Color.jpg",
+      "normal": "Roth_Ch13_1001_Normal_Normal.jpg",
+      "mascara": "Roth_Ch13_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch13_hair",
+      "recorte": true,
+      "color": "Roth_Ch13_1002_Diffuse_Color.png",
+      "normal": "Roth_Ch13_1002_Normal_Normal.jpg"
+    }
+  ]
+}

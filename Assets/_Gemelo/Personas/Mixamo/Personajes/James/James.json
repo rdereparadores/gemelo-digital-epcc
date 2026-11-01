@@ -1,0 +1,34 @@
+{
+  "nombre": "James",
+  "altura": 1.827,
+  "colores": {
+    "piel": "#7a4a39",
+    "top": "#0f151a",
+    "mangas": "#10151b",
+    "bajo": "#0f151a",
+    "zapatos": "#464445",
+    "pelo": "#0d1215"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch06_body",
+      "recorte": false,
+      "color": "James_Ch06_1001_Diffuse_Color.png",
+      "normal": "James_Ch06_1001_Normal_Normal.jpg",
+      "mascara": "James_Ch06_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch06_eyelashes",
+      "recorte": true,
+      "color": "James_Ch06_1001_Diffuse_Color.png",
+      "normal": "James_Ch06_1001_Normal_Normal.jpg"
+    },
+    {
+      "nombre": "Ch06_body1",
+      "recorte": false,
+      "color": "James_Ch06_1002_Diffuse_Color.jpg",
+      "normal": "James_Ch06_1002_Normal_Normal.jpg",
+      "mascara": "James_Ch06_1002_Glossiness_Mascara.png"
+    }
+  ]
+}

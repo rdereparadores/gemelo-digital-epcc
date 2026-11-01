@@ -1,0 +1,26 @@
+{
+  "nombre": "Josh",
+  "altura": 1.793,
+  "colores": {
+    "piel": "#9c7268",
+    "top": "#232329",
+    "mangas": "#24242a",
+    "bajo": "#525969",
+    "zapatos": "#182430",
+    "pelo": "#0c0b0b"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch23_body",
+      "recorte": false,
+      "color": "Josh_Ch23_1001_Diffuse_Color.jpg",
+      "normal": "Josh_Ch23_1001_Normal_Normal.jpg",
+      "mascara": "Josh_Ch23_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch23_hair",
+      "recorte": true,
+      "color": "Josh_Ch23_1002_Diffuse_Color.png"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "nombre": "Remy",
+  "altura": 3.785,
+  "colores": {
+    "piel": "#f9c1b3",
+    "top": "#4b4b4b",
+    "mangas": "#1c1c20",
+    "bajo": "#727069",
+    "zapatos": "#f4f7f9",
+    "pelo": "#846954"
+  },
+  "materiales": [
+    {
+      "nombre": "Shoesmat",
+      "recorte": false,
+      "color": "Remy_Shoes_Diffuse_Color.jpg",
+      "normal": "Remy_Shoes_Normal_Normal.jpg",
+      "mascara": "Remy_Shoes_Gloss_Mascara.png"
+    },
+    {
+      "nombre": "Topmat",
+      "recorte": false,
+      "color": "Remy_Top_Diffuse_Color.jpg",
+      "normal": "Remy_Top_Normal_Normal.jpg",
+      "mascara": "Remy_Top_Gloss_Mascara.png"
+    },
+    {
+      "nombre": "Bottommat",
+      "recorte": false,
+      "color": "Remy_Bottom_Diffuse_Color.jpg",
+      "normal": "Remy_Bottom_Normal_Normal.jpg",
+      "mascara": "Remy_Bottom_Gloss_Mascara.png"
+    },
+    {
+      "nombre": "Hairmat",
+      "recorte": true,
+      "color": "Remy_Hair_Diffuse_Opacity_Color.png",
+      "normal": "Remy_Hair_Normal_Normal.jpg",
+      "mascara": "Remy_Hair_Gloss_Mascara.png"
+    },
+    {
+      "nombre": "Bodymat",
+      "recorte": false,
+      "color": "Remy_Body_Diffuse_Color.jpg",
+      "normal": "Remy_Body_Normal_Normal.jpg",
+      "mascara": "Remy_Body_Gloss_Mascara.png"
+    },
+    {
+      "nombre": "Eyelashmat",
+      "recorte": true,
+      "color": "Remy_Body_Diffuse_Opacity_Color.png",
+      "normal": "Remy_Body_Normal_Normal.jpg",
+      "mascara": "Remy_Body_Gloss_Mascara.png"
+    }
+  ]
+}

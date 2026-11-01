@@ -1,0 +1,27 @@
+{
+  "nombre": "Brian",
+  "altura": 1.764,
+  "colores": {
+    "piel": "#956c68",
+    "top": "#c1c1c1",
+    "mangas": "#c4c4c4",
+    "bajo": "#38485b",
+    "zapatos": "#c7c5cb",
+    "pelo": "#b79786"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch01_body",
+      "recorte": false,
+      "color": "Brian_Ch01_1001_Diffuse_Color.png",
+      "normal": "Brian_Ch01_1001_Normal_Normal.jpg",
+      "mascara": "Brian_Ch01_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch01_hair",
+      "recorte": true,
+      "color": "Brian_Ch01_1001_Diffuse_Color.png",
+      "normal": "Brian_Ch01_1001_Normal_Normal.jpg"
+    }
+  ]
+}

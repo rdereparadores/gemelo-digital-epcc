@@ -1,0 +1,27 @@
+{
+  "nombre": "Joe",
+  "altura": 1.784,
+  "colores": {
+    "piel": "#9d7368",
+    "top": "#161c32",
+    "mangas": "#161d33",
+    "bajo": "#323848",
+    "zapatos": "#382117",
+    "pelo": "#2d241d"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch33_body",
+      "recorte": false,
+      "color": "Joe_Ch33_1001_Diffuse_Color.jpg",
+      "normal": "Joe_Ch33_1001_Normal_Normal.jpg",
+      "mascara": "Joe_Ch33_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch33_hair",
+      "recorte": true,
+      "color": "Joe_Ch33_1002_Diffuse_Color.png",
+      "normal": "Joe_Ch33_1002_Normal_Normal.jpg"
+    }
+  ]
+}

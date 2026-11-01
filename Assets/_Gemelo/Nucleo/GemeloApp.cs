@@ -43,6 +43,9 @@ namespace Gemelo
         public const string Hablando = "Hablando";     // bool (gesticula de pie o sentado)
         public const string EnSuelo = "EnSuelo";       // bool
         public const string Saltar = "Saltar";         // trigger
+        /// <summary>float, sentado con las manos ocupadas (estado SentadoMovil): 0 = teclea en un ordenador,
+        /// 1 = escribe en la mesa. Lo pone el módulo Personas según el puesto (con ordenador o no).</summary>
+        public const string Escribiendo = "Escribiendo";
     }
 
     public class GemeloApp : MonoBehaviour
@@ -84,6 +87,11 @@ namespace Gemelo
         // para que el jugador en tercera persona use el mismo cuerpo que los NPCs. Puede ser null.
         public static Func<int, GameObject> FabricaAvatar;
 
+        /// <summary>Cuerpo del jugador en tercera persona según Ajustes.avatarJugador (0 = Brian, 1 = Megan): avatar con
+        /// Animator de ParamAvatar, como FabricaAvatar. Lo registra el módulo Personas si tiene personajes para el
+        /// jugador; puede ser null (entonces Control usa FabricaAvatar).</summary>
+        public static Func<int, GameObject> FabricaJugador;
+
         /// <summary>NPCs que hay ahora en la escena (lo pone el módulo Personas, para el HUD).</summary>
         public int PersonasEnEscena { get; set; }
 
@@ -110,6 +118,7 @@ namespace Gemelo
         {
             Arrancado = null;
             FabricaAvatar = null;
+            FabricaJugador = null;
             PunteroSobreUI = null;
             EscapeConsumido = -1;
             Instancia = null;

@@ -1,0 +1,27 @@
+{
+  "nombre": "Kate",
+  "altura": 1.759,
+  "colores": {
+    "piel": "#a76e68",
+    "top": "#2e3f50",
+    "mangas": "#2d3d4f",
+    "bajo": "#885e3e",
+    "zapatos": "#473622",
+    "pelo": "#281a10"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch21_body",
+      "recorte": false,
+      "color": "Kate_Ch21_1001_Diffuse_Color.jpg",
+      "normal": "Kate_Ch21_1001_Normal_Normal.jpg",
+      "mascara": "Kate_Ch21_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch21_hair",
+      "recorte": true,
+      "color": "Kate_Ch21_1002_Diffuse_Color.png",
+      "normal": "Kate_Ch21_1002_Normal_Normal.jpg"
+    }
+  ]
+}

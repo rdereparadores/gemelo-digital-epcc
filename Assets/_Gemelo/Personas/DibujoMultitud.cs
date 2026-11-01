@@ -29,13 +29,15 @@ namespace Gemelo
             public SkinnedMeshRenderer[] rend;
             public Material[][] mats;      // materiales propios de cada renderer (sin la marca del stencil)
             public bool marcado;
-            public bool sombra = true;
-            public int variante;
+            public bool sombra = true, fino = true;
+            public bool[] conSombra;       // los que pueden dar sombra (no el pelo ni las pestañas con recorte alfa)
+            public int cuerpo;             // índice del prefab (personaje o variante)
+            public List<GameObject> marcas; // copias de los renderers de varias submallas con la marca en todas (Mixamo)
             public Persona p;
         }
 
         public const int TopeAnimadas = 80;
-        const float RadioAnimadas = 40f, RadioSombras = 35f, RadioSombrasAnimadas = 14f, InteriorLejos = 70f, CadaSeleccion = 0.2f;
+        const float RadioAnimadas = 40f, RadioSombras = 35f, RadioSombrasAnimadas = 14f, InteriorLejos = 70f, CadaSeleccion = 0.2f, RadioPielFina = 8f;
 
         readonly RecursosPersonas rec;
         readonly Multitud m;
@@ -51,15 +53,21 @@ namespace Gemelo
         readonly List<Cercano> reserva = new();
         Transform raiz;
         float tSeleccion;
+        GameObject[] pruebaPrevia;
         // Marca de stencil de los avatares (bit 3: «persona») mientras la vista cenital tiene una capa de color
         readonly Material matMarca;
         bool marcar;
         readonly List<(float d, Persona p)> candidatos = new();
         public int Animadas, Instanciadas;
+        /// <summary>Avatares creados (instanciados) desde el principio: con la reserva caliente apenas crece.</summary>
+        public int Creados;
+        int creadosCiclo;
+        // Crear un personaje de Mixamo cuesta 1-3 ms (≈60 huesos y 6-9 renderers): como mucho unos pocos por selección
+        const int CrearPorSeleccion = 3;
 
         static readonly int idVel = Animator.StringToHash(ParamAvatar.Velocidad), idSentado = Animator.StringToHash(ParamAvatar.Sentado),
                             idHabla = Animator.StringToHash(ParamAvatar.Hablando), idMovil = Animator.StringToHash("Movil"),
-                            idSuelo = Animator.StringToHash(ParamAvatar.EnSuelo);
+                            idSuelo = Animator.StringToHash(ParamAvatar.EnSuelo), idEscribe = Animator.StringToHash(ParamAvatar.Escribiendo);
         static readonly int idInst = Shader.PropertyToID("_Instancias"), idBase = Shader.PropertyToID("_Base");
 
         public DibujoMultitud(RecursosPersonas rec, Multitud m, Transform padre)
@@ -207,6 +215,16 @@ namespace Gemelo
                 p.visible = vis;
             }
 
+            if (FabricaAvatares.PruebaAvatares != pruebaPrevia)
+            {
+                // Cambio de cuerpos (medidas A/B): fuera todos los avatares, que se rehacen con los nuevos
+                pruebaPrevia = FabricaAvatares.PruebaAvatares;
+                for (int i = cercanos.Count - 1; i >= 0; i--) Devolver(i);
+                foreach (var r in reserva) Object.Destroy(r.go);
+                reserva.Clear();
+                tSeleccion = 0f;
+            }
+
             // Selección de los animados (cada poco)
             if (Time.time >= tSeleccion)
             {
@@ -227,10 +245,11 @@ namespace Gemelo
                     if (sigue)
                     {
                         int pos = candidatos.FindIndex(x => x.p == c.p);
-                        sigue = pos >= 0 && pos < maxAnim + 4;   // un poco de holgura para no parpadear
+                        sigue = pos >= 0 && pos < maxAnim + (maxAnim > 0 ? 4 : 0);   // un poco de holgura para no parpadear
                     }
                     if (!sigue) Devolver(i);
                 }
+                creadosCiclo = 0;
                 foreach (var (d, p) in candidatos)
                 {
                     if (cercanos.Count >= maxAnim) break;
@@ -240,10 +259,20 @@ namespace Gemelo
                 // Solo los más cercanos proyectan sombra (cada sombra es un dibujo más por cascada)
                 foreach (var c in cercanos)
                 {
-                    bool sombra = !BajoTecho(c.p) && (c.p.pos - cp).sqrMagnitude < RadioSombrasAnimadas * RadioSombrasAnimadas;
-                    if (sombra == c.sombra || c.rend == null) continue;
+                    if (c.rend == null) continue;
+                    float d2 = (c.p.pos - cp).sqrMagnitude;
+                    // Piel de 4 huesos solo de cerca (cara y manos); más allá basta con 2
+                    bool fino = d2 < RadioPielFina * RadioPielFina;
+                    if (fino != c.fino)
+                    {
+                        c.fino = fino;
+                        foreach (var r in c.rend) r.quality = fino ? SkinQuality.Auto : SkinQuality.Bone2;
+                    }
+                    bool sombra = !BajoTecho(c.p) && d2 < RadioSombrasAnimadas * RadioSombrasAnimadas;
+                    if (sombra == c.sombra) continue;
                     c.sombra = sombra;
-                    foreach (var r in c.rend) r.shadowCastingMode = sombra ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                    for (int i = 0; i < c.rend.Length; i++)
+                        c.rend[i].shadowCastingMode = sombra && (c.conSombra == null || c.conSombra[i]) ? ShadowCastingMode.On : ShadowCastingMode.Off;
                 }
             }
 
@@ -256,17 +285,20 @@ namespace Gemelo
             {
                 if (c.marcado != marcar) Marcar(c, marcar);
                 var p = c.p;
-                float y = p.sentada && p.estado == EstadoPersona.Quieta ? p.alturaAsiento - 0.46f * p.ap.escala : 0f;
+                float y = p.sentada && p.estado == EstadoPersona.Quieta ? p.alturaAsiento - AsientoClip * p.ap.escala : 0f;
                 c.tr.SetPositionAndRotation(p.pos + Vector3.up * y, Quaternion.Euler(0f, p.rumbo * Mathf.Rad2Deg, 0f));
                 if (!c.go.activeSelf) c.go.SetActive(true);
+                float escribe = Escritura(p);
+                bool manos = ManosOcupadas(p, escribe);
                 if (c.an != null)
                 {
                     c.an.SetFloat(idVel, p.vel, 0.12f, Time.deltaTime);
                     c.an.SetBool(idSentado, p.sentada);
                     c.an.SetBool(idHabla, p.gesto == Gesto.Habla);
-                    c.an.SetBool(idMovil, p.gesto == Gesto.Movil);
+                    c.an.SetBool(idMovil, manos);
+                    c.an.SetFloat(idEscribe, escribe);
                 }
-                bool movil = p.gesto == Gesto.Movil && p.vel < 0.3f;
+                bool movil = p.gesto == Gesto.Movil && p.vel < 0.3f && (!p.sentada || MovilSentado);
                 if (c.movil != null && c.movil.activeSelf != movil) c.movil.SetActive(movil);
             }
             Animadas = cercanos.Count;
@@ -344,13 +376,38 @@ namespace Gemelo
 
         static uint U(Color32 c) => c.r | (uint)c.g << 8 | (uint)c.b << 16 | 0xFF000000u;
 
+        float AsientoClip => rec != null ? rec.alturaAsientoClip : 0.46f;
+        bool MovilSentado => rec == null || rec.movilSentado;
+
+        /// <summary>ParamAvatar.Escribiendo: 0 si su puesto tiene ordenador (teclea), 1 si no (escribe en la mesa).</summary>
+        static float Escritura(Persona p)
+        {
+            var e = p.donde;
+            if (e == null || p.plaza < 0 || p.plaza >= e.plazas.Length || p.destino != e) return 1f;
+            return e.plazas[p.plaza].ordenador ? 0f : 1f;
+        }
+
+        // Parámetro Movil del controlador: de pie, mirar el móvil; sentado, el estado SentadoMovil. Con los personajes
+        // de Mixamo ese estado teclea o escribe, así que solo vale donde hay mesa (en la cafetería, el salón de actos o
+        // un banco del hall se quedan sentados sin más)
+        bool ManosOcupadas(Persona p, float escribe)
+        {
+            if (p.gesto != Gesto.Movil) return false;
+            if (!p.sentada || MovilSentado) return true;
+            return p.donde != null && (p.donde.mesas || escribe < 0.5f);
+        }
+
         void Asignar(Persona p)
         {
             Cercano c = null;
+            int cuerpo = FabricaAvatares.Cuerpo(p.ap, rec);
             for (int i = reserva.Count - 1; i >= 0; i--)
-                if (reserva[i].variante == p.ap.variante) { c = reserva[i]; reserva.RemoveAt(i); break; }
+                if (reserva[i].cuerpo == cuerpo) { c = reserva[i]; reserva.RemoveAt(i); break; }
             if (c == null)
             {
+                if (creadosCiclo >= CrearPorSeleccion) return;     // (sigue de maniquí hasta la siguiente selección)
+                creadosCiclo++;
+                Creados++;
                 if (cercanos.Count + reserva.Count >= TopeAnimadas + 24 && reserva.Count > 0)
                 {
                     // Recicla uno de otra variante
@@ -359,18 +416,29 @@ namespace Gemelo
                 }
                 var go = FabricaAvatares.Crear(p.ap, raiz);
                 if (go == null) return;
-                c = new Cercano { go = go, tr = go.transform, an = go.GetComponent<Animator>(), variante = p.ap.variante, movil = FabricaAvatares.Movil(go),
+                c = new Cercano { go = go, tr = go.transform, an = go.GetComponent<Animator>(), cuerpo = cuerpo, movil = FabricaAvatares.Movil(go),
                                  rend = go.GetComponentsInChildren<SkinnedMeshRenderer>(true) };
+                // Pelo y pestañas (recorte alfa, a dos caras) no dan sombra: es la pasada de sombra más cara y no se nota
+                c.conSombra = new bool[c.rend.Length];
+                for (int i = 0; i < c.rend.Length; i++)
+                {
+                    bool recorte = false;
+                    foreach (var m in c.rend[i].sharedMaterials) if (m != null && m.IsKeywordEnabled("_ALPHATEST_ON")) recorte = true;
+                    c.conSombra[i] = !recorte;
+                    if (recorte) c.rend[i].shadowCastingMode = ShadowCastingMode.Off;
+                }
             }
             else
             {
-                c.tr.localScale = Vector3.one * p.ap.escala;
+                c.tr.localScale = Vector3.one * FabricaAvatares.Escala(p.ap, rec);
                 if (rec.colorearAvatares) FabricaAvatares.Colorear(c.go, p.ap);
             }
             c.p = p;
             p.avatar = cercanos.Count;
             cercanos.Add(c);
-            float y = p.sentada ? p.alturaAsiento - 0.46f * p.ap.escala : 0f;
+            float y = p.sentada ? p.alturaAsiento - AsientoClip * p.ap.escala : 0f;
+            float escribe = Escritura(p);
+            bool manos = ManosOcupadas(p, escribe);
             c.tr.SetPositionAndRotation(p.pos + Vector3.up * y, Quaternion.Euler(0f, p.rumbo * Mathf.Rad2Deg, 0f));
             c.go.SetActive(true);
             if (c.an != null)
@@ -379,9 +447,10 @@ namespace Gemelo
                 c.an.SetBool(idSuelo, true);
                 c.an.SetBool(idSentado, p.sentada);
                 c.an.SetBool(idHabla, p.gesto == Gesto.Habla);
-                c.an.SetBool(idMovil, p.gesto == Gesto.Movil);
+                c.an.SetBool(idMovil, manos);
+                c.an.SetFloat(idEscribe, escribe);
                 c.an.SetFloat(idVel, p.vel);
-                string estado = p.sentada ? (p.gesto == Gesto.Habla ? "SentadoHablando" : p.gesto == Gesto.Movil ? "SentadoMovil" : "Sentado")
+                string estado = p.sentada ? (p.gesto == Gesto.Habla ? "SentadoHablando" : manos ? "SentadoMovil" : "Sentado")
                               : p.vel < 0.3f && p.gesto == Gesto.Habla ? "HablarDePie" : p.vel < 0.3f && p.gesto == Gesto.Movil ? "MovilDePie" : "Locomocion";
                 c.an.Play(estado, 0, (p.id * 0.137f) % 1f);
             }
@@ -396,18 +465,49 @@ namespace Gemelo
                 c.mats = new Material[c.rend.Length][];
                 for (int i = 0; i < c.rend.Length; i++) c.mats[i] = c.rend[i].sharedMaterials;
             }
+            if (c.marcas != null)
+                foreach (var g in c.marcas) if (g != null) g.SetActive(si);
             for (int i = 0; i < c.rend.Length; i++)
             {
                 var r = c.rend[i];
                 if (r == null) continue;
+                // Un material de más que submallas vuelve a dibujar solo la última submalla: vale para los cuerpos de una
+                // submalla (maniquíes y casi todas las piezas de Mixamo); los de varias (James, Lewis…) llevan al lado
+                // una copia del renderer, con los mismos huesos, que dibuja la marca en todas sus submallas
+                var malla = r.sharedMesh;
+                if (malla != null && malla.subMeshCount > 1)
+                {
+                    if (si && (c.marcas == null || !c.marcas.Exists(g => g != null && g.name == "Marca_" + r.name))) CopiaMarca(c, r);
+                    continue;
+                }
                 if (!si) { r.sharedMaterials = c.mats[i]; continue; }
-                // (un material de más que submallas vuelve a dibujar la última submalla: los maniquíes tienen una; un
-                // personaje con varias solo marcaría la última)
                 var m = new Material[c.mats[i].Length + 1];
                 c.mats[i].CopyTo(m, 0);
                 m[^1] = matMarca;
                 r.sharedMaterials = m;
             }
+        }
+
+        void CopiaMarca(Cercano c, SkinnedMeshRenderer r)
+        {
+            var g = new GameObject("Marca_" + r.name);
+            g.transform.SetParent(r.transform.parent, false);
+            g.transform.localPosition = r.transform.localPosition;
+            g.transform.localRotation = r.transform.localRotation;
+            g.transform.localScale = r.transform.localScale;
+            var s = g.AddComponent<SkinnedMeshRenderer>();
+            s.sharedMesh = r.sharedMesh;
+            s.bones = r.bones;
+            s.rootBone = r.rootBone;
+            s.localBounds = r.localBounds;
+            s.quality = r.quality;
+            s.updateWhenOffscreen = false;
+            s.shadowCastingMode = ShadowCastingMode.Off;
+            s.receiveShadows = false;
+            var mats = new Material[r.sharedMesh.subMeshCount];
+            for (int k = 0; k < mats.Length; k++) mats[k] = matMarca;
+            s.sharedMaterials = mats;
+            (c.marcas ??= new List<GameObject>()).Add(g);
         }
 
         void Devolver(int i)

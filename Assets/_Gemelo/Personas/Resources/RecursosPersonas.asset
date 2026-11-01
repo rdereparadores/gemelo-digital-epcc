@@ -141,12 +141,405 @@ MonoBehaviour:
   - {x: 356.29153, y: 20.779545, z: 507.32742}
   - {x: 355.10025, y: 24.370455, z: 507.69705}
   avatares:
-  - {fileID: 5809119926103693638, guid: 8ea41e5d158b526e7811743bff4e672a, type: 3}
-  - {fileID: 2596605976094008014, guid: 2e2b9d34ef709fcc7af0c57df92c1e45, type: 3}
-  - {fileID: 8685852305291739887, guid: 085bae56401ba84368e2a46ac2e92296, type: 3}
-  - {fileID: 386406016086102500, guid: 1ea682efe126a4fa2b3044925cee086d, type: 3}
+  - {fileID: 8291832437891652004, guid: dc7e8c228268c92dab033315c532ea11, type: 3}
+  - {fileID: 3538321945471398637, guid: 7d1cbbe477b22d571bcbe875d8077c60, type: 3}
+  - {fileID: 6894618151099261948, guid: 4785dd8ac49ab7bda865cc9c62361a58, type: 3}
+  - {fileID: 1603892012949340841, guid: 1c2650f236c78b2038f8651559a196fb, type: 3}
+  - {fileID: 4932039006377638213, guid: 4b4db5463b5f143bca9c48530e9a7aac, type: 3}
+  - {fileID: 3413756157260103085, guid: 61a9117146d8680629b691c31a9749e0, type: 3}
+  - {fileID: 9102941339556073480, guid: c6df89b21e3209221b4aff510f424fb0, type: 3}
+  - {fileID: 4206862323710589386, guid: d8b73d88f25365b5787eb6c67237b423, type: 3}
+  - {fileID: 4216839940085734965, guid: d5cdf25d546bc45479ab791acb6a6061, type: 3}
+  - {fileID: 7978445227128448989, guid: b2fb4ee28edcdce42a94904a290edabb, type: 3}
+  - {fileID: 1242906047760771311, guid: 71d7ca0848849535b835a36b06cf1290, type: 3}
+  - {fileID: 3810691443441332202, guid: 6af17ad210a58258587252911ea1eec6, type: 3}
+  - {fileID: 7464397510676970144, guid: ba35f1718741b14ef92a375fa613cd4f, type: 3}
+  - {fileID: 2205304568373796449, guid: aa3c8458bedd7bebf862a9baf8a884c0, type: 3}
+  - {fileID: 731572948394765781, guid: cfb8bd039845fa18cbcf03b1d8327887, type: 3}
+  - {fileID: 8862567579165642611, guid: 400ddf88f27ac435ea19d50a38182451, type: 3}
+  - {fileID: 5102820760451166835, guid: 4108ad46dc427de0e8cc027a172f29ab, type: 3}
   controlador: {fileID: 9100000, guid: 49e97332194099c2e9b55055be4274e9, type: 2}
-  colorearAvatares: 1
+  colorearAvatares: 0
+  perfiles:
+  - nombre: Remy
+    mujer: 0
+    papel: 0
+    altura: 1.78
+    piel:
+      serializedVersion: 2
+      rgba: 4289970681
+    top:
+      serializedVersion: 2
+      rgba: 4283124555
+    mangas:
+      serializedVersion: 2
+      rgba: 4280294428
+    bajo:
+      serializedVersion: 2
+      rgba: 4285100146
+    zapatos:
+      serializedVersion: 2
+      rgba: 4294572020
+    pelo:
+      serializedVersion: 2
+      rgba: 4283722116
+  - nombre: Bryce
+    mujer: 0
+    papel: 0
+    altura: 1.801
+    piel:
+      serializedVersion: 2
+      rgba: 4284969624
+    top:
+      serializedVersion: 2
+      rgba: 4280294832
+    mangas:
+      serializedVersion: 2
+      rgba: 4280294576
+    bajo:
+      serializedVersion: 2
+      rgba: 4290290825
+    zapatos:
+      serializedVersion: 2
+      rgba: 4290229942
+    pelo:
+      serializedVersion: 2
+      rgba: 4278716942
+  - nombre: James
+    mujer: 0
+    papel: 0
+    altura: 1.827
+    piel:
+      serializedVersion: 2
+      rgba: 4281944698
+    top:
+      serializedVersion: 2
+      rgba: 4279899407
+    mangas:
+      serializedVersion: 2
+      rgba: 4279964944
+    bajo:
+      serializedVersion: 2
+      rgba: 4279899407
+    zapatos:
+      serializedVersion: 2
+      rgba: 4282729542
+    pelo:
+      serializedVersion: 2
+      rgba: 4279570957
+  - nombre: Lewis
+    mujer: 0
+    papel: 0
+    altura: 1.768
+    piel:
+      serializedVersion: 2
+      rgba: 4282736006
+    top:
+      serializedVersion: 2
+      rgba: 4287729527
+    mangas:
+      serializedVersion: 2
+      rgba: 4287860856
+    bajo:
+      serializedVersion: 2
+      rgba: 4281020721
+    zapatos:
+      serializedVersion: 2
+      rgba: 4279571476
+    pelo:
+      serializedVersion: 2
+      rgba: 4279374356
+  - nombre: David
+    mujer: 0
+    papel: 0
+    altura: 1.763
+    piel:
+      serializedVersion: 2
+      rgba: 4282079366
+    top:
+      serializedVersion: 2
+      rgba: 4279636496
+    mangas:
+      serializedVersion: 2
+      rgba: 4279636496
+    bajo:
+      serializedVersion: 2
+      rgba: 4280030996
+    zapatos:
+      serializedVersion: 2
+      rgba: 4280361249
+    pelo:
+      serializedVersion: 2
+      rgba: 4278387716
+  - nombre: Kate
+    mujer: 1
+    papel: 0
+    altura: 1.759
+    piel:
+      serializedVersion: 2
+      rgba: 4285034151
+    top:
+      serializedVersion: 2
+      rgba: 4283449134
+    mangas:
+      serializedVersion: 2
+      rgba: 4283383085
+    bajo:
+      serializedVersion: 2
+      rgba: 4282277512
+    zapatos:
+      serializedVersion: 2
+      rgba: 4280432199
+    pelo:
+      serializedVersion: 2
+      rgba: 4279245352
+  - nombre: Sophie
+    mujer: 1
+    papel: 0
+    altura: 1.764
+    piel:
+      serializedVersion: 2
+      rgba: 4285033901
+    top:
+      serializedVersion: 2
+      rgba: 4283602394
+    mangas:
+      serializedVersion: 2
+      rgba: 4283602394
+    bajo:
+      serializedVersion: 2
+      rgba: 4286351275
+    zapatos:
+      serializedVersion: 2
+      rgba: 4288519581
+    pelo:
+      serializedVersion: 2
+      rgba: 4281882728
+  - nombre: Elizabeth
+    mujer: 1
+    papel: 0
+    altura: 1.783
+    piel:
+      serializedVersion: 2
+      rgba: 4283129495
+    top:
+      serializedVersion: 2
+      rgba: 4292270042
+    mangas:
+      serializedVersion: 2
+      rgba: 4292796126
+    bajo:
+      serializedVersion: 2
+      rgba: 4283251242
+    zapatos:
+      serializedVersion: 2
+      rgba: 4283974868
+    pelo:
+      serializedVersion: 2
+      rgba: 4278782474
+  - nombre: Jody
+    mujer: 1
+    papel: 0
+    altura: 1.742
+    piel:
+      serializedVersion: 2
+      rgba: 4285295271
+    top:
+      serializedVersion: 2
+      rgba: 4289630398
+    mangas:
+      serializedVersion: 2
+      rgba: 4289696191
+    bajo:
+      serializedVersion: 2
+      rgba: 4280360218
+    zapatos:
+      serializedVersion: 2
+      rgba: 4291413959
+    pelo:
+      serializedVersion: 2
+      rgba: 4279112743
+  - nombre: Louise
+    mujer: 1
+    papel: 0
+    altura: 1.752
+    piel:
+      serializedVersion: 2
+      rgba: 4284246693
+    top:
+      serializedVersion: 2
+      rgba: 4282983691
+    mangas:
+      serializedVersion: 2
+      rgba: 4283180556
+    bajo:
+      serializedVersion: 2
+      rgba: 4283115020
+    zapatos:
+      serializedVersion: 2
+      rgba: 4278321675
+    pelo:
+      serializedVersion: 2
+      rgba: 4278520336
+  - nombre: Josh
+    mujer: 0
+    papel: 1
+    altura: 1.793
+    piel:
+      serializedVersion: 2
+      rgba: 4285035164
+    top:
+      serializedVersion: 2
+      rgba: 4280886051
+    mangas:
+      serializedVersion: 2
+      rgba: 4280951844
+    bajo:
+      serializedVersion: 2
+      rgba: 4285094226
+    zapatos:
+      serializedVersion: 2
+      rgba: 4281345048
+    pelo:
+      serializedVersion: 2
+      rgba: 4278913804
+  - nombre: Joe
+    mujer: 0
+    papel: 1
+    altura: 1.784
+    piel:
+      serializedVersion: 2
+      rgba: 4285035421
+    top:
+      serializedVersion: 2
+      rgba: 4281474070
+    mangas:
+      serializedVersion: 2
+      rgba: 4281539862
+    bajo:
+      serializedVersion: 2
+      rgba: 4282923058
+    zapatos:
+      serializedVersion: 2
+      rgba: 4279705912
+    pelo:
+      serializedVersion: 2
+      rgba: 4280099885
+  - nombre: Martha
+    mujer: 1
+    papel: 1
+    altura: 1.77
+    piel:
+      serializedVersion: 2
+      rgba: 4284838041
+    top:
+      serializedVersion: 2
+      rgba: 4284038715
+    mangas:
+      serializedVersion: 2
+      rgba: 4284104252
+    bajo:
+      serializedVersion: 2
+      rgba: 4286350749
+    zapatos:
+      serializedVersion: 2
+      rgba: 4288656332
+    pelo:
+      serializedVersion: 2
+      rgba: 4278914326
+  - nombre: Suzie
+    mujer: 1
+    papel: 1
+    altura: 1.764
+    piel:
+      serializedVersion: 2
+      rgba: 4283984027
+    top:
+      serializedVersion: 2
+      rgba: 4292993508
+    mangas:
+      serializedVersion: 2
+      rgba: 4293125093
+    bajo:
+      serializedVersion: 2
+      rgba: 4279769371
+    zapatos:
+      serializedVersion: 2
+      rgba: 4278979596
+    pelo:
+      serializedVersion: 2
+      rgba: 4278717454
+  - nombre: Roth
+    mujer: 1
+    papel: 1
+    altura: 1.762
+    piel:
+      serializedVersion: 2
+      rgba: 4285034153
+    top:
+      serializedVersion: 2
+      rgba: 4293322470
+    mangas:
+      serializedVersion: 2
+      rgba: 4293454056
+    bajo:
+      serializedVersion: 2
+      rgba: 4281280038
+    zapatos:
+      serializedVersion: 2
+      rgba: 4278979596
+    pelo:
+      serializedVersion: 2
+      rgba: 4279245352
+  - nombre: Pete
+    mujer: 0
+    papel: 2
+    altura: 1.788
+    piel:
+      serializedVersion: 2
+      rgba: 4282862191
+    top:
+      serializedVersion: 2
+      rgba: 4281094631
+    mangas:
+      serializedVersion: 2
+      rgba: 4282792251
+    bajo:
+      serializedVersion: 2
+      rgba: 4281874749
+    zapatos:
+      serializedVersion: 2
+      rgba: 4281489786
+    pelo:
+      serializedVersion: 2
+      rgba: 4290164663
+  - nombre: Alex
+    mujer: 0
+    papel: 3
+    altura: 1.773
+    piel:
+      serializedVersion: 2
+      rgba: 4282734473
+    top:
+      serializedVersion: 2
+      rgba: 4279964695
+    mangas:
+      serializedVersion: 2
+      rgba: 4279701523
+    bajo:
+      serializedVersion: 2
+      rgba: 4279438607
+    zapatos:
+      serializedVersion: 2
+      rgba: 4278979596
+    pelo:
+      serializedVersion: 2
+      rgba: 4278584839
+  jugadores:
+  - {fileID: 7989925549171545347, guid: e3d9e983073ac0262baec115df67f944, type: 3}
+  - {fileID: 5112160716172963035, guid: 06ab296eab860ec6d9c399e808220de4, type: 3}
+  alturaAsientoClip: 0.44322038
+  movilSentado: 0
   movil: {fileID: 4300000, guid: 103138c16a8d48b4e96af34064324917, type: 2}
   materialMovil: {fileID: 2100000, guid: 97f2a3a7e09fd9b16b3df03f977994a8, type: 2}
   mallasLejanas:

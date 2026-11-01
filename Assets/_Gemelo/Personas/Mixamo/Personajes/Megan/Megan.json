@@ -1,0 +1,27 @@
+{
+  "nombre": "Megan",
+  "altura": 1.752,
+  "colores": {
+    "piel": "#a76a6c",
+    "top": "#cad0d4",
+    "mangas": "#cbd1d6",
+    "bajo": "#233257",
+    "zapatos": "#3c3533",
+    "pelo": "#483727"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch22_body",
+      "recorte": false,
+      "color": "Megan_Ch22_1001_Diffuse_Color.jpg",
+      "normal": "Megan_Ch22_1001_Normal_Normal.jpg",
+      "mascara": "Megan_Ch22_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch22_hair",
+      "recorte": true,
+      "color": "Megan_Ch22_1002_Diffuse_Color.png",
+      "normal": "Megan_Ch22_1002_Normal_Normal.jpg"
+    }
+  ]
+}

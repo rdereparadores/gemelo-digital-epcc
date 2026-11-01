@@ -1,0 +1,27 @@
+{
+  "nombre": "Suzie",
+  "altura": 1.764,
+  "colores": {
+    "piel": "#9b6858",
+    "top": "#e4e1e1",
+    "mangas": "#e5e3e3",
+    "bajo": "#1b1918",
+    "zapatos": "#0c0c0c",
+    "pelo": "#0e0c08"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch41_body",
+      "recorte": false,
+      "color": "Suzie_Ch41_1001_Diffuse_Color.jpg",
+      "normal": "Suzie_Ch41_1001_Normal_Normal.jpg",
+      "mascara": "Suzie_Ch41_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch41_hair",
+      "recorte": true,
+      "color": "Suzie_Ch41_1002_Diffuse_Color.png",
+      "normal": "Suzie_Ch41_1002_Normal_Normal.jpg"
+    }
+  ]
+}

@@ -6,6 +6,10 @@ namespace Gemelo
 {
     public static class FabricaAvatares
     {
+        /// <summary>Solo para medir (A/B): si no es null, los NPC cercanos usan estos prefabs (los maniquíes) teñidos
+        /// por variante en lugar de los de RecursosPersonas. DibujoMultitud rehace los avatares al cambiarlo.</summary>
+        public static GameObject[] PruebaAvatares;
+
         static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
         static readonly int BaseMap = Shader.PropertyToID("_BaseMap");
 
@@ -16,16 +20,64 @@ namespace Gemelo
         {
             var rec = RecursosPersonas.Cargar();
             if (rec == null || rec.avatares == null || rec.avatares.Length == 0) return null;
-            var pf = rec.avatares[Mathf.Abs(ap.variante) % rec.avatares.Length];
+            if (PruebaAvatares != null && PruebaAvatares.Length > 0)
+            {
+                // Medidas A/B: los maniquíes en lugar de los personajes, teñidos con la apariencia
+                var m = Instanciar(PruebaAvatares[Mathf.Abs(ap.variante) % PruebaAvatares.Length], padre, rec);
+                m.name = "Persona";
+                m.transform.localScale = Vector3.one * ap.escala;
+                Colorear(m, ap);
+                return m;
+            }
+            int i = Cuerpo(ap, rec);
+            var pf = rec.avatares[i];
             if (pf == null) return null;
-            var go = Object.Instantiate(pf, padre);
+            var go = Instanciar(pf, padre, rec);
             go.name = "Persona";
-            go.transform.localScale = Vector3.one * ap.escala;
+            go.transform.localScale = Vector3.one * Escala(ap, rec);
+            if (rec.colorearAvatares) Colorear(go, ap);
+            return go;
+        }
+
+        /// <summary>Índice del prefab de RecursosPersonas.avatares que lleva esta apariencia.</summary>
+        public static int Cuerpo(Apariencia ap, RecursosPersonas rec = null)
+        {
+            if (PruebaAvatares != null && PruebaAvatares.Length > 0) return 1000 + Mathf.Abs(ap.variante) % PruebaAvatares.Length;
+            rec ??= RecursosPersonas.Cargar();
+            int n = rec != null && rec.avatares != null ? rec.avatares.Length : 0;
+            if (n == 0) return 0;
+            return ap.personaje >= 0 ? ap.personaje % n : Mathf.Abs(ap.variante) % n;
+        }
+
+        /// <summary>Escala del avatar cercano: la estatura de la apariencia (1,81 m · escala) sobre la altura del modelo.</summary>
+        public static float Escala(Apariencia ap, RecursosPersonas rec = null)
+        {
+            if (PruebaAvatares != null && PruebaAvatares.Length > 0) return ap.escala;
+            rec ??= RecursosPersonas.Cargar();
+            var p = rec != null ? rec.Perfil(Cuerpo(ap, rec)) : null;
+            return p != null && p.altura > 0.5f ? ap.escala * 1.81f / p.altura : ap.escala;
+        }
+
+        /// <summary>Cuerpo del jugador (0 = Brian, 1 = Megan) a su escala natural; si no hay, uno de los NPC.</summary>
+        public static GameObject CrearJugador(int cual)
+        {
+            var rec = RecursosPersonas.Cargar();
+            if (rec == null || rec.jugadores == null || rec.jugadores.Length == 0) return Crear(7);
+            var pf = rec.jugadores[Mathf.Clamp(cual, 0, rec.jugadores.Length - 1)];
+            if (pf == null) return Crear(7);
+            var go = Instanciar(pf, null, rec);
+            go.name = "Jugador_" + pf.name;
+            return go;
+        }
+
+        static GameObject Instanciar(GameObject pf, Transform padre, RecursosPersonas rec)
+        {
+            var go = Object.Instantiate(pf, padre);
             var an = go.GetComponent<Animator>();
             if (an == null) an = go.AddComponent<Animator>();
-            if (rec.controlador != null) an.runtimeAnimatorController = rec.controlador;
+            // Los personajes de Mixamo traen su controlador (masculino o femenino); los maniquíes, el común
+            if (an.runtimeAnimatorController == null && rec.controlador != null) an.runtimeAnimatorController = rec.controlador;
             an.applyRootMotion = false;
-            if (rec.colorearAvatares) Colorear(go, ap);
             var mm = MaterialMovil(rec);
             if (mm != null)
                 foreach (var mr in go.GetComponentsInChildren<MeshRenderer>(true))

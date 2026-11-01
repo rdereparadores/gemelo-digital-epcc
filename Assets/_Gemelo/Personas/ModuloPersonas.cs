@@ -17,6 +17,8 @@ namespace Gemelo
             GemeloApp.Arrancado -= Arrancar;
             GemeloApp.Arrancado += Arrancar;
             GemeloApp.FabricaAvatar = FabricaAvatares.Crear;
+            GemeloApp.FabricaJugador = FabricaAvatares.CrearJugador;
+            FabricaAvatares.PruebaAvatares = null;
             Puerta.Presencia = null;
             DibujoMultitud.CamaraForzada = null;
             DibujoMultitud.SombrasBajoTecho = false;

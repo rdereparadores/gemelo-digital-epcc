@@ -8,7 +8,8 @@ namespace Gemelo
 
     public struct Apariencia
     {
-        public int variante;          // 0 hombre, 1 hombre con mochila, 2 mujer, 3 mujer con mochila
+        public int variante;          // 0 hombre, 1 hombre con mochila, 2 mujer, 3 mujer con mochila (malla lejana)
+        public int personaje;         // índice en RecursosPersonas.avatares (personaje de Mixamo); −1 = por variante
         public float escala;          // el maniquí mide 1,81 m a escala 1
         public float paso;            // velocidad al andar (m/s)
         public Color32 piel, top, mangas, bajo, zapatos, pelo, mochila;
@@ -58,6 +59,7 @@ namespace Gemelo
             var a = new Apariencia
             {
                 variante = (mujer ? 2 : 0) + (mochila ? 1 : 0),
+                personaje = -1,
                 escala = Mathf.Clamp((mujer ? 0.915f : 0.97f) + Normal(r) * 0.035f, 0.84f, 1.07f),
                 paso = Mathf.Clamp(1.32f + Normal(r) * 0.13f, 1.0f, 1.65f),
                 piel = Variar(r, Elegir(r, Pieles, PesoPiel), 0.05f),

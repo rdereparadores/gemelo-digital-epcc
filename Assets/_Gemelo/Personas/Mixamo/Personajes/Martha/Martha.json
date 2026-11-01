@@ -1,0 +1,27 @@
+{
+  "nombre": "Martha",
+  "altura": 1.77,
+  "colores": {
+    "piel": "#997065",
+    "top": "#3b3e59",
+    "mangas": "#3c3e5a",
+    "bajo": "#9d857c",
+    "zapatos": "#ccb39f",
+    "pelo": "#160d0b"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch27_body",
+      "recorte": false,
+      "color": "Martha_Ch27_1001_Diffuse_Color.jpg",
+      "normal": "Martha_Ch27_1001_Normal_Normal.jpg",
+      "mascara": "Martha_Ch27_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch27_hair",
+      "recorte": true,
+      "color": "Martha_Ch27_1002_Diffuse_Color.png",
+      "normal": "Martha_Ch27_1002_Normal_Normal.jpg"
+    }
+  ]
+}

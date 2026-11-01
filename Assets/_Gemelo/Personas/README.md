@@ -26,10 +26,15 @@ Solo usa el núcleo (`Assets/_Gemelo/Nucleo/`) y `Assets/_Politecnica/Runtime/`.
 | `Navegacion.cs` | Carga la malla (`NavMesh.AddNavMeshData`) y sus enlaces, calcula y guarda en caché las rutas |
 | `Rejilla.cs` | Rejilla espacial (2 m) para esquivarse y para las puertas |
 | `DibujoMultitud.cs` | LOD: avatares con Animator cerca, maniquíes instanciados en la GPU lejos, nada más allá |
-| `FabricaAvatares.cs` | Crea y tiñe avatares (lo usa también el jugador) |
+| `FabricaAvatares.cs` | Crea y tiñe avatares (NPC y jugador: `GemeloApp.FabricaAvatar` y `GemeloApp.FabricaJugador`) |
+| `Reparto.cs` | Qué personaje de Mixamo lleva cada persona según el local (alumnado, profesorado, mantenimiento, vigilancia) |
 | `Shaders/MultitudInstanciada.shader` | Maniquí rígido animado en el vértice (andar, correr, sentado, hablar, móvil) |
 | `Editor/ConstructorNavegacion.cs` | Tools ▸ Gemelo ▸ Malla de navegación → `Navegacion/Campus.asset` |
-| `Editor/ConstructorManiquies.cs` | Tools ▸ Gemelo ▸ Maniquíes → `Maniquies/` (mallas, avatares, clips, controlador) |
+| `Editor/ConstructorManiquies.cs` | Tools ▸ Gemelo ▸ Maniquíes → `Maniquies/` (mallas lejanas, maniquíes, clips, controlador) |
+| `Editor/ImportadorMixamo.cs` | Ajustes de importación de `Mixamo/` (Humanoid, LOD de malla, clips in place, texturas) |
+| `Editor/ConstructorMixamo.cs` | Tools ▸ Gemelo ▸ Personajes de Mixamo → materiales, controladores, prefabs y `RecursosPersonas` |
+| `Editor/GaleriaPersonajes.cs` | Render de prueba de todos los avatares con un clip (sin Play Mode) |
+| `Mixamo/` | Personajes (FBX sin texturas embebidas, texturas ≤ 1024 px, JSON con colores), animaciones, override y prefabs |
 | `Resources/RecursosPersonas.asset` | Lo que se carga en ejecución: malla y enlaces, prefabs de avatar, controlador, mallas lejanas |
 
 ## Malla de navegación
@@ -89,52 +94,132 @@ edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y 
 
 ## Dibujo
 
-- Hasta `Ajustes.maxAnimadas` personas (con un tope interno de 40, `DibujoMultitud.TopeAnimadas`) a menos de 40 m y
-  en pantalla llevan un avatar con `Animator` humanoide (reserva reutilizada por variante de cuerpo; una sola submalla
-  teñida con una paleta 8×1 propia en un material propio de cada avatar, no con `MaterialPropertyBlock`, para que el
-  SRP Batcher los agrupe). Solo proyectan sombra los que están a menos de 14 m.
+- Hasta `Ajustes.maxAnimadas` personas (40 por defecto, con un tope interno de 80, `DibujoMultitud.TopeAnimadas`) a
+  menos de 40 m y en pantalla llevan un **personaje de Mixamo** con `Animator` humanoide (reserva reutilizada por
+  personaje). Se crean como mucho 3 por selección (cada 0,2 s), porque crear uno cuesta 1-3 ms; mientras tanto sigue
+  de maniquí. Solo proyectan sombra los que están a menos de 14 m, y nunca el pelo ni las pestañas (recorte alfa a
+  dos caras: la pasada de sombra más cara). A más de 8 m la piel se calcula con 2 huesos (`SkinQuality.Bone2`). Las
+  mallas llevan LOD de malla de Unity 6 (`generateMeshLods` al importar): de lejos se dibujan simplificadas. Con
+  `maxAnimadas` = 0 no queda ninguno animado (la holgura de 4 para no parpadear solo vale con alguno).
 - El resto, hasta `Ajustes.distanciaPersonas`, son maniquíes rígidos dibujados con `Graphics.RenderMeshIndirect` (un
-  dibujo por variante, con sombra a menos de 35 m) y animados en el vértice por `MultitudInstanciada`.
+  dibujo por variante, con sombra a menos de 35 m) y animados en el vértice por `MultitudInstanciada`. Llevan los
+  **colores dominantes del personaje** que tendrían de cerca (piel, ropa de arriba, mangas, ropa de abajo, zapatos y
+  pelo o casco/gorra, sacados de su textura por zonas del cuerpo) y su estatura, así que el salto de LOD apenas se nota.
+- Con los maniquíes como avatares cercanos (Tools ▸ Gemelo ▸ Maniquíes) cada uno se tiñe con una paleta 8×1 propia
+  (`colorearAvatares`).
+- **Sentados**: el avatar sube o baja `alturaAsiento − alturaAsientoClip · escala` (la altura de la silla menos la
+  del asiento de la postura sentada, que mide `ConstructorMixamo`: 0,443 m para 1,81 m de estatura). Con el gesto
+  del móvil, el estado `SentadoMovil` **teclea** (`Sit_Typing`) si hay una pantalla de ordenador delante del puesto
+  (`Plaza.ordenador`: mallas `*Pantalla_Monitor` a la altura de una mesa, a menos de 0,9 m del punto 0,5 m por
+  delante del asiento) y **escribe** (`Sit_Writing`) si no (`ParamAvatar.Escribiendo` = 0/1). Donde no hay mesa
+  (`Estancia.mesas` falso: cafetería, salón de actos, salas de descanso y de estudiantes, bancos de los halls) se
+  queda sentado sin más; de pie sí saca el móvil (`MovilDePie`, en la mano derecha). Con los Mixamo el móvil no
+  sale sentado (`RecursosPersonas.movilSentado`).
 - Se ocultan los que quedan por encima del corte de su edificio (`GemeloApp.CortarEdificio`) y, vistos desde fuera y
   a más de 70 m, los que están dentro de un edificio.
 - **Tras los muros**: con la cámara dentro de un local cerrado (aula, despacho, laboratorio…; no pasillos, vestíbulos,
   halls, escaleras, cafetería ni patios, y no a menos de 2,5 m de una de sus puertas), los que están bajo techo en otro
   local solo se dibujan si están en la misma planta y a menos de 10 m (25 m en pasillos y vestíbulos, que se ven por
-  la puerta abierta); los de
-  fuera, sí (se ven por las ventanas). `DibujoMultitud.OcultarTrasMuros = false` lo desactiva (pruebas).
+  la puerta abierta); los de fuera, sí (se ven por las ventanas). `DibujoMultitud.OcultarTrasMuros = false` lo
+  desactiva (pruebas).
 - **Sombras**: quien está quieto bajo techo (en una estancia que no es patio ni terraza) no da sombra del sol: el techo
   ya la tapa y las luces interiores no tienen sombras. `DibujoMultitud.SombrasBajoTecho = true` lo deshace (pruebas).
 - **Stencil**: en la vista cenital con una capa de color, los avatares llevan un material más
   (`Resources/GemeloPersonas/MarcaPersonas.shader`) que marca el bit 3 (valor 8) del stencil donde se ven, y
   `MultitudInstanciada` lo marca siempre en su pasada de color; la capa de color de Control no pinta ahí, así que no
-  tiñe a la gente (con personajes de varias submallas solo se marcaría la última).
+  tiñe a la gente. Un material de más solo vuelve a dibujar la última submalla: vale para los renderers de una
+  submalla (casi todas las piezas de Mixamo); los de varias (James, Lewis, Alex) llevan al lado, solo mientras hace
+  falta, una copia del `SkinnedMeshRenderer` con los mismos huesos y la marca en todas sus submallas.
 
-## Maniquíes, clips y cómo cambiarlos por personajes de Mixamo
+## Personajes de Mixamo
+
+Los NPC cercanos y el jugador son personajes de Mixamo (selección aprobada por el usuario el 01-11-2026):
+
+| Papel | Personajes | Dónde salen (`Reparto.cs`) |
+|---|---|---|
+| Alumnado | Remy, Bryce, James, Lewis, David (hombres); Kate, Sophie, Elizabeth, Jody, Louise (mujeres) | el resto |
+| Profesorado | Josh, Joe (hombres); Martha, Suzie, Roth (mujeres) | 85 % en despachos, secretaría, conserjería, oficinas y salas de juntas; 40 % en laboratorios de investigación; 8 % en los demás laboratorios; 3 % en las aulas; 6 % en el resto |
+| Mantenimiento | Pete (chaleco reflectante y casco) | 5 % en pasillos, distribuidores, almacenes e instalaciones; como mucho 2 a la vez |
+| Vigilancia | Alex (uniforme negro y gorra) | 12 % en conserjería, vestíbulos y halls; como mucho 2 a la vez |
+| Jugador | Brian, Megan (no salen como NPC) | `Ajustes.avatarJugador` (Ajustes ▸ Controles) |
+
+El sexo (y con él el andar y la malla lejana) sale de la semilla de cada persona (58 % hombres); el personaje se
+elige entre los de ese sexo y papel (de dos al azar, el menos repetido). El servicio no publica ocupación de los
+despachos (01-11-2026), así que casi todo el personal que se ve está en aulas, laboratorios y salas de juntas (con
+~1.800 personas, ~90 son profesorado, 2 de mantenimiento y 2 de vigilancia). `Multitud.porPersonaje` cuenta cuántos
+lleva cada personaje.
+
+### Cómo se rehace
+
+1. Descargar de Mixamo a `Datos/descargas/mixamo/` (caché ignorada por git): personajes «FBX for Unity», con piel y
+   en T-pose, en `personajes/<Nombre>.fbx`, y animaciones «FBX for Unity» sin piel (esqueleto de Y Bot), las de
+   locomoción *in place*, en `animaciones/<nombre>.fbx` (nombres en la tabla de clips).
+2. `/usr/bin/python3.14 -I Herramientas/mixamo/preparar_mixamo.py [Nombre…]` (unos 2 min con todo). Sin Blender: lee
+   el FBX binario (`fbx_binario.py`), extrae las texturas embebidas y lo vuelve a escribir sin ellas (mallas, pesos y
+   esqueleto `mixamorig:*` idénticos, así que Unity lo importa como cualquier FBX de Mixamo, sin nodo raíz de más).
+   Deja en `Mixamo/Personajes/<N>/` el FBX (~2,5 MB), el color a 1024 px (JPG; PNG con alfa si el pelo o las
+   pestañas recortan con ella, con el color de los texeles transparentes rellenado desde los vecinos para que no
+   salga el halo blanco al filtrar), la normal (JPG), una máscara de 512 px con el *gloss* en A (→ smoothness de
+   URP/Lit) y `<N>.json` con los materiales, la altura y los colores dominantes por zonas (en T-pose: manos y cara,
+   pecho, brazos, muslos, pies, pelo o casco/gorra). Copia también las animaciones a `Mixamo/Animaciones/`.
+   `MIXAMO_DEPURAR=<carpeta>` guarda una vista de las muestras de color; `MIXAMO_DESTINO=<carpeta>` escribe en otro
+   sitio (pruebas).
+3. En Unity, al importar, `ImportadorMixamo` aplica: Humanoid con *Create From This Model* (también las animaciones,
+   con el avatar de su esqueleto de Y Bot), escala del archivo (Remy viene a 3,8 m y se importa a 1,78), LOD de
+   malla, tangentes, sin cámaras ni blendshapes; clips con giro, altura y posición horneados en la pose (referencia
+   original) y en bucle salvo `StandToSit`/`SitToStand`; texturas a 1024 como mucho, normales como *Normal map*,
+   máscaras lineales y el color con alfa conservando la cobertura en los mipmaps.
+4. **Tools ▸ Gemelo ▸ Personajes de Mixamo** (`ConstructorMixamo.Construir()`, ~30 s): materiales URP/Lit en
+   `Personajes/<N>/Materiales/` (pelo y pestañas con *Alpha Clipping* 0,45 y a dos caras; smoothness 0,5 × gloss),
+   reimporta cada FBX con ellos (`AddRemap`), crea los dos `AnimatorOverrideController` (`Persona_Hombre`,
+   `Persona_Mujer`) sobre `Maniquies/Persona.controller`, un prefab por personaje en `Mixamo/Prefabs/` (con el móvil
+   en la mano derecha: dedos en +Y y palma en +Z del hueso) y rellena `RecursosPersonas` (avatares, perfiles,
+   jugadores, sin teñir, sin móvil sentado y la altura del asiento de la postura sentada). **Tools ▸ Gemelo ▸
+   Maniquíes** rehace el controlador (conservando su GUID) y vuelve a poner los maniquíes: después hay que volver a
+   pasar este.
+5. Revisar sin Play Mode: `Gemelo.GaleriaPersonajes.Render("/ruta.png", "Sentado", 1.5f)` (o `Reposo`, `Andar`,
+   `SentadoMovil`, `SentadoEscribiendo`, `MovilDePie`, `HablarDePie`…).
+
+Lo versionado de Mixamo ocupa ~111 MB (personajes 84 MB, animaciones 26 MB contando las copias recentradas, prefabs
+1,7 MB), frente a ~920 MB de los FBX originales.
+
+### Clips
+
+`Persona.controller` (generado por `ConstructorManiquies`) tiene los estados `Locomocion` (árbol 1D por `Velocidad`:
+`Reposo` 0, `Andar` 1,4, `Correr` 3,0 y `CorrerRapido` 4,6 m/s), `HablarDePie`, `MovilDePie`, `Sentado`,
+`SentadoHablando`, `SentadoMovil` (árbol 1D por `Escribiendo`: `SentadoMovil` 0 y `SentadoEscribiendo` 1) y `Aire`,
+con los parámetros de `ParamAvatar` más `Movil`. Los override sustituyen los clips:
+
+| Clip del maniquí | Hombre | Mujer |
+|---|---|---|
+| Reposo | Idle_Standing (Standing Idle) | Idle_WeightShift (Weight Shift Idle) |
+| Andar | Walk_MaleStandard (Male Standard Walk) | Walk_Female (Female Walk) |
+| Correr / CorrerRapido | Run_Jogging (Jogging) / Run_Standard (Standard Running) | igual |
+| HablarDePie | Talk_GeneralConversation (General Conversation) | Talk_AskingOneHand (Asking A Question With One Hand) |
+| MovilDePie | Texting_Standing (Standing Texting On Phone) | igual |
+| Sentado | Sit_Breathing (Sitting With Breathing Idle) | Sit_StillChair_Centrado (Sitting Still In A Chair) |
+| SentadoHablando | Sit_Talking_Centrado (Sitting And Talking To Another Person) | igual |
+| SentadoMovil | Sit_Typing (Sitting At A Computer And Typing) | igual |
+| SentadoEscribiendo | Sit_Writing_Centrado (Male Writing While Seated) | igual |
+| Aire | Falling_Idle (Mid-Air Falling Idle) | igual |
+
+Mixamo no tiene «texting» sentado: sentado, el gesto del móvil teclea o escribe (ver Dibujo). Las posturas sentadas no
+ponen la cadera en el mismo sitio: «Writing» se sienta 20 cm más adelante (las piernas atravesaban la mesa) y
+«Still In A Chair», «Talking» y «Writing», 5-8 cm más altas. `ConstructorMixamo` guarda copias `*_Centrado.anim`
+con el cuerpo llevado a la cadera de «Typing» en planta y a medio camino en altura (del todo hundía los pies), con
+las claves reducidas. `Walk_Standard`, `StandToSit` y `SitToStand` quedan importados pero sin usar: los NPC llegan a
+la plaza y se sientan en el sitio (con la transición de 0,55 s del controlador), y las animaciones de sentarse
+necesitan empezar delante de la silla y desplazar la raíz, lo que complicaría la máquina de estados y el paso.
+
+## Maniquíes
 
 `Tools ▸ Gemelo ▸ Maniquíes` genera cuatro cuerpos (hombre y mujer, con y sin mochila) con esqueleto humanoide de
-nombres estándar (`Hips`, `Spine`, `Chest`, `Neck`, `Head`, `LeftShoulder`, `LeftUpperArm`…), su `Avatar`, nueve clips
-humanoides (`Reposo`, `Andar`, `Correr`, `Sentado`, `SentadoHablando`, `SentadoMovil`, `HablarDePie`, `MovilDePie`,
-`Aire`) y `Persona.controller` con los parámetros de `ParamAvatar` (`Velocidad`, `Sentado`, `Hablando`, `EnSuelo`,
-`Saltar`) más `Movil` (bool). Las poses se escriben como giros de huesos y se convierten a músculos, así que los clips
-valen para cualquier humanoide.
-
-Para usar personajes de Mixamo (FBX):
-
-1. Importar cada personaje con *Rig ▸ Animation Type: Humanoid* (*Avatar Definition: Create From This Model*) y hacer
-   un prefab con el modelo (el `Animator` puede quedarse sin controlador).
-2. En `Resources/RecursosPersonas.asset`, poner esos prefabs en **Avatares** (el índice es la variante: 0 hombre,
-   1 hombre con mochila, 2 mujer, 3 mujer con mochila; si hay otra cantidad, se reparten por módulo) y desmarcar
-   **Colorear Avatares** (los de Mixamo traen su textura).
-3. Para las animaciones, importar los clips de Mixamo también como *Humanoid* (*In Place*, *Loop Time*) y crear un
-   `AnimatorOverrideController` sobre `Maniquies/Persona.controller` que sustituya cada clip (Reposo → Idle, Andar →
-   Walking, Correr → Running, Sentado → Sitting Idle, SentadoHablando → Sitting Talking, SentadoMovil → Texting While
-   Sitting, HablarDePie → Talking, MovilDePie → Texting, Aire → Falling Idle). Ponerlo en **Controlador**.
-4. Nada más: el código solo usa los parámetros del controlador y `HumanBodyBones.RightHand` para el móvil (si el
-   personaje no lo trae, se le pone uno). El jugador (módulo Control) recibe el mismo cuerpo por `GemeloApp.FabricaAvatar`.
-
-Los maniquíes lejanos siguen siendo los del shader (la silueta y los colores sirven igual a distancia). Si se quisiera
-otro cuerpo lejos, basta con cambiar **Mallas Lejanas** por mallas con la misma convención de `uv2`–`uv4` (pieza y
-región, hombro/cadera/cuello y codo/rodilla) que genera el builder.
+nombres estándar (`Hips`, `Spine`, `Chest`, `Neck`, `Head`, `LeftShoulder`, `LeftUpperArm`…), su `Avatar`, once clips
+humanoides (los de la tabla de arriba) y `Persona.controller`. Las poses se escriben como giros de huesos y se
+convierten a músculos, así que los clips valen para cualquier humanoide. Las mallas lejanas de la multitud
+(`Lejano_*`) también salen de aquí; si se quisiera otro cuerpo lejos, basta con cambiar **Mallas Lejanas** por mallas
+con la misma convención de `uv2`–`uv4` (pieza y región, hombro/cadera/cuello y codo/rodilla). De cerca los maniquíes
+solo se usan para comparar (`FabricaAvatares.PruebaAvatares`, ver Rendimiento).
 
 ## Rendimiento
 
@@ -157,11 +242,25 @@ intercaladas), con 1.190–1.570 personas simuladas:
   SetPass de 345 a 222, 0,5 M triángulos menos. De noche (sin sombras del sol; ruido ±0,5 ms): GPU −1,4 ms, hilo
   principal −0,8 ms, `Time.smoothDeltaTime` −0,8 ms, SetPass de 245 a 176. En la calle y en la vista cenital, igual
   (dentro del ruido).
+- **Mixamo frente a maniquíes** (01-11-2026, tope de 40 animados, tercera persona; `FabricaAvatares.PruebaAvatares`
+  pone los maniquíes en su lugar; tres parejas de tandas de 6 s en régimen estable, tras 8 s de asentarse cada
+  cambio; el editor iba a 35-45 ms por fotograma): plaza del Común (40 animados y 227 instanciados), GPU +1,8 ms
+  (+0,4 a +3,1) e hilo principal +1,2 ms; aula NORBA 1903_P1_24 con clase (20-24 sentados, 40 animados contando el
+  pasillo), GPU +3,1 ms, hilo principal +1,5 ms y 1,1 M triángulos más. Antes de las rebajas (sin LOD de malla, piel
+  de 4 huesos y sombra del pelo) y alternando cada 3 s, salían +9 a +27 ms: casi todo era **crear** los personajes
+  (cada cambio rehacía 40 de golpe), de ahí el tope de 3 creaciones por selección. Lo que queda es sobre todo el
+  sombreado de más triángulos y renderers (~7 por personaje).
 - La simulación (reconciliar + rutas + paso) se queda en 0,4–0,9 ms. Las rutas se calculan con un presupuesto de
   0,6 ms por fotograma; en el arranque de una evacuación grande hay picos de 1–5 ms durante unos segundos mientras se
   calculan las rutas de cada estancia al punto de reunión (luego quedan en caché).
 
 ## Limitaciones conocidas
+
+- Personajes de Mixamo: no se han probado con la hora acelerada ni con saltos de reloj (no se podía tocar el reloj
+  del servicio mientras trabajaban otros agentes); el reparto se hace en `Multitud.Nueva` y las cuentas de
+  `porPersonaje` salieron coherentes tras arrancar y tras una evacuación. Los clips de sentarse y levantarse no se
+  usan. El móvil de pie queda en la palma, casi tapado por la mano. En los bancos fijos con mesa corrida las manos
+  pueden rozar el tablero.
 
 - La malla deja 20 de 526 accesos de estancia sin ruta desde el aparcamiento (01-11-2026; antes 79 de 509, y otros 10
   solo «llegaban» por costuras que atravesaban la fachada): locales sin puerta en el modelo (1903 P1 22, 1904 P0 26,

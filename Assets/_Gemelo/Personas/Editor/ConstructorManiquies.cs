@@ -358,6 +358,9 @@ namespace Gemelo
             rec.mallasLejanas = lejanas.ToArray();
             rec.materialLejano = matLejano;
             rec.colorearAvatares = true;
+            rec.perfiles = new PerfilPersonaje[0];          // (los de Mixamo los vuelve a poner ConstructorMixamo)
+            rec.alturaAsientoClip = 0.46f;
+            rec.movilSentado = true;
             EditorUtility.SetDirty(rec);
             AssetDatabase.SaveAssets();
             return $"{prefabs.Count} maniquíes, {clips.Count} clips, controlador y {lejanas.Count} mallas lejanas " +
@@ -510,6 +513,8 @@ namespace Gemelo
             for (int k = 0; k <= 8; k++) defs["Andar"].Add((k / 8f, Paso(k / 8f, 24, 52, 6, 16, 14, 0.025f, 2)));
             defs["Correr"] = new();
             for (int k = 0; k <= 8; k++) defs["Correr"].Add((0.7f * k / 8f, Paso(k / 8f, 40, 85, 20, 32, 80, 0.06f, 11)));
+            defs["CorrerRapido"] = new();
+            for (int k = 0; k <= 8; k++) defs["CorrerRapido"].Add((0.62f * k / 8f, Paso(k / 8f, 48, 100, 22, 40, 85, 0.07f, 14)));
 
             defs["Sentado"] = new() { (0f, Sentada()), (2f, Sentada(1.5f).Cabeza(8, 4)), (4f, Sentada()) };
             defs["SentadoHablando"] = new()
@@ -522,6 +527,9 @@ namespace Gemelo
             };
             Pose SentadaMovil(float c) => Sentada().Cabeza(28 + c, 0).Brazo("Left", 72, 42, 112).Brazo("Right", 72, 42, 112);
             defs["SentadoMovil"] = new() { (0f, SentadaMovil(0)), (2f, SentadaMovil(3)), (4f, SentadaMovil(0)) };
+            // Escribiendo en la mesa: cabeza baja, mano derecha que va y viene sobre el papel
+            Pose Escribir(float c) => Sentada().Tronco(14).Cabeza(24, -4).Brazo("Right", 66, 50 + c, 100 - c).Brazo("Left", 68, 46, 96);
+            defs["SentadoEscribiendo"] = new() { (0f, Escribir(0)), (0.5f, Escribir(4)), (1f, Escribir(-2)), (1.5f, Escribir(3)), (2f, Escribir(0)) };
 
             Pose Hablar(float a, float b) => DePie().Brazo("Right", 50 + a, 40 + b, 80 + b, -15).Brazo("Left", 72, 15 + a * 0.3f, 35).Cabeza(-2, 6 - a * 0.3f).Tronco(1, a * 0.2f);
             defs["HablarDePie"] = new() { (0f, Hablar(0, 0)), (0.7f, Hablar(-12, 14)), (1.5f, Hablar(6, -6)), (2.2f, Hablar(-8, 10)), (3f, Hablar(0, 0)) };
@@ -591,15 +599,20 @@ namespace Gemelo
 
         static AnimatorController Controlador(Dictionary<string, AnimationClip> clips)
         {
+            // Se construye aparte y se copia encima del anterior para conservar su GUID (lo usan los prefabs, el
+            // asset de recursos y los AnimatorOverrideController de Mixamo)
             var ruta = Carpeta + "/Persona.controller";
-            AssetDatabase.DeleteAsset(ruta);
-            var c = AnimatorController.CreateAnimatorControllerAtPath(ruta);
+            var tmp = Carpeta + "/Tmp/Persona.controller";
+            Directory(Carpeta + "/Tmp");
+            AssetDatabase.DeleteAsset(tmp);
+            var c = AnimatorController.CreateAnimatorControllerAtPath(tmp);
             c.AddParameter(ParamAvatar.Velocidad, AnimatorControllerParameterType.Float);
             c.AddParameter(ParamAvatar.Sentado, AnimatorControllerParameterType.Bool);
             c.AddParameter(ParamAvatar.Hablando, AnimatorControllerParameterType.Bool);
             c.AddParameter(new AnimatorControllerParameter { name = ParamAvatar.EnSuelo, type = AnimatorControllerParameterType.Bool, defaultBool = true });
             c.AddParameter(ParamAvatar.Saltar, AnimatorControllerParameterType.Trigger);
             c.AddParameter(ParamMovil, AnimatorControllerParameterType.Bool);
+            c.AddParameter(new AnimatorControllerParameter { name = ParamAvatar.Escribiendo, type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
 
             var sm = c.layers[0].stateMachine;
             var loco = c.CreateBlendTreeInController("Locomocion", out var arbol, 0);
@@ -608,7 +621,8 @@ namespace Gemelo
             arbol.useAutomaticThresholds = false;
             arbol.AddChild(clips["Reposo"], 0f);
             arbol.AddChild(clips["Andar"], 1.4f);
-            arbol.AddChild(clips["Correr"], 3.6f);
+            arbol.AddChild(clips["Correr"], 3.0f);
+            arbol.AddChild(clips["CorrerRapido"], 4.6f);
             sm.defaultState = loco;
 
             AnimatorState Estado(string n, Vector3 pos)
@@ -621,7 +635,13 @@ namespace Gemelo
             var movil = Estado("MovilDePie", new Vector3(300, 80));
             var sentado = Estado("Sentado", new Vector3(600, 0));
             var sentHabla = Estado("SentadoHablando", new Vector3(600, 80));
-            var sentMovil = Estado("SentadoMovil", new Vector3(600, 160));
+            // Sentado con las manos ocupadas: teclear (Escribiendo = 0) o escribir (1); los maniquíes, móvil o escribir
+            var sentMovil = c.CreateBlendTreeInController("SentadoMovil", out var arbolMovil, 0);
+            arbolMovil.blendType = BlendTreeType.Simple1D;
+            arbolMovil.blendParameter = ParamAvatar.Escribiendo;
+            arbolMovil.useAutomaticThresholds = false;
+            arbolMovil.AddChild(clips["SentadoMovil"], 0f);
+            arbolMovil.AddChild(clips["SentadoEscribiendo"], 1f);
             var aire = Estado("Aire", new Vector3(0, 250));
 
             const AnimatorConditionMode Si = AnimatorConditionMode.If, No = AnimatorConditionMode.IfNot;
@@ -667,7 +687,11 @@ namespace Gemelo
             aterrizar.duration = 0.2f;
             aterrizar.AddCondition(Si, 0, ParamAvatar.EnSuelo);
             EditorUtility.SetDirty(c);
-            return c;
+            AssetDatabase.SaveAssets();
+            System.IO.File.Copy(tmp, ruta, true);
+            AssetDatabase.DeleteAsset(Carpeta + "/Tmp");
+            AssetDatabase.ImportAsset(ruta, ImportAssetOptions.ForceUpdate);
+            return AssetDatabase.LoadAssetAtPath<AnimatorController>(ruta);
         }
 
         // ───────────────────────── Utilidades ─────────────────────────

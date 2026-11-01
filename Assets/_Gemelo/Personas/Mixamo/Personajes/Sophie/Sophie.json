@@ -1,0 +1,27 @@
+{
+  "nombre": "Sophie",
+  "altura": 1.764,
+  "colores": {
+    "piel": "#ad6d68",
+    "top": "#da9552",
+    "mangas": "#da9552",
+    "bajo": "#ab877c",
+    "zapatos": "#9d9d9d",
+    "pelo": "#685838"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch02_body",
+      "recorte": false,
+      "color": "Sophie_Ch02_1001_Diffuse_Color.jpg",
+      "normal": "Sophie_Ch02_1001_Normal_Normal.jpg",
+      "mascara": "Sophie_Ch02_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch02_hair",
+      "recorte": true,
+      "color": "Sophie_Ch02_1002_Diffuse_Color.png",
+      "normal": "Sophie_Ch02_1002_Normal_Normal.jpg"
+    }
+  ]
+}

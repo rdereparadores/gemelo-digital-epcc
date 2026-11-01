@@ -1,0 +1,21 @@
+{
+  "nombre": "Alex",
+  "altura": 1.773,
+  "colores": {
+    "piel": "#895745",
+    "top": "#17141b",
+    "mangas": "#131017",
+    "bajo": "#0f0d13",
+    "zapatos": "#0c0c0c",
+    "pelo": "#070606"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch18_Body",
+      "recorte": false,
+      "color": "Alex_Ch18_1001_Diffuse_Color.jpg",
+      "normal": "Alex_Ch18_1001_Normal_Normal.jpg",
+      "mascara": "Alex_Ch18_1001_Glossiness_Mascara.png"
+    }
+  ]
+}

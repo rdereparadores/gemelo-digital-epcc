@@ -1,0 +1,27 @@
+{
+  "nombre": "Lewis",
+  "altura": 1.768,
+  "colores": {
+    "piel": "#865d45",
+    "top": "#778f91",
+    "mangas": "#789093",
+    "bajo": "#31312b",
+    "zapatos": "#141415",
+    "pelo": "#141212"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch12_body",
+      "recorte": false,
+      "color": "Lewis_Ch12_1001_Diffuse_Color.png",
+      "normal": "Lewis_Ch12_1001_Normal_Normal.jpg",
+      "mascara": "Lewis_Ch12_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch12_hair",
+      "recorte": true,
+      "color": "Lewis_Ch12_1001_Diffuse_Color.png",
+      "normal": "Lewis_Ch12_1001_Normal_Normal.jpg"
+    }
+  ]
+}

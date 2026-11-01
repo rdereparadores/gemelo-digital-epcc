@@ -1,0 +1,27 @@
+{
+  "nombre": "David",
+  "altura": 1.763,
+  "colores": {
+    "piel": "#86583b",
+    "top": "#101216",
+    "mangas": "#101216",
+    "bajo": "#14171c",
+    "zapatos": "#212121",
+    "pelo": "#040403"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch28_body",
+      "recorte": false,
+      "color": "David_Ch28_1001_Diffuse_Color.png",
+      "normal": "David_Ch28_1001_Normal_Normal.jpg",
+      "mascara": "David_Ch28_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch28_hair",
+      "recorte": true,
+      "color": "David_Ch28_1001_Diffuse_Color.png",
+      "normal": "David_Ch28_1001_Normal_Normal.jpg"
+    }
+  ]
+}

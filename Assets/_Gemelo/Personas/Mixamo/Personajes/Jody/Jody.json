@@ -1,0 +1,27 @@
+{
+  "nombre": "Jody",
+  "altura": 1.742,
+  "colores": {
+    "piel": "#a76a6c",
+    "top": "#be90ae",
+    "mangas": "#bf91af",
+    "bajo": "#1a1d21",
+    "zapatos": "#c7c7c9",
+    "pelo": "#27140e"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch38_body",
+      "recorte": false,
+      "color": "Jody_Ch37_1001_Diffuse_Color.jpg",
+      "normal": "Jody_Ch37_1001_Normal_Normal.jpg",
+      "mascara": "Jody_Ch37_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch37_hair",
+      "recorte": true,
+      "color": "Jody_Ch37_1002_Diffuse_Color.png",
+      "normal": "Jody_Ch37_1002_Normal_Normal.jpg"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "nombre": "Elizabeth",
+  "altura": 1.783,
+  "colores": {
+    "piel": "#975e4b",
+    "top": "#dad7d6",
+    "mangas": "#dedede",
+    "bajo": "#2a3a4d",
+    "zapatos": "#d44458",
+    "pelo": "#0a0a09"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch26_body",
+      "recorte": false,
+      "color": "Elizabeth_Ch26_1001_Diffuse_Color.jpg",
+      "normal": "Elizabeth_Ch26_1001_Normal_Normal.jpg",
+      "mascara": "Elizabeth_Ch26_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch26_hair",
+      "recorte": true,
+      "color": "Elizabeth_Ch26_1002_Diffuse_Color.png",
+      "normal": "Elizabeth_Ch26_1002_Normal_Normal.jpg"
+    }
+  ]
+}

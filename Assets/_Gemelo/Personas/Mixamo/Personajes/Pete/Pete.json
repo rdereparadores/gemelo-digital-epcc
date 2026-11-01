@@ -1,0 +1,27 @@
+{
+  "nombre": "Pete",
+  "altura": 1.788,
+  "colores": {
+    "piel": "#6f4a47",
+    "top": "#e7512c",
+    "mangas": "#3b3946",
+    "bajo": "#3d3938",
+    "zapatos": "#7a5932",
+    "pelo": "#b7b7b6"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch17_body",
+      "recorte": false,
+      "color": "Pete_Ch17_1001_Diffuse_Color.jpg",
+      "normal": "Pete_Ch17_1001_Normal_Normal.jpg",
+      "mascara": "Pete_Ch17_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch17_hair",
+      "recorte": true,
+      "color": "Pete_Ch17_1002_Diffuse_Color.png",
+      "normal": "Pete_Ch17_1002_Normal_Normal.jpg"
+    }
+  ]
+}

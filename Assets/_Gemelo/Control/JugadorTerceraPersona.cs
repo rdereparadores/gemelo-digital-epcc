@@ -1,5 +1,5 @@
-// Tercera persona: el avatar del jugador (el mismo maniquí que los NPCs, de GemeloApp.FabricaAvatar, o uno
-// de cápsulas si no hay fábrica) con un CharacterController del tamaño de una persona (radio 0,22, piel 0,02,
+// Tercera persona: el avatar del jugador (Brian o Megan según Ajustes.avatarJugador, de GemeloApp.FabricaJugador; si
+// no hay, el cuerpo de un NPC de GemeloApp.FabricaAvatar o uno de cápsulas) con un CharacterController del tamaño de una persona (radio 0,22, piel 0,02,
 // alto 1,8: cabe por todas las puertas), y la cámara orbital por detrás del hombro. La cámara se acerca con
 // un spherecast cuando algo se interpone (muros de pasillos estrechos, pilares, techos), y si queda pegada
 // a la cabeza el cuerpo solo proyecta sombra.
@@ -27,19 +27,24 @@ namespace Gemelo
         /// <summary>Recorrido automático: el jugador anda (o corre con CorrerForzado) por estos puntos y la cámara le sigue.</summary>
         public readonly System.Collections.Generic.List<Vector3> Ruta = new();
         public bool CorrerForzado { get; set; }
+        /// <summary>Para pruebas: salta en el siguiente fotograma (como pulsar espacio).</summary>
+        public bool SaltoForzado { get; set; }
         public float Rumbo { get => yaw; set => yaw = value; }
         public float Inclinacion { get => pitch; set => pitch = Mathf.Clamp(value, -45f, 72f); }
         public float Distancia { get => distObjetivo; set => distObjetivo = Mathf.Clamp(value, distanciaMin, distanciaMax); }
         public float DistanciaCamara => distActual;
 
         GemeloApp app;
-        GameObject cuerpo;
+        GameObject cuerpo, modelo;
+        int avatarPuesto = -1;
         CharacterController cc;
         Animator anim;
         Renderer[] renderers;
         ShadowCastingMode[] sombras;
         bool ocultoPorCamara;
-        bool paramVelocidad, paramEnSuelo, paramSaltar;
+        bool paramVelocidad, paramEnSuelo, paramSaltar, paramSentado;
+        bool sentado;
+        Vector3 posLevantarse;
 
         float yaw, pitch = 14f;
         float distObjetivo = 3.4f, distActual = 3.4f;
@@ -53,6 +58,7 @@ namespace Gemelo
         static readonly int hVelocidad = Animator.StringToHash(ParamAvatar.Velocidad);
         static readonly int hEnSuelo = Animator.StringToHash(ParamAvatar.EnSuelo);
         static readonly int hSaltar = Animator.StringToHash(ParamAvatar.Saltar);
+        static readonly int hSentado = Animator.StringToHash(ParamAvatar.Sentado);
 
         // Aparición: en la plaza del este del Edificio Común (entre la cafetería, Informática y Teleco), mirando a
         // la puerta de la cafetería
@@ -63,6 +69,7 @@ namespace Gemelo
         {
             app = GemeloApp.Instancia;
             enabled = false;
+            Ajustes.Cambiados += AjustesCambiados;
         }
 
         public void IgnorarRatonUnFrame() => ignorarRaton = true;
@@ -82,6 +89,7 @@ namespace Gemelo
             }
             else
             {
+                if (sentado) Levantarse();
                 enabled = false;
                 if (cuerpo != null) cuerpo.SetActive(false);
                 if (app != null && app.Jugador == (cuerpo != null ? cuerpo.transform : null)) app.Jugador = null;
@@ -102,8 +110,25 @@ namespace Gemelo
             cc.slopeLimit = 50f;
             cc.minMoveDistance = 0f;
 
-            GameObject modelo = null;
-            if (GemeloApp.FabricaAvatar != null)
+            PonerModelo();
+            Colocar(PuntoAparicion(), MirarAparicion);
+        }
+
+        // Cuerpo visible: el del jugador elegido en los ajustes (GemeloApp.FabricaJugador: Brian o Megan) o, si no hay,
+        // el de un NPC (FabricaAvatar) o el maniquí de cápsulas
+        void PonerModelo()
+        {
+            if (modelo != null) Destroy(modelo);
+            modelo = null;
+            anim = null;
+            paramVelocidad = paramEnSuelo = paramSaltar = paramSentado = false;
+            avatarPuesto = Ajustes.Actual.avatarJugador;
+            if (GemeloApp.FabricaJugador != null)
+            {
+                try { modelo = GemeloApp.FabricaJugador(avatarPuesto); }
+                catch (System.Exception e) { Debug.LogException(e); }
+            }
+            if (modelo == null && GemeloApp.FabricaAvatar != null)
             {
                 try { modelo = GemeloApp.FabricaAvatar(7); }
                 catch (System.Exception e) { Debug.LogException(e); }
@@ -124,13 +149,91 @@ namespace Gemelo
                     if (p.nameHash == hVelocidad) paramVelocidad = true;
                     else if (p.nameHash == hEnSuelo) paramEnSuelo = true;
                     else if (p.nameHash == hSaltar) paramSaltar = true;
+                    else if (p.nameHash == hSentado) paramSentado = true;
                 }
+                if (sentado && paramSentado) anim.SetBool(hSentado, true);
             }
             renderers = modelo.GetComponentsInChildren<Renderer>(true);
             sombras = new ShadowCastingMode[renderers.Length];
             for (int i = 0; i < renderers.Length; i++) sombras[i] = renderers[i].shadowCastingMode;
-            Colocar(PuntoAparicion(), MirarAparicion);
+            ocultoPorCamara = false;
         }
+
+        public bool Sentado => sentado;
+
+        /// <summary>Sienta al jugador en el asiento libre más cercano (a menos de 1,3 m) del local en el que está.</summary>
+        public bool Sentarse()
+        {
+            if (cuerpo == null || sentado) return sentado;
+            var t = cuerpo.transform;
+            var p = t.position;
+            var il = RegistroCampus.LocalEn(p + Vector3.up * 0.1f);
+            Transform mejor = null;
+            float md = 1.3f * 1.3f;
+            if (il != null && il.local.asientos != null)
+                foreach (var a in il.local.asientos)
+                {
+                    if (a == null) continue;
+                    var d = a.position - p;
+                    if (Mathf.Abs(d.y) > 0.8f) continue;
+                    d.y = 0;
+                    if (d.sqrMagnitude < md) { md = d.sqrMagnitude; mejor = a; }
+                }
+            if (mejor == null)
+            {
+                app?.Avisar("No hay ningún asiento a mano", NivelAviso.Info);
+                return false;
+            }
+            // Altura del asiento: el collider de la silla bajo su centro (si sale algo raro, la de una silla normal)
+            float suelo = Mathf.Abs(mejor.position.y - p.y) < 0.8f ? mejor.position.y : p.y;
+            float alto = 0.46f;
+            if (Physics.Raycast(mejor.position + Vector3.up * 1.0f, Vector3.down, out var hit, 1.1f, ~(1 << 2), QueryTriggerInteraction.Ignore)
+                && hit.transform.IsChildOf(mejor) && hit.point.y - suelo > 0.3f && hit.point.y - suelo < 0.8f)
+                alto = hit.point.y - suelo;
+            // Las sillas con respaldo lo tienen en −Z: se mira a +Z (como los NPC)
+            var fwd = mejor.forward;
+            fwd.y = 0;
+            if (fwd.sqrMagnitude < 0.01f) fwd = t.forward;
+            fwd.Normalize();
+            posLevantarse = p;
+            var pos = mejor.position + fwd * 0.03f;
+            pos.y = suelo + alto - AsientoClip;
+            cc.enabled = false;
+            t.SetPositionAndRotation(pos, Quaternion.LookRotation(fwd));
+            velH = Vector3.zero;
+            vy = 0;
+            sentado = true;
+            if (anim != null)
+            {
+                if (paramSentado) anim.SetBool(hSentado, true);
+                if (paramVelocidad) anim.SetFloat(hVelocidad, 0f);
+            }
+            return true;
+        }
+
+        /// <summary>Se levanta y vuelve a donde estaba de pie.</summary>
+        public void Levantarse()
+        {
+            if (!sentado) return;
+            sentado = false;
+            if (anim != null && paramSentado) anim.SetBool(hSentado, false);
+            var t = cuerpo.transform;
+            t.position = posLevantarse;
+            cc.enabled = true;
+            yaw = t.eulerAngles.y;
+        }
+
+        // Altura del asiento en la postura sentada del avatar (Mixamo y maniquíes: ~0,45 m para 1,8 m de estatura)
+        const float AsientoClip = 0.45f;
+
+        // Cambio de avatar en los ajustes con la partida en marcha: se cambia el cuerpo sin mover al jugador
+        void AjustesCambiados(Ajustes a)
+        {
+            if (cuerpo == null || a.avatarJugador == avatarPuesto) return;
+            PonerModelo();
+        }
+
+        void OnDestroy() => Ajustes.Cambiados -= AjustesCambiados;
 
         Vector3 PuntoAparicion()
         {
@@ -145,6 +248,7 @@ namespace Gemelo
         /// <summary>Lleva al jugador a un punto, mirando hacia otro.</summary>
         public void Colocar(Vector3 p, Vector3 mirarA)
         {
+            if (sentado) { sentado = false; if (anim != null && paramSentado) anim.SetBool(hSentado, false); }
             cc.enabled = false;
             var dir = mirarA - p; dir.y = 0;
             cuerpo.transform.SetPositionAndRotation(p, Quaternion.LookRotation(dir.sqrMagnitude > 0.01f ? dir : Vector3.forward));
@@ -218,6 +322,7 @@ namespace Gemelo
                 corre = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
                 salta = kb.spaceKey.wasPressedThisFrame;
             }
+            if (SaltoForzado) { salta = true; SaltoForzado = false; }
             if (MarchaForzada != Vector2.zero) { mv = MarchaForzada; corre |= CorrerForzado; }
             else if (Ruta.Count > 0)
             {
@@ -232,6 +337,25 @@ namespace Gemelo
                     corre |= CorrerForzado;
                 }
             }
+            // ─── Sentarse (C) en el asiento más cercano del local; cualquier tecla de marcha, C o espacio levanta
+            bool tSentar = jugar && kb != null && kb.cKey.wasPressedThisFrame;
+            if (sentado)
+            {
+                if (tSentar || salta || mv != Vector2.zero) Levantarse();
+                else
+                {
+                    if (anim != null && paramVelocidad) anim.SetFloat(hVelocidad, 0f, 0.1f, dt);
+                    if (Time.time >= siguienteLocal)
+                    {
+                        siguienteLocal = Time.time + 0.2f;
+                        app.PonerLocalActual(RegistroCampus.LocalEn(posLevantarse + Vector3.up * 0.1f));
+                    }
+                    return;
+                }
+                salta = false;
+            }
+            else if (tSentar && Sentarse()) return;
+
             if (mv.sqrMagnitude > 1f) mv.Normalize();
             var giro = Quaternion.Euler(0, yaw, 0);
             var deseada = giro * new Vector3(mv.x, 0, mv.y) * (corre ? correr : andar);
@@ -286,7 +410,7 @@ namespace Gemelo
             var t = cuerpo.transform;
 
             // La altura de la cabeza se suaviza (peldaños) pero sigue rápido las caídas y los saltos
-            float yObj = t.position.y + alturaOjos;
+            float yObj = t.position.y + (sentado ? alturaOjos - 0.4f : alturaOjos);
             yCabeza = Mathf.SmoothDamp(yCabeza, yObj, ref yCabezaVel, 0.07f);
             if (Mathf.Abs(yCabeza - yObj) > 1.2f) yCabeza = yObj - Mathf.Sign(yObj - yCabeza) * 1.2f;
             var cabeza = new Vector3(t.position.x, yCabeza, t.position.z);

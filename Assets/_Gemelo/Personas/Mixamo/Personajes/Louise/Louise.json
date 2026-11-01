@@ -1,0 +1,27 @@
+{
+  "nombre": "Louise",
+  "altura": 1.752,
+  "colores": {
+    "piel": "#a56a5c",
+    "top": "#0b2549",
+    "mangas": "#0c264c",
+    "bajo": "#0c264b",
+    "zapatos": "#0b0202",
+    "pelo": "#100a05"
+  },
+  "materiales": [
+    {
+      "nombre": "Ch07_body",
+      "recorte": false,
+      "color": "Louise_Ch07_1001_Diffuse_Color.jpg",
+      "normal": "Louise_Ch07_1001_Normal_Normal.jpg",
+      "mascara": "Louise_Ch07_1001_Glossiness_Mascara.png"
+    },
+    {
+      "nombre": "Ch07_hair",
+      "recorte": true,
+      "color": "Louise_Ch07_1002_Diffuse_Color.png",
+      "normal": "Louise_Ch07_1002_Normal_Normal.jpg"
+    }
+  ]
+}

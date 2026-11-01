@@ -48,7 +48,13 @@ núcleo como evento o propiedad de `GemeloApp`.
   - **Avatar:** `GemeloApp.FabricaAvatar` (estático, `Func<int, GameObject>`). Lo registra Personas y lo usa
     Control para el jugador. Devuelve un avatar con `Animator` y los parámetros de `ParamAvatar`: `Velocidad`,
     `Sentado`, `Hablando`, `EnSuelo` y `Saltar` (el controlador de Personas trae además `Movil`, bool; el móvil va en
-    la mano derecha, en un hijo «Movil» apagado). La escala del objeto es la estatura (1 ≈ 1,81 m).
+    la mano derecha, en un hijo «Movil» apagado). Con los maniquíes, la escala del objeto es la estatura (1 ≈ 1,81 m);
+    con los personajes de Mixamo cada uno trae su altura (la escala queda cerca de 1).
+  - **Jugador:** `GemeloApp.FabricaJugador` (estático, `Func<int, GameObject>`, añadido el 01-11-2026): cuerpo del
+    jugador según `Ajustes.avatarJugador` (0 = Brian, 1 = Megan, personajes que no salen como NPC). Lo registra
+    Personas; Control lo usa si existe y, si no, `FabricaAvatar(7)`. Mismos parámetros que `FabricaAvatar`.
+  - `ParamAvatar.Escribiendo` (float, añadido el 01-11-2026): en el estado `SentadoMovil` (sentado con `Movil`),
+    0 = teclea en un ordenador y 1 = escribe en la mesa. Lo pone Personas según el puesto; el jugador no lo usa.
   - `PersonasEnEscena`: NPCs simulados ahora mismo, para el HUD.
   - Puertas: `Puerta.Presencia` (estático de `_Politecnica/Runtime/Puerta.cs`) es una consulta «¿hay alguien cerca?»
     que registra Personas (sus NPCs y `GemeloApp.Jugador`); las puertas se abren con eso y con la cámara principal.
@@ -86,7 +92,8 @@ núcleo como evento o propiedad de `GemeloApp`.
   del modelo: en las fusiones suma ocupación, ventanas y radiadores; en las divisiones reparte la ocupación por superficie.
   Solo se quedan sin local los tres patios descubiertos de 1905.
 - **`Ajustes`** (`Ajustes.Actual`, `Ajustes.Aplicar()` y el evento `Ajustes.Cambiados`): se guardan en JSON en
-  `persistentDataPath`.
+  `persistentDataPath`. `avatarJugador` (0 = Brian, 1 = Megan; Ajustes ▸ Controles) cambia el cuerpo del jugador al
+  momento, sin reiniciar.
 - **`Escalas`**: nombre, unidad, rango, valor y color de cada capa, más los colores del confort y de la severidad.
   La paleta es la de la UEx.
 
@@ -100,13 +107,18 @@ selección y, si no hay, pausa. Esc se lee en `LateUpdate` y se ignora si la UI 
 `GemeloApp.EscapeConsumido` ese frame. **En pausa Control no lee Esc** (la UI lo usa para continuar).
 
 - **Menú** (`CamaraMenu`): sobrevuelo lento por una Catmull-Rom cerrada que pasa por los siete edificios.
-- **Tercera persona** (`JugadorTerceraPersona`): avatar de `FabricaAvatar` (o un maniquí de cápsulas) con
+- **Tercera persona** (`JugadorTerceraPersona`): avatar de `FabricaJugador` (Brian o Megan, según
+  `Ajustes.avatarJugador`; se cambia en caliente al recibir `Ajustes.Cambiados`), o de `FabricaAvatar`, o un
+  maniquí de cápsulas, con
   CharacterController de 0,22 m de radio, 0,02 de piel y 1,8 de alto, en la capa 2 (Ignore Raycast). WASD o
   flechas, Mayús corre, Espacio salta, ratón para mirar (sensibilidad, invertir y FOV de `Ajustes`), rueda para
   la distancia (0,9–8 m). La cámara va por detrás del hombro y se acerca con un spherecast si algo se interpone;
   pegada a la cabeza, el cuerpo solo da sombra. Aparece en la plaza de la cafetería del Común y al volver al modo
-  sigue donde estaba. Pone `GemeloApp.Jugador` y `LocalActual`. Para pruebas y recorridos: `Ruta` (lista de
-  puntos que recorre solo), `MarchaForzada`, `Rumbo`, `Inclinacion`, `Distancia` y `Colocar(punto, mirarA)`.
+  sigue donde estaba. **C** sienta al jugador en el asiento más cercano del local (a menos de 1,3 m, mirando como
+  los NPC; altura del asiento por raycast a la silla) y cualquier tecla de marcha, C o Espacio lo levanta. Pone
+  `GemeloApp.Jugador` y `LocalActual`. Para pruebas y recorridos: `Ruta` (lista de puntos que recorre solo),
+  `MarchaForzada`, `CorrerForzado`, `SaltoForzado`, `Sentarse()`/`Levantarse()`, `Rumbo`, `Inclinacion`,
+  `Distancia` y `Colocar(punto, mirarA)`.
 - **Interacciones** (`InteraccionesJugador`): según el local y su estado ofrece clase (empezar con el 85 % de la
   capacidad / terminar, en aulas, laboratorios y salas de reuniones), ventanas (abrir/cerrar, 30 min),
   calefacción (encender/apagar, 1 h) y, en el edificio, alarma de incendio (15 min) y apagón (10 min), o

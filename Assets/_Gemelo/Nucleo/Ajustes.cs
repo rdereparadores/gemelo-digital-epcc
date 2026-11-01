@@ -29,6 +29,7 @@ namespace Gemelo
         public bool invertirY;
         public float campoVision = 60f;
         public float velocidadCamaraCenital = 1f;
+        public int avatarJugador;              // cuerpo en tercera persona: 0 = Brian, 1 = Megan
 
         // Audio
         public float volumenGeneral = 0.8f;

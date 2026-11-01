@@ -37,6 +37,10 @@ namespace Gemelo
         readonly List<Persona> libres = new();
         readonly List<(Estancia e, int n)> deficits = new();
         readonly NavMeshPath caminoTmp = new();
+        /// <summary>Cuántas personas activas llevan cada personaje (índice de RecursosPersonas.avatares).</summary>
+        public readonly int[] porPersonaje = new int[64];
+        // Pantallas de ordenador sobre las mesas (rejilla de 2 m), para saber qué puestos teclean
+        readonly Dictionary<(int, int), List<Vector3>> pantallas = new();
 
         public Multitud(Navegacion nav)
         {
@@ -50,6 +54,17 @@ namespace Gemelo
                 ep.puertas = ie.puertasExteriores.Count > 0 ? c / ie.puertasExteriores.Count : ie.limites.center;
                 edificios.Add(ep);
                 porEdificio[ie] = ep;
+            }
+            foreach (var mf in Object.FindObjectsByType<MeshFilter>())
+            {
+                var malla = mf.sharedMesh;
+                if (malla == null || !malla.name.EndsWith("Pantalla_Monitor")) continue;
+                var r = mf.GetComponent<Renderer>();
+                var c = r != null ? r.bounds.center : mf.transform.position;
+                if (!Zona.Contains(c)) continue;
+                var k = (Mathf.FloorToInt(c.x / 2f), Mathf.FloorToInt(c.z / 2f));
+                if (!pantallas.TryGetValue(k, out var l)) pantallas[k] = l = new List<Vector3>();
+                l.Add(c);
             }
             foreach (var il in RegistroCampus.Locales.Values)
             {
@@ -150,10 +165,28 @@ namespace Gemelo
                     float off = n == 1 ? 0 : (i - (n - 1) / 2f) * ancho / n;
                     var pos = a.position + der * off + fwd * 0.03f;
                     pos.y = suelo;
-                    lista.Add(new Plaza { pos = pos, rumbo = Mathf.Atan2(fwd.x, fwd.z), altura = alto, ocupante = -1 });
+                    lista.Add(new Plaza { pos = pos, rumbo = Mathf.Atan2(fwd.x, fwd.z), altura = alto, ocupante = -1, ordenador = Ordenador(pos, fwd) });
                 }
             }
             e.plazas = lista.ToArray();
+        }
+
+        // ¿Hay una pantalla de ordenador delante del asiento, a la altura de una mesa?
+        bool Ordenador(Vector3 suelo, Vector3 fwd)
+        {
+            var q = suelo + fwd * 0.5f;
+            int cx = Mathf.FloorToInt(q.x / 2f), cz = Mathf.FloorToInt(q.z / 2f);
+            for (int i = -1; i <= 1; i++)
+            for (int j = -1; j <= 1; j++)
+            {
+                if (!pantallas.TryGetValue((cx + i, cz + j), out var l)) continue;
+                foreach (var c in l)
+                {
+                    float h = c.y - suelo.y, dx = c.x - q.x, dz = c.z - q.z;
+                    if (h > 0.7f && h < 1.35f && dx * dx + dz * dz < 0.9f * 0.9f) return true;
+                }
+            }
+            return false;
         }
 
         void BuscarLlegadas()
@@ -447,6 +480,8 @@ namespace Gemelo
             p.semilla = p.id * 7 + 3;
             var uso = e.info.local.uso ?? "";
             p.ap = Apariencia.Generar(p.semilla, uso.StartsWith("aula") || uso.StartsWith("sala") || uso == "seminario" ? 0.55f : 0.15f);
+            RepartoPersonajes.Elegir(ref p.ap, uso, p.semilla, porPersonaje);
+            if (p.ap.personaje >= 0 && p.ap.personaje < porPersonaje.Length) porPersonaje[p.ap.personaje]++;
             p.estado = EstadoPersona.Quieta;
             p.destino = null; p.donde = null; p.plaza = -1; p.grupo = -1; p.llegada = null; p.saliendo = false; p.evacuando = null;
             p.sentada = false; p.gesto = Gesto.Nada; p.vel = 0; p.nTramos = 0; p.pendienteRuta = false; p.avatar = -1;
@@ -462,6 +497,7 @@ namespace Gemelo
         void Desactivar(Persona p)
         {
             Soltar(p);
+            if (p.ap.personaje >= 0 && p.ap.personaje < porPersonaje.Length) porPersonaje[p.ap.personaje]--;
             p.estado = EstadoPersona.Inactiva;
             activas.Remove(p);
             cola.Remove(p);
