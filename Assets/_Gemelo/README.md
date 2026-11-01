@@ -181,7 +181,11 @@ crea el resto:
   `AmbienteBuilder`; con `Ajustes.sincronizarSol = false` lo devuelve todo como estaba.
 - `Lluvia` (trazos en la GPU alrededor de la cámara) y `Farolas` (destellos en las luminarias y las luces más cercanas).
 - `LucesInteriores`: intensidad de `Local.luces` (`EdificioPolitecnica` sigue decidiendo `enabled` por distancia),
-  ventanas y muros cortina iluminados de noche, apagón y señales verdes de salida.
+  ventanas y muros cortina iluminados de noche, apagón y señales verdes de salida. Los locales grandes traen varias
+  luces (una cada ~20 m², con la intensidad según la superficie que alumbran; las pone el generador): solo quedan
+  activas las de los locales encendidos más cercanos a la cámara, hasta `LucesInteriores.MaxLuces` (64; las otras
+  plantas cuentan como más lejos), y de día bajan con la luz natural (`FactorDia`), porque la luz ambiente ya alumbra
+  los interiores.
 - `Ventanas`: hojas y persianas de las estancias con sensor, a partir de `Resources/Ambiente/Ventanas/<código>.json`
   (lo escribe `Herramientas/politecnica/generar_politecnica.py`; `POL_SOLO_VENTANAS=1` rehace solo esos JSON y
   conserva el `en_malla` de cada ventana). Los paños de muro cortina de vestíbulos, pasillos y escaleras van en el
@@ -193,5 +197,5 @@ crea el resto:
   `AudioAmbiente` (viento, pájaros, lluvia y rumor de gente; sonidos sintetizados en `SintesisAudio`).
 
 Modo de prueba (solo para este módulo, no toca el servicio): `Gemelo.AmbienteGemelo.Prueba.hora`, `nubes`,
-`lluvia`, `viento`, `persianas[clave]`, `destellos` y `camara`; `Prueba.Quitar()` lo deshace.
+`lluvia`, `viento`, `persianas[clave]`, `luces` (claves de locales encendidos a la fuerza), `destellos` y `camara`; `Prueba.Quitar()` lo deshace.
 `Gemelo.CapturaPrueba.Tomar(pos, mira, ruta)` guarda un PNG en Play Mode con el postprocesado de la cámara principal.

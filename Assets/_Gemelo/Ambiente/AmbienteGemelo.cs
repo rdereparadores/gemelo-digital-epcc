@@ -25,6 +25,8 @@ namespace Gemelo
             public static float? viento;       // m/s
             /// <summary>Persiana forzada (0 subida – 1 bajada) por clave de local.</summary>
             public static readonly Dictionary<string, float> persianas = new();
+            /// <summary>Locales (por clave) con las luces encendidas a la fuerza, digan lo que digan los sensores.</summary>
+            public static readonly HashSet<string> luces = new();
 
             /// <summary>Estroboscópicos y balizas siempre encendidos (para las capturas).</summary>
             public static bool destellos;
@@ -32,7 +34,7 @@ namespace Gemelo
             /// señales se encienden cerca).</summary>
             public static Vector3? camara;
 
-            public static void Quitar() { hora = null; nubes = null; lluvia = null; viento = null; persianas.Clear(); destellos = false; camara = null; }
+            public static void Quitar() { hora = null; nubes = null; lluvia = null; viento = null; persianas.Clear(); luces.Clear(); destellos = false; camara = null; }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

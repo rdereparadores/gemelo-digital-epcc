@@ -3,7 +3,13 @@
 // verdes de salida de emergencia sobre las puertas de fachada (con una luz verde tenue en las más cercanas).
 // De noche, las ventanas (y los muros cortina) de los locales encendidos brillan por fuera (cuadros aditivos detrás del vidrio,
 // instanciados): así se ve de lejos qué aulas están encendidas, aunque sus luces puntuales estén lejos de la
-// cámara y apagadas por EdificioPolitecnica (que decide `enabled` por distancia; aquí solo se toca la intensidad).
+// cámara y apagadas por EdificioPolitecnica (que decide `enabled` por distancia; aquí se toca la intensidad y se
+// desactiva el objeto de las luces apagadas).
+// Los locales grandes tienen varias luces (una cada ~20 m²; ver luces_local en el generador). Para que el coste no
+// crezca con ellas, solo quedan activas las de los locales encendidos más cercanos a la cámara, hasta MaxLuces; las
+// de los locales apagados o lejanos se desactivan (una luz con intensidad 0 también cuenta para URP). De día la luz
+// ambiente ya alumbra los interiores como si no hubiera techo, así que las luces bajan con la luz natural para no
+// quemar las aulas.
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -12,9 +18,20 @@ namespace Gemelo
 {
     public class LucesInteriores : MonoBehaviour
     {
-        static readonly Color ColorVentana = new(1.0f, 0.72f, 0.40f);
+        static readonly Color ColorVentana = new(1.0f, 0.86f, 0.64f);
         static readonly Color ColorSalida = new(0.15f, 1.0f, 0.35f);
         const int MaxLucesSalida = 12;
+        /// <summary>Luces interiores activas como mucho (las de los locales encendidos más cercanos a la cámara).</summary>
+        public static int MaxLuces = 64;
+        /// <summary>Más allá de esta distancia (m) de la cámara a la planta del local, sus luces se desactivan.</summary>
+        public static float DistanciaMax = 45f;
+        /// <summary>Cuánto más lejos cuenta la diferencia de altura (otras plantas) al elegir qué luces quedan activas.</summary>
+        public static float PenalizacionPlanta = 5f;
+        /// <summary>Intensidad de las luces con plena luz natural (1 de noche).</summary>
+        public static float FactorDia = 0.45f;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void Limpiar() { MaxLuces = 64; DistanciaMax = 45f; FactorDia = 0.45f; PenalizacionPlanta = 5f; }
 
         class LocalLuz
         {
@@ -24,7 +41,20 @@ namespace Gemelo
             public float factor = 1f, objetivo = 1f;
             public float parpadeo;         // segundos de arranque de fluorescente que quedan
             public bool circulacion;
+            public bool activas = true;    // objetos de las luces activos
+            public float radio;            // medio lado de la planta (para la distancia a la cámara)
+            public float distancia;
         }
+
+        sealed class PorDistancia : IComparer<LocalLuz>
+        {
+            public int Compare(LocalLuz a, LocalLuz b) => a.distancia.CompareTo(b.distancia);
+        }
+        static readonly PorDistancia porDistancia = new();
+        readonly List<LocalLuz> candidatos = new();
+        float kDia = 1f;
+        /// <summary>Luces interiores activas ahora (para medir).</summary>
+        public int LucesActivas { get; private set; }
 
         AmbienteGemelo amb;
         readonly List<LocalLuz> locales = new();
@@ -56,7 +86,8 @@ namespace Gemelo
             {
                 var ls = il.local.luces;
                 if (ls == null || ls.Length == 0) continue;
-                var x = new LocalLuz { info = il, luces = ls, base_ = new float[ls.Length], circulacion = EsCirculacion(il.local.uso) };
+                var x = new LocalLuz { info = il, luces = ls, base_ = new float[ls.Length], circulacion = EsCirculacion(il.local.uso),
+                                       radio = 0.5f * Mathf.Sqrt(Mathf.Max(1f, il.area)) };
                 for (int i = 0; i < ls.Length; i++) x.base_[i] = ls[i] != null ? ls[i].intensity : 0f;
                 locales.Add(x);
                 porInfo[il] = x;
@@ -97,10 +128,14 @@ namespace Gemelo
         {
             if (matBrillo != null) Destroy(matBrillo);
             if (cuadro != null) Destroy(cuadro);
-            // Las luces vuelven a su intensidad de la escena
+            // Las luces vuelven a su intensidad de la escena (y activas)
             foreach (var x in locales)
                 for (int i = 0; i < x.luces.Length; i++)
-                    if (x.luces[i] != null) x.luces[i].intensity = x.base_[i];
+                    if (x.luces[i] != null)
+                    {
+                        x.luces[i].intensity = x.base_[i];
+                        if (!x.luces[i].gameObject.activeSelf) x.luces[i].gameObject.SetActive(true);
+                    }
         }
 
         static bool EsCirculacion(string uso) => uso switch
@@ -128,6 +163,7 @@ namespace Gemelo
             {
                 siguiente = Time.time + 0.5f;
                 Decidir();
+                Activar();
                 PrepararVentanas();
                 PrepararSenales();
             }
@@ -157,6 +193,7 @@ namespace Gemelo
         {
             var l = x.info;
             if (amb.SinLuz(l)) return false;
+            if (AmbienteGemelo.Prueba.luces.Contains(l.clave)) return true;
             var st = AmbienteGemelo.Estado(l);
             if (st != null)
             {
@@ -195,16 +232,67 @@ namespace Gemelo
                     x.parpadeo -= dt;
                     f = Mathf.PerlinNoise(Time.time * 25f, x.info.centro.x) > 0.55f ? 0.8f : 0.05f;
                     x.factor = Mathf.Max(x.factor, 0.01f);
-                    if (x.parpadeo <= 0f) x.factor = 1f;
+                    if (x.parpadeo <= 0f) x.factor = f = 1f;     // (si no, se quedaba con la intensidad del último destello)
                 }
                 else
                 {
                     x.factor = Mathf.MoveTowards(x.factor, x.objetivo, dt * 3f);
                     f = x.factor;
                 }
-                for (int k = 0; k < x.luces.Length; k++)
-                    if (x.luces[k] != null) x.luces[k].intensity = x.base_[k] * f;
+                Poner(x, f);
                 if (x.factor == x.objetivo && x.parpadeo <= 0f) animando.RemoveAt(i);
+            }
+        }
+
+        void Poner(LocalLuz x, float f)
+        {
+            f *= kDia;
+            for (int k = 0; k < x.luces.Length; k++)
+                if (x.luces[k] != null) x.luces[k].intensity = x.base_[k] * f;
+        }
+
+        // ─── Qué luces quedan activas: las de los locales encendidos (o apagándose) más cercanos, hasta MaxLuces
+
+        void Activar()
+        {
+            // Con luz natural, menos intensidad (la luz ambiente ya alumbra los interiores)
+            float k = Mathf.Lerp(1f, FactorDia, amb.LuzNatural);
+            bool cambioDia = Mathf.Abs(k - kDia) > 0.01f;
+            if (cambioDia) kDia = k;
+
+            bool hayCam = AmbienteGemelo.PosicionCamara(out var pcam);
+            candidatos.Clear();
+            foreach (var x in locales)
+            {
+                if (x.objetivo <= 0f && x.factor <= 0f) continue;
+                if (!x.info.planta.raiz.gameObject.activeInHierarchy) continue;
+                // (las otras plantas cuentan como más lejos: a través del forjado no se ven)
+                var d = pcam - (x.info.centro + Vector3.up * 1.5f);
+                float dy = Mathf.Max(0f, Mathf.Abs(d.y) - 1.8f) * PenalizacionPlanta;
+                x.distancia = hayCam ? Mathf.Max(0f, Mathf.Sqrt(d.x * d.x + d.z * d.z + dy * dy) - x.radio) : 0f;
+                if (x.distancia > DistanciaMax) continue;
+                candidatos.Add(x);
+            }
+            candidatos.Sort(porDistancia);
+            int n = 0;
+            foreach (var x in candidatos)
+            {
+                if (n + x.luces.Length > MaxLuces) { x.distancia = float.MaxValue; continue; }
+                n += x.luces.Length;
+                x.distancia = -1f;          // (marca: se queda activa)
+            }
+            LucesActivas = n;
+            foreach (var x in locales)
+            {
+                bool si = x.distancia < 0f && (x.objetivo > 0f || x.factor > 0f);
+                x.distancia = 0f;
+                if (si != x.activas)
+                {
+                    x.activas = si;
+                    if (si) Poner(x, x.factor);
+                    foreach (var l in x.luces) if (l != null) l.gameObject.SetActive(si);
+                }
+                else if (si && cambioDia && !animando.Contains(x)) Poner(x, x.factor);
             }
         }
 

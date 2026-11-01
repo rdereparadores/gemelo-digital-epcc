@@ -17,6 +17,9 @@ public static class PolitecnicaBuilder
     const string Mobiliario = MaterialesPolitecnica.Raiz + "/Mobiliario";
     const string Prefabs = MaterialesPolitecnica.Raiz + "/Prefabs";
     const string Contenedor = "Politecnica_Edificios";
+    // Temperatura de color de las luces interiores: los tubos y LED de 4000 K se ven blancos con el ojo adaptado,
+    // pero con 4000 K en el render (balance de blancos de día) el aula salía anaranjada
+    const float ColorLuzInterior = 6000f;
     const string HeightmapViales = "Datos/Viales/heightmap_viales.raw";
 
 #pragma warning disable 0649
@@ -28,7 +31,7 @@ public static class PolitecnicaBuilder
         public float[] centro, min, max, poligono;
     }
     [System.Serializable] class PuertaDef { public string planta, tipo, hoja; public float[] p; public float yaw, ancho, alto, apertura; }
-    [System.Serializable] class LuzDef { public string planta, local; public float[] p; public float rango; }
+    [System.Serializable] class LuzDef { public string planta, local; public float[] p; public float rango, i; }
     [System.Serializable] class RebajeDef { public float[] huella; public float y; }
     [System.Serializable] class PiezaDef { public string tipo, planta, local; public float[] p; public float yaw, ex = 1f, ey = 1f, ez = 1f; }
     [System.Serializable] class Manifiesto
@@ -164,7 +167,10 @@ public static class PolitecnicaBuilder
                 Anadir(ref dueño.asientos, pieza.transform);
         }
 
-        // Una luz puntual por local; EdificioPolitecnica las enciende solo con la cámara cerca
+        // Luces puntuales de los locales (varias en los grandes, con la intensidad según la superficie que alumbran;
+        // ver luces_local en el generador), de luz blanca neutra de fluorescente o LED. EdificioPolitecnica las
+        // enciende solo con la cámara cerca y el gemelo (LucesInteriores) según los sensores.
+        var colorLuz = Mathf.CorrelatedColorTemperatureToRGB(ColorLuzInterior);
         foreach (var l in m.luces ?? new LuzDef[0])
         {
             var padre = Hijo(plantas, l.planta, "Luces");
@@ -174,8 +180,8 @@ public static class PolitecnicaBuilder
             var luz = go.AddComponent<Light>();
             luz.type = LightType.Point;
             luz.range = l.rango;
-            luz.intensity = 1.6f;
-            luz.color = Mathf.CorrelatedColorTemperatureToRGB(4000f);
+            luz.intensity = l.i > 0 ? l.i : 1.6f;
+            luz.color = colorLuz;
             luz.shadows = LightShadows.None;
             luz.lightmapBakeType = LightmapBakeType.Realtime;
             // Con sus datos de URP ya puestos: si no, URP los añade al abrir la escena y la deja modificada sin guardar
