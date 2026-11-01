@@ -16,7 +16,7 @@ using UnityEngine.Rendering;
 // Los nombres "Grupo_resto" se agrupan bajo un hijo "Grupo". Las piezas de mobiliario (carpeta
 // Mobiliario/) llevan una sola BoxCollider en la raíz en vez de MeshCollider por malla, porque se
 // instancian miles de veces, y un LODGroup que las oculta cuando se ven muy pequeñas.
-[ScriptedImporter(7, "mcam")]
+[ScriptedImporter(8, "mcam")]
 public class McamImporter : ScriptedImporter
 {
     public const string MaterialesDir = "Assets/_Ambientacion/Materiales";
@@ -65,6 +65,12 @@ public class McamImporter : ScriptedImporter
                 mesh.RecalculateNormals();
                 mesh.RecalculateTangents();
                 mesh.RecalculateBounds();
+                // Orden de índices y vértices para la caché de vértices de la GPU (mismo resultado, menos trabajo)
+                mesh.Optimize();
+                // Sin copia en CPU en el build: nada lee las mallas en tiempo de ejecución y los MeshCollider se
+                // precocinan al compilar (Player Settings ▸ Prebake Collision Meshes). En el editor siguen legibles
+                // para los scripts de edición
+                mesh.UploadMeshData(true);
                 ctx.AddObjectToAsset(nombre, mesh);
 
                 string grupo = nombre.Contains("_") ? nombre.Substring(0, nombre.IndexOf('_')) : nombre;
