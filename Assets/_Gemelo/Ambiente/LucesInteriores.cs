@@ -1,7 +1,7 @@
 // Luces interiores de cada local (Local.luces) según los sensores: lights_on si la estancia lo tiene; si no, la
 // ocupación (y las circulaciones mientras el edificio tiene gente). Con apagón, todo apagado salvo las señales
 // verdes de salida de emergencia sobre las puertas de fachada (con una luz verde tenue en las más cercanas).
-// De noche, las ventanas de los locales encendidos brillan por fuera (cuadros aditivos detrás del vidrio,
+// De noche, las ventanas (y los muros cortina) de los locales encendidos brillan por fuera (cuadros aditivos detrás del vidrio,
 // instanciados): así se ve de lejos qué aulas están encendidas, aunque sus luces puntuales estén lejos de la
 // cámara y apagadas por EdificioPolitecnica (que decide `enabled` por distancia; aquí solo se toca la intensidad).
 using System.Collections.Generic;
@@ -222,7 +222,8 @@ namespace Gemelo
                 if (!v.info.planta.raiz.gameObject.activeInHierarchy) continue;
                 float w = v.ancho - 2 * v.perfil, h = v.alto - 2 * v.perfil;
                 if (w < 0.2f || h < 0.2f) continue;
-                var pos = v.centro - v.normal * 0.06f;
+                // (los paños de muro cortina tienen el vidrio en el eje de los montantes, de 12 cm: un poco más adentro)
+                var pos = v.centro - v.normal * (v.cortina ? 0.1f : 0.06f);
                 matrices[nVentanas] = Matrix4x4.TRS(pos, Quaternion.LookRotation(v.normal, Vector3.up), new Vector3(w, h, 1));
                 // Un poco de variación entre aulas (tubos más o menos cálidos)
                 float var_ = Mathf.Abs(Mathf.Sin(v.centro.x * 12.9898f + v.centro.z * 78.233f));

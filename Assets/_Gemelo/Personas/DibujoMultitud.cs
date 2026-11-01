@@ -1,7 +1,9 @@
 // Dibujo de la multitud: los más cercanos a la cámara (hasta Ajustes.maxAnimadas) con un avatar humanoide animado
 // por su Animator; el resto, hasta Ajustes.distanciaPersonas, como maniquíes rígidos instanciados en la GPU
 // (Graphics.RenderMeshIndirect, animados en el shader MultitudInstanciada). Más allá, nada. Se ocultan los que quedan
-// por encima del corte de su edificio y, desde lejos y fuera, los que están dentro de un edificio.
+// por encima del corte de su edificio, desde lejos y fuera los que están dentro de un edificio y, con la cámara en un
+// local cerrado, los que están bajo techo en otros locales (tras los muros). Quien está quieto bajo techo no da sombra
+// del sol. En la vista cenital con capa de color, todos marcan el bit 3 del stencil para que la capa no los tiña.
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -25,6 +27,8 @@ namespace Gemelo
             public Animator an;
             public GameObject movil;
             public SkinnedMeshRenderer[] rend;
+            public Material[][] mats;      // materiales propios de cada renderer (sin la marca del stencil)
+            public bool marcado;
             public bool sombra = true;
             public int variante;
             public Persona p;
@@ -47,6 +51,9 @@ namespace Gemelo
         readonly List<Cercano> reserva = new();
         Transform raiz;
         float tSeleccion;
+        // Marca de stencil de los avatares (bit 3: «persona») mientras la vista cenital tiene una capa de color
+        readonly Material matMarca;
+        bool marcar;
         readonly List<(float d, Persona p)> candidatos = new();
         public int Animadas, Instanciadas;
 
@@ -70,6 +77,8 @@ namespace Gemelo
             args = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, grupos, GraphicsBuffer.IndirectDrawIndexedArgs.size);
             raiz = new GameObject("Personas").transform;
             raiz.SetParent(padre, false);
+            var sh = Resources.Load<Shader>("GemeloPersonas/MarcaPersonas");
+            if (sh != null) matMarca = new Material(sh) { name = "Marca de personas (gemelo)" };
         }
 
         public void Mostrar(bool si)
@@ -83,6 +92,65 @@ namespace Gemelo
             args?.Release();
             datos = args = null;
             if (raiz != null) Object.Destroy(raiz.gameObject);
+            if (matMarca != null) Object.Destroy(matMarca);
+        }
+
+        /// <summary>Para pruebas: si es true, también dan sombra del sol los que están quietos bajo techo.</summary>
+        public static bool SombrasBajoTecho;
+
+        // Quien está quieto en un local cubierto no da sombra del sol: el techo ya lo tapa (solo entraría algo por las
+        // ventanas) y las luces interiores no tienen sombras. En un aula llena eran 40 avatares y cientos de maniquíes
+        // dibujados otra vez en cada cascada de la sombra del sol
+        static bool BajoTecho(Persona p) => p.donde != null && !p.donde.alAireLibre && !SombrasBajoTecho;
+
+        // ─── Gente tras los muros. Con la cámara dentro de un local cerrado (aula, despacho, laboratorio… y no junto a
+        // su puerta), los que están bajo techo en otro local solo se dibujan si están en la misma planta y a menos de
+        // RadioTrasMuros (el pasillo que se ve por la puerta); los de fuera, sí (se ven por las ventanas). Sin esto, en
+        // un aula se dibujaban cientos de maniquíes de las otras aulas, plantas y edificios en cada pasada. (En los
+        // pasillos y vestíbulos de la misma planta, hasta RadioPasillo: se ven por la puerta abierta.)
+        /// <summary>Para pruebas: si es false, se dibujan también los que quedan tras los muros.</summary>
+        public static bool OcultarTrasMuros = true;
+        const float RadioTrasMuros = 10f, RadioPasillo = 25f, RadioPuerta = 2.5f;
+        static readonly HashSet<string> Abiertos = new()
+        {
+            "pasillo", "vestibulo", "hall", "distribuidor", "escalera", "galeria", "patio", "terraza", "porche", "cafeteria", "comedor",
+        };
+        InfoLocal camLocal;
+        bool camCerrada;
+        float tCam;
+
+        void LocalDeCamara(Vector3 cp)
+        {
+            if (Time.time < tCam) return;
+            tCam = Time.time + 0.15f;
+            camLocal = OcultarTrasMuros ? RegistroCampus.LocalEn(cp) : null;
+            camCerrada = camLocal != null && !Abiertos.Contains(camLocal.local.uso ?? "");
+            if (!camCerrada) return;
+            foreach (var pu in camLocal.puertas)
+                if (pu != null && (RegistroCampus.CentroPuerta(pu) - cp).sqrMagnitude < RadioPuerta * RadioPuerta) { camCerrada = false; return; }
+        }
+
+        /// <summary>Local (bajo techo o patio) en el que está la persona: el suyo si está quieta; andando, el que pisa.</summary>
+        static InfoLocal LocalDe(Persona p)
+        {
+            if (p.donde != null) return p.donde.info;
+            if (p.edificio == null) return null;
+            if (Time.time >= p.tLocal)
+            {
+                p.tLocal = Time.time + 0.4f + (p.id % 7) * 0.03f;
+                p.localAndando = RegistroCampus.LocalEn(p.pos);
+            }
+            return p.localAndando;
+        }
+
+        bool TrasLosMuros(Persona p, float d2)
+        {
+            var l = LocalDe(p);
+            if (l == null || l == camLocal) return false;
+            var uso = l.local.uso ?? "";
+            if (uso == "patio" || uso == "terraza") return false;
+            float r = Abiertos.Contains(uso) ? RadioPasillo : RadioTrasMuros;
+            return l.planta != camLocal.planta || d2 > r * r;
         }
 
         /// <summary>Si no es null, la cámara que manda (para capturas y pruebas); si no, Camera.main.</summary>
@@ -99,6 +167,7 @@ namespace Gemelo
 
         bool Oculta(Persona p, Vector3 cam, float d2)
         {
+            if (camCerrada && TrasLosMuros(p, d2)) return true;
             var e = p.edificio;
             if (e == null) return false;
             var app = GemeloApp.Instancia;
@@ -124,6 +193,7 @@ namespace Gemelo
             // por encima de TopeAnimadas se sale del presupuesto de la escena, que ya va al límite de la GPU
             int maxAnim = Mathf.Clamp(Ajustes.Actual.maxAnimadas, 0, TopeAnimadas);
             var lista = m.activas;
+            LocalDeCamara(cp);
 
             // Visibilidad
             foreach (var p in lista)
@@ -170,16 +240,21 @@ namespace Gemelo
                 // Solo los más cercanos proyectan sombra (cada sombra es un dibujo más por cascada)
                 foreach (var c in cercanos)
                 {
-                    bool sombra = (c.p.pos - cp).sqrMagnitude < RadioSombrasAnimadas * RadioSombrasAnimadas;
+                    bool sombra = !BajoTecho(c.p) && (c.p.pos - cp).sqrMagnitude < RadioSombrasAnimadas * RadioSombrasAnimadas;
                     if (sombra == c.sombra || c.rend == null) continue;
                     c.sombra = sombra;
                     foreach (var r in c.rend) r.shadowCastingMode = sombra ? ShadowCastingMode.On : ShadowCastingMode.Off;
                 }
             }
 
+            // Con la capa de color de la vista cenital, los avatares marcan el stencil para que no se tiñan
+            var app = GemeloApp.Instancia;
+            marcar = matMarca != null && app != null && app.Modo == Modo.Cenital && app.Capa != Capa.Ninguna;
+
             // Avatares cercanos: transformar y animar
             foreach (var c in cercanos)
             {
+                if (c.marcado != marcar) Marcar(c, marcar);
                 var p = c.p;
                 float y = p.sentada && p.estado == EstadoPersona.Quieta ? p.alturaAsiento - 0.46f * p.ap.escala : 0f;
                 c.tr.SetPositionAndRotation(p.pos + Vector3.up * y, Quaternion.Euler(0f, p.rumbo * Mathf.Rad2Deg, 0f));
@@ -263,7 +338,7 @@ namespace Gemelo
 
         static int Grupo(Persona p, Vector3 cp, int nv)
         {
-            bool sombra = (p.pos - cp).sqrMagnitude < RadioSombras * RadioSombras;
+            bool sombra = !BajoTecho(p) && (p.pos - cp).sqrMagnitude < RadioSombras * RadioSombras;
             return (sombra ? 0 : nv) + Mathf.Clamp(p.ap.variante, 0, nv - 1);
         }
 
@@ -309,6 +384,29 @@ namespace Gemelo
                 string estado = p.sentada ? (p.gesto == Gesto.Habla ? "SentadoHablando" : p.gesto == Gesto.Movil ? "SentadoMovil" : "Sentado")
                               : p.vel < 0.3f && p.gesto == Gesto.Habla ? "HablarDePie" : p.vel < 0.3f && p.gesto == Gesto.Movil ? "MovilDePie" : "Locomocion";
                 c.an.Play(estado, 0, (p.id * 0.137f) % 1f);
+            }
+        }
+
+        void Marcar(Cercano c, bool si)
+        {
+            c.marcado = si;
+            if (c.rend == null) return;
+            if (c.mats == null)
+            {
+                c.mats = new Material[c.rend.Length][];
+                for (int i = 0; i < c.rend.Length; i++) c.mats[i] = c.rend[i].sharedMaterials;
+            }
+            for (int i = 0; i < c.rend.Length; i++)
+            {
+                var r = c.rend[i];
+                if (r == null) continue;
+                if (!si) { r.sharedMaterials = c.mats[i]; continue; }
+                // (un material de más que submallas vuelve a dibujar la última submalla: los maniquíes tienen una; un
+                // personaje con varias solo marcaría la última)
+                var m = new Material[c.mats[i].Length + 1];
+                c.mats[i].CopyTo(m, 0);
+                m[^1] = matMarca;
+                r.sharedMaterials = m;
             }
         }
 

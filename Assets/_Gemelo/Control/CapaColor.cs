@@ -54,7 +54,8 @@ namespace Gemelo
         // Las huellas de los edificios cuestan unos milisegundos cada una: se preparan de una en una
         System.Collections.IEnumerator Precalcular()
         {
-            foreach (var e in RegistroCampus.Edificios)
+            // (sobre una copia: entre fotograma y fotograma el registro puede rehacerse)
+            foreach (var e in RegistroCampus.Edificios.ToArray())
             {
                 GeometriaControl.Aura(e);
                 yield return null;

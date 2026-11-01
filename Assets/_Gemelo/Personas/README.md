@@ -36,17 +36,27 @@ Solo usa el núcleo (`Assets/_Gemelo/Nucleo/`) y `Assets/_Politecnica/Runtime/`.
 
 `Tools ▸ Gemelo ▸ Malla de navegación` recoge los colliders de la zona de la Politécnica (300 × 290 m: los siete
 edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y accesos) y construye con
-`NavMeshBuilder.BuildNavMeshData` (agente de 0,2 m de radio y 1,8 m de alto, escalón 0,36 m, vóxel 8 cm, con *height
-mesh* para que la altura de los pies sea exacta en las escaleras).
+`NavMeshBuilder.BuildNavMeshData` (agente de 0,18 m de radio y 1,7 m de alto, escalón 0,36 m, vóxel 6 cm, con
+*height mesh* para que la altura de los pies sea exacta en las escaleras). Con 0,2 m y 8 cm las puertas de 0,65-0,68 m
+(despachos de Teleco) quedaban sin paso; con 1,8 m, los cuartos bajo las escaleras (puerta rebajada a 1,79 m).
+`ConstructorNavegacion.ConstruirDatos(zona, …)` construye solo una zona, sin guardar, para probar cambios.
 
 - Se camina sobre suelos, peldaños, aceras, calzadas y el terreno. Muros, falsos techos, carpinterías, barandillas y
   **todo el mobiliario** se rasterizan como «no caminable»: estorban, pero encima no sale malla (ni islas sobre mesas).
 - Las hojas de puerta (`Puerta`) y los triggers de los locales no cuentan.
 - Áreas: 0 suelo/acera (coste 1), 3 terreno (1,8), 4 calzada (2,5): se prefiere la acera y se cruza por donde toca.
-- **Costuras**: el voxelizado deja algunos trozos sueltos (sobre todo el arranque de tramos de escalera desde los
-  rellanos, que en el modelo quedan tapiados por el muro de la caja). El builder busca los trozos que no conectan con
-  el principal y los cose con enlaces cortos (≤ 0,9 m, casi a la misma altura) que se guardan en `RecursosPersonas` y
-  se añaden en ejecución con `NavMesh.AddLink`.
+- **Escaleras**: todas las de los siete edificios se andan por la malla (el generador corta los muros que las tapiaban
+  y cose las mesetas a sus tramos; ver `Herramientas/politecnica/README.md`). No hay enlaces «ascensor»
+  (`CoserAscensor`, desactivado) ni costuras a través de tabiques (`CoserForzado`, desactivado: unían azoteas sin
+  puerta con los locales de al lado atravesando la fachada).
+- **Costuras**: el voxelizado deja algunos trozos sueltos separados por centímetros. El builder busca los trozos que no
+  conectan con el principal y los cose con enlaces cortos (≤ 0,9 m, casi a la misma altura y sin nada en medio) que se
+  guardan en `RecursosPersonas` y se añaden en ejecución con `NavMesh.AddLink`.
+- **Puntos de paso**: el builder guarda en `RecursosPersonas.escaleras` el arranque y la llegada de cada tramo de
+  escalera (huellas de peldaño agrupadas, en la malla). El buscador de Unity tiene un tope de nodos y no completa las
+  rutas largas por interiores llenos de muebles (del aparcamiento a la P2 del Común): entonces `Navegacion.Calcular` la
+  parte por el punto de paso (escalera o puerta exterior del edificio de un extremo) que menos la alarga, hasta tres
+  veces; solo si así tampoco, sigue desde donde se quedó (lo que antes daba los rodeos).
 - En ejecución las rutas se densifican (altura de la malla cada 0,6 m en escaleras y cada 2,5 m fuera) y las de nodo a
   nodo (acceso de estancia, llegada, punto de reunión) se guardan en caché.
 
@@ -63,6 +73,10 @@ mesh* para que la altura de los pies sea exacta en las escaleras).
   taburetes y bancos corridos no tienen respaldo y se mira hacia la mesa más cercana. Si no hay asiento libre, de pie.
   En halls, pasillos y vestíbulos se quedan de pie, pasean de un sitio a otro o forman corrillos de hasta 4.
 - **Gestos**: hablar (más en la cafetería y en los corrillos), mirar el móvil o nada, con cambios cada pocos segundos.
+- **Saltos de reloj**: si entre dos reconciliaciones la hora del modelo avanza más de un cuarto de hora de lo que
+  tocaría por la escala (alguien cambia la hora en el menú, el servicio rehace el reloj o cambia mucho la escala), todo
+  se coloca directamente, como al arrancar: los que andan llegan, los nuevos aparecen en su sitio y los que sobran se
+  van (`Multitud.SaltosReloj` los cuenta).
 - **Hora acelerada**: un viaje que a pie tardaría más de un cuarto de hora del modelo se resuelve teletransportando;
   por encima de 300× todo se coloca directamente. Con más de 20× se anda un 60 % más deprisa.
 - **Evacuación**: un edificio está en alarma si su estado trae la alerta `fire_alarm` o alguna estancia tiene
@@ -77,11 +91,23 @@ mesh* para que la altura de los pies sea exacta en las escaleras).
 
 - Hasta `Ajustes.maxAnimadas` personas (con un tope interno de 40, `DibujoMultitud.TopeAnimadas`) a menos de 40 m y
   en pantalla llevan un avatar con `Animator` humanoide (reserva reutilizada por variante de cuerpo; una sola submalla
-  teñida con una paleta 8×1 propia por `MaterialPropertyBlock`). Solo proyectan sombra los que están a menos de 14 m.
+  teñida con una paleta 8×1 propia en un material propio de cada avatar, no con `MaterialPropertyBlock`, para que el
+  SRP Batcher los agrupe). Solo proyectan sombra los que están a menos de 14 m.
 - El resto, hasta `Ajustes.distanciaPersonas`, son maniquíes rígidos dibujados con `Graphics.RenderMeshIndirect` (un
   dibujo por variante, con sombra a menos de 35 m) y animados en el vértice por `MultitudInstanciada`.
 - Se ocultan los que quedan por encima del corte de su edificio (`GemeloApp.CortarEdificio`) y, vistos desde fuera y
   a más de 70 m, los que están dentro de un edificio.
+- **Tras los muros**: con la cámara dentro de un local cerrado (aula, despacho, laboratorio…; no pasillos, vestíbulos,
+  halls, escaleras, cafetería ni patios, y no a menos de 2,5 m de una de sus puertas), los que están bajo techo en otro
+  local solo se dibujan si están en la misma planta y a menos de 10 m (25 m en pasillos y vestíbulos, que se ven por
+  la puerta abierta); los de
+  fuera, sí (se ven por las ventanas). `DibujoMultitud.OcultarTrasMuros = false` lo desactiva (pruebas).
+- **Sombras**: quien está quieto bajo techo (en una estancia que no es patio ni terraza) no da sombra del sol: el techo
+  ya la tapa y las luces interiores no tienen sombras. `DibujoMultitud.SombrasBajoTecho = true` lo deshace (pruebas).
+- **Stencil**: en la vista cenital con una capa de color, los avatares llevan un material más
+  (`Resources/GemeloPersonas/MarcaPersonas.shader`) que marca el bit 3 (valor 8) del stencil donde se ven, y
+  `MultitudInstanciada` lo marca siempre en su pasada de color; la capa de color de Control no pinta ahí, así que no
+  tiñe a la gente (con personajes de varias submallas solo se marcaría la última).
 
 ## Maniquíes, clips y cómo cambiarlos por personajes de Mixamo
 
@@ -124,20 +150,29 @@ intercaladas), con 1.190–1.570 personas simuladas:
 
 - Cada avatar animado cuesta ~0,05 ms de GPU y ~0,07 ms de hilo principal: con 120 (el valor de fábrica de
   `Ajustes.maxAnimadas`) se iban a +7 ms de GPU y +9 ms de CPU, de ahí el tope de 40.
+- **Pulido del 01-11-2026** (tercera persona en el aula NORBA 1903_P1_24, con `Gemelo.MedidorRendimiento.AB`, tandas
+  de 2 s intercaladas y mediana por parejas; ruido de una prueba A/A en ese momento: ±1,5 ms). Antes se dibujaban 36
+  avatares animados y 177 maniquíes, casi todos de las aulas, plantas y edificios de al lado; ahora, 7 y 6 (los del aula
+  y el pasillo). Al atardecer (con sombras del sol): GPU −2,8 ms (mediana; −4,3 ms de media), hilo principal −0,9 ms,
+  SetPass de 345 a 222, 0,5 M triángulos menos. De noche (sin sombras del sol; ruido ±0,5 ms): GPU −1,4 ms, hilo
+  principal −0,8 ms, `Time.smoothDeltaTime` −0,8 ms, SetPass de 245 a 176. En la calle y en la vista cenital, igual
+  (dentro del ruido).
 - La simulación (reconciliar + rutas + paso) se queda en 0,4–0,9 ms. Las rutas se calculan con un presupuesto de
   0,6 ms por fotograma; en el arranque de una evacuación grande hay picos de 1–5 ms durante unos segundos mientras se
   calculan las rutas de cada estancia al punto de reunión (luego quedan en caché).
 
 ## Limitaciones conocidas
 
-- La malla deja 79 de 509 accesos de estancia sin ruta desde el aparcamiento (sobre todo la P1 de Edificación, cuya
-  escalera no se puede andar en el modelo, y algunos despachos de la P1 de Telecomunicación). Quien va a una estancia
-  sin ruta aparece en su sitio en vez de andar (se cuenta en `Multitud.Fallos`). Algunas plantas se unen por enlaces
-  «ascensor» que se cruzan de golpe (1906 P1/P2, 1907 P1).
-- El buscador de rutas de Unity tiene un tope de nodos: las rutas largas por interiores se calculan por tramos
-  (se sigue desde donde se quedó), y alguna sale con rodeos.
-- Con la hora del modelo acelerada no se ha podido probar en vivo (no se toca la escala global del servicio); la
-  lógica de teletransporte depende solo de `HoraCampus.Escala`.
+- La malla deja 20 de 526 accesos de estancia sin ruta desde el aparcamiento (01-11-2026; antes 79 de 509, y otros 10
+  solo «llegaban» por costuras que atravesaban la fachada): locales sin puerta en el modelo (1903 P1 22, 1904 P0 26,
+  terrazas de 1904 P1 y de 1905 P0 13 y P1 T1-T3, altillo 01 del 1907), puertas que no abren el muro en que van
+  (instalaciones 01-04 del −1 de 1903, 1903 P1 28 y su distribuidor, 1904 P1 31-32, terraza 57 de 1905), el almacén
+  del −1 de Teleco (su puerta da bajo el forjado de P0), el cuarto de instalaciones del −1 del 1906 (puerta de 1,67 m
+  bajo la escalera) y el altillo 02 del 1907, que no tiene escalera en el plano. Quien va a uno de ellos aparece en su
+  sitio en vez de andar (se cuenta en `Multitud.Fallos`).
+- Hora acelerada probada en vivo el 01-11-2026 a 60× y 600× (y vuelta a 1× con salto de reloj): sin excepciones;
+  a 60× hay ráfagas de 10–100 teletransportes en cada reconciliación (viajes de más de un cuarto de hora del modelo) y
+  a 600× todo se coloca directamente (cientos de cambios de sitio de golpe cuando cambia la hora de clase, como debe ser).
 - Las estancias del servicio cuyo `unity_room` no existe en el modelo (p. ej. `1901_P2_23`) no se representan.
 - Algunos locales sin puerta con malla (instalaciones, galerías, terrazas) no tienen acceso y no reciben gente.
 - La última aproximación al asiento es en línea recta (entre filas de pupitres la malla está cortada por las sillas).

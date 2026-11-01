@@ -123,7 +123,12 @@ selección y, si no hay, pausa. Esc se lee en `LateUpdate` y se ignora si la UI 
   valor agregado del edificio: ocupación total entre capacidad total, el confort más extendido o la media por
   superficie. El edificio seleccionado lleva el aura en amarillo (sin capa) y pulsa; el de bajo el cursor, en
   blanco. Los colores pasan de uno a otro en ~1 s. Las mallas (`GeometriaControl`: ear clipping de
-  `Local.poligono`, huella de cada edificio rasterizando sus locales) se calculan una vez.
+  `Local.poligono`, huella de cada edificio rasterizando sus locales) se calculan una vez. La superposición no
+  pinta donde el stencil trae el bit 3 (valor 8), que marcan las personas (ver Convenciones): así no tiñe a la gente
+  de pie de cintura para abajo.
+- **Medidor de rendimiento** (`MedidorRendimiento`, solo para pruebas): `MedidorRendimiento.Medir(s, nombre)` y
+  `MedidorRendimiento.AB(nombre, on => …, tandas, s)` (tandas intercaladas, media y mediana por parejas, más
+  contadores de dibujo); el resultado queda en `MedidorRendimiento.Resultado`.
 
 ## UI (`UI/`)
 
@@ -161,6 +166,9 @@ licencia OFL en `Resources/GemeloUI/Fuentes/`) y el imagotipo y el sello de la U
   editor en `<módulo>/Editor/`.
 - Rendimiento: la escena ya va al límite de la GPU (~25 ms en la Radeon 780M; ver `Referencias/Rendimiento.md`).
   Hay que instanciar en vez de crear miles de objetos y no añadir luces con sombra.
+- **Stencil**: el bit 3 (valor 8) significa «aquí se ve una persona». Lo escriben los sombreadores de Personas
+  (`MultitudInstanciada` y el material `MarcaPersonas` que llevan los avatares en la vista cenital con capa) y lo
+  respeta la superposición de Control (`Comp NotEqual`, propiedad `_StencilComp`). Los bits 4–7 son de URP.
 
 ## Ambiente (`Ambiente/`)
 
@@ -173,10 +181,15 @@ crea el resto:
   `AmbienteBuilder`; con `Ajustes.sincronizarSol = false` lo devuelve todo como estaba.
 - `Lluvia` (trazos en la GPU alrededor de la cámara) y `Farolas` (destellos en las luminarias y las luces más cercanas).
 - `LucesInteriores`: intensidad de `Local.luces` (`EdificioPolitecnica` sigue decidiendo `enabled` por distancia),
-  ventanas iluminadas de noche, apagón y señales verdes de salida.
+  ventanas y muros cortina iluminados de noche, apagón y señales verdes de salida.
 - `Ventanas`: hojas y persianas de las estancias con sensor, a partir de `Resources/Ambiente/Ventanas/<código>.json`
-  (lo escribe `Herramientas/politecnica/generar_politecnica.py`).
-- `Indicadores` (insignias de las alertas), `Emergencias` (sirena, estroboscópicos, balizas y charcos) y
+  (lo escribe `Herramientas/politecnica/generar_politecnica.py`; `POL_SOLO_VENTANAS=1` rehace solo esos JSON y
+  conserva el `en_malla` de cada ventana). Los paños de muro cortina de vestíbulos, pasillos y escaleras van en el
+  mismo JSON con `cortina: true` (uno por tramo de hasta 3,6 m, con el local de dentro o, a doble altura, el de abajo):
+  solo sirven para iluminarlos de noche.
+- `Indicadores` (insignias de las alertas), `Emergencias` (sirena, estroboscópicos, balizas y charcos con el
+  sombreador `Gemelo/Agua`: suelo visto a través del agua, reflejo en espacio de pantalla de lo que hay alrededor o, si
+  no, del techo con la luz del local, brillos de las luminarias y anillos del goteo; sin sondas de reflexión) y
   `AudioAmbiente` (viento, pájaros, lluvia y rumor de gente; sonidos sintetizados en `SintesisAudio`).
 
 Modo de prueba (solo para este módulo, no toca el servicio): `Gemelo.AmbienteGemelo.Prueba.hora`, `nubes`,

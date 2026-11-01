@@ -29,7 +29,9 @@ namespace Gemelo
         readonly LinkedList<Persona> cola = new();
         int siguienteId;
         bool inicial = true;
-        public int Teletransportes, Viajes, Fallos;
+        public int Teletransportes, Viajes, Fallos, SaltosReloj;
+        System.DateTime horaAnterior;
+        float realAnterior;
         public double MsRutas;
         readonly Persona[] vecinos = new Persona[24];
         readonly List<Persona> libres = new();
@@ -288,6 +290,23 @@ namespace Gemelo
             int max = Mathf.Max(0, Ajustes.Actual.maxPersonas);
             float ahora = Time.time;
 
+            // Salto de reloj (alguien cambia la hora en el menú o el servicio la rehace, o un cambio grande de escala):
+            // el estado nuevo no sigue al anterior, así que todo se coloca directamente, como al arrancar. Si no, tras
+            // saltar de la noche a media mañana entraban 1.700 personas andando desde los aparcamientos a la vez (y
+            // la cola de rutas se iba a decenas de milisegundos por fotograma)
+            var hora = HoraCampus.Utc;
+            float real = Time.realtimeSinceStartup;
+            bool salto = !inicial && System.Math.Abs((hora - horaAnterior).TotalSeconds - (real - realAnterior) * HoraCampus.Escala) > 900.0;
+            horaAnterior = hora;
+            realAnterior = real;
+            bool colocar = inicial || salto;
+            if (salto)
+            {
+                SaltosReloj++;
+                for (int i = activas.Count - 1; i >= 0; i--)
+                    if (i < activas.Count && activas[i].Andando && activas[i].evacuando == null) Colocar(activas[i]);
+            }
+
             // Alarmas
             foreach (var e in edificios)
             {
@@ -361,7 +380,7 @@ namespace Gemelo
                     }
                     var q = libres[mejor];
                     libres.RemoveAt(mejor);
-                    Asignar(q, e, false);
+                    Asignar(q, e, colocar);
                     n--;
                 }
                 deficits[d] = (e, n);
@@ -373,7 +392,7 @@ namespace Gemelo
                 {
                     if (!e.accesible) break;
                     var p = Nueva(e);
-                    if (inicial || llegadas.Count == 0) Asignar(p, e, true);
+                    if (colocar || llegadas.Count == 0) Asignar(p, e, true);
                     else
                     {
                         var l = ElegirLlegada(e.acceso);
@@ -387,7 +406,8 @@ namespace Gemelo
             }
             // Y lo que sobra se va (tras esperar un poco los que salen de una alarma)
             foreach (var p in libres)
-                if (ahora >= p.tDecision) Salir(p);
+                if (colocar && p.evacuando == null) Desactivar(p);
+                else if (ahora >= p.tDecision) Salir(p);
 
             // Por encima del tope (si se baja en los ajustes)
             while (activas.Count > max) Desactivar(activas[activas.Count - 1]);

@@ -24,6 +24,7 @@ namespace Gemelo
         public bool accesible;
         public bool sentados;            // se está sentado (aulas, despachos, laboratorios, cafetería…)
         public bool cafeteria;
+        public bool alAireLibre;         // patios y terrazas: sin techo (el sol da sombra a quien está ahí)
         public Plaza[] plazas = new Plaza[0];
         public readonly List<Persona> miembros = new();
         List<Vector3> puntos;            // sitios para estar de pie (se buscan la primera vez)
@@ -44,6 +45,7 @@ namespace Gemelo
             var uso = il.local.uso ?? "";
             sentados = conAsientos.Contains(uso) || uso.StartsWith("lab");
             cafeteria = uso == "cafeteria" || uso == "comedor";
+            alAireLibre = uso == "patio" || uso == "terraza";
         }
 
         public int PlazaLibre(System.Random r)

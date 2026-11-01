@@ -124,6 +124,8 @@ namespace Gemelo
         // Dibujo
         public int avatar = -1;             // índice en la reserva de avatares cercanos
         public bool visible;
+        public InfoLocal localAndando;      // local bajo techo en el que está andando (null fuera), cada poco
+        public float tLocal;
 
         public bool Activa => estado != EstadoPersona.Inactiva;
         public bool Andando => estado == EstadoPersona.Andando;

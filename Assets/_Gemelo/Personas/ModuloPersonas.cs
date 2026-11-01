@@ -19,6 +19,8 @@ namespace Gemelo
             GemeloApp.FabricaAvatar = FabricaAvatares.Crear;
             Puerta.Presencia = null;
             DibujoMultitud.CamaraForzada = null;
+            DibujoMultitud.SombrasBajoTecho = false;
+            DibujoMultitud.OcultarTrasMuros = true;
         }
 
         static void Arrancar(GemeloApp app)

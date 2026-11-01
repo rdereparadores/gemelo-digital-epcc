@@ -137,6 +137,8 @@ Shader "Gemelo/MultitudInstanciada"
             Tags { "LightMode" = "UniversalForward" }
             Cull Back
             ZWrite On
+            // Bit 3 del stencil: «aquí se ve una persona» (la capa de color de la vista cenital no tiñe a la gente)
+            Stencil { Ref 8 WriteMask 8 Comp Always Pass Replace }
 
             HLSLPROGRAM
             #pragma target 4.5

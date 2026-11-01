@@ -1,7 +1,8 @@
 // Emergencias: alarma de incendio (sirena sintetizada, estroboscópicos rojos y blancos en los pasillos y
 // vestíbulos del edificio más cercanos a la cámara y destellos en las puertas de fachada, que se ven desde fuera
-// y desde la vista cenital) y fugas de agua (charco que crece en el suelo del local). El apagón lo llevan
-// LucesInteriores (luces y señales de salida) y los Indicadores.
+// y desde la vista cenital) y fugas de agua (charco que crece en el suelo del local, con el sombreador Gemelo/Agua:
+// suelo visto a través del agua, reflejos en espacio de pantalla o del techo, brillos de las luminarias y anillos del
+// goteo, sin sondas de reflexión). El apagón lo llevan LucesInteriores (luces y señales de salida) y los Indicadores.
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -30,9 +31,13 @@ namespace Gemelo
         readonly List<(Vector3 pos, int i)> balizas = new();
 
         // Charcos
-        class Charco { public InfoLocal l; public GameObject go; public Material mat; public float radio, maximo, edad; public bool vivo; }
+        class Charco { public InfoLocal l; public GameObject go; public MeshRenderer rend; public float radio, maximo; public bool vivo; }
         readonly Dictionary<InfoLocal, Charco> charcos = new();
         Material matAgua;
+        MaterialPropertyBlock mpbAgua;
+        LucesInteriores luces;
+        static readonly int IdTecho = Shader.PropertyToID("_Techo");
+        static readonly Color ColorTecho = new(0.62f, 0.60f, 0.56f);
 
         void Start()
         {
@@ -55,18 +60,10 @@ namespace Gemelo
             if (sh != null) matBrillo = new Material(sh) { name = "Destellos (gemelo)", enableInstancing = true };
             cuadro = LucesInteriores.CrearCuadro();
             mpb = new MaterialPropertyBlock();
-            // Material del agua: el del vidrio de las ventanas (Lit transparente y liso), oscurecido
-            foreach (var r in FindObjectsByType<MeshRenderer>())
-            {
-                var m = r.sharedMaterial;
-                if (m != null && m.name == "Vidrio_Ventana") { matAgua = new Material(m) { name = "Agua (gemelo)" }; break; }
-            }
-            if (matAgua != null)
-            {
-                matAgua.color = new Color(0.035f, 0.045f, 0.05f, 0.82f);
-                if (matAgua.HasProperty("_Smoothness")) matAgua.SetFloat("_Smoothness", 0.95f);
-                if (matAgua.HasProperty("_Metallic")) matAgua.SetFloat("_Metallic", 0.0f);
-            }
+            var shAgua = Resources.Load<Shader>("Ambiente/GemeloAgua");
+            if (shAgua != null) matAgua = new Material(shAgua) { name = "Agua (gemelo)" };
+            mpbAgua = new MaterialPropertyBlock();
+            luces = GetComponent<LucesInteriores>();
         }
 
         void OnDestroy()
@@ -256,6 +253,10 @@ namespace Gemelo
             var r = c.go.AddComponent<MeshRenderer>();
             r.sharedMaterial = matAgua;
             r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            r.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            r.lightProbeUsage = LightProbeUsage.Off;
+            c.rend = r;
             c.go.transform.localScale = Vector3.one * 0.05f;
             return c;
         }
@@ -269,13 +270,25 @@ namespace Gemelo
                 // Crece hasta su tamaño en un par de minutos y, al cerrar la fuga, se seca despacio
                 float obj = c.vivo ? c.maximo : 0f;
                 c.radio = Mathf.MoveTowards(c.radio, obj, dt * (c.vivo ? c.maximo / 90f : c.maximo / 40f));
-                if (c.go != null) c.go.transform.localScale = new Vector3(c.radio, 1, c.radio);
+                if (c.go != null)
+                {
+                    c.go.transform.localScale = new Vector3(c.radio, 1, c.radio);
+                    // El techo que refleja: la luz del local (o la natural que entra de día), apagado en un apagón
+                    float enc = luces != null ? luces.Encendido(c.l) : 1f;
+                    float luz = Mathf.Max(enc, amb.SinLuz(c.l) ? 0f : amb.LuzNatural * 0.7f);
+                    mpbAgua.SetColor(IdTecho, ColorTecho * (0.06f + 0.8f * luz));
+                    c.rend.SetPropertyBlock(mpbAgua);
+                }
                 if (!c.vivo && c.radio <= 0.001f) (secos ??= new List<InfoLocal>()).Add(c.l);
             }
             if (secos != null)
                 foreach (var l in secos)
                 {
-                    if (charcos[l].go != null) Destroy(charcos[l].go);
+                    if (charcos[l].go != null)
+                    {
+                        Destroy(charcos[l].go.GetComponent<MeshFilter>().sharedMesh);
+                        Destroy(charcos[l].go);
+                    }
                     charcos.Remove(l);
                 }
         }
@@ -286,6 +299,7 @@ namespace Gemelo
             const int lados = 56;
             var vs = new Vector3[lados + 1];
             var uv = new Vector2[lados + 1];
+            var radial = new Vector2[lados + 1];      // (0 en el centro, 1 en el contorno): agua y borde mojado
             var ts = new int[lados * 3];
             vs[0] = Vector3.zero;
             uv[0] = new Vector2(0.5f, 0.5f);
@@ -296,6 +310,7 @@ namespace Gemelo
                           + 0.08f * Mathf.Sin(a * 3 + semilla);
                 vs[i + 1] = new Vector3(Mathf.Cos(a) * r, 0, Mathf.Sin(a) * r);
                 uv[i + 1] = new Vector2(vs[i + 1].x * 0.5f + 0.5f, vs[i + 1].z * 0.5f + 0.5f);
+                radial[i + 1] = new Vector2(1f, 0f);
                 ts[i * 3] = 0;
                 ts[i * 3 + 1] = (i + 1) % lados + 1;
                 ts[i * 3 + 2] = i + 1;
@@ -303,6 +318,7 @@ namespace Gemelo
             var m = new Mesh { name = "Charco" };
             m.vertices = vs;
             m.uv = uv;
+            m.uv2 = radial;
             m.triangles = ts;
             m.RecalculateNormals();
             if (m.normals[0].y < 0)

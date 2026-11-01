@@ -1,7 +1,7 @@
 // Ventanas de los edificios, exportadas por el generador (Herramientas/politecnica/generar_politecnica.py →
 // Resources/Ambiente/Ventanas/<código>.json): plano de la carpintería, tamaño, hojas, persiana y local.
 // Las «móviles» (estancias con sensores de ventana o persiana) se dibujan en tiempo de ejecución (Ventanas); el
-// resto solo sirve para iluminarlas de noche (LucesInteriores).
+// resto (y los paños de muro cortina, `cortina`) solo sirve para iluminarlas de noche (LucesInteriores).
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +14,7 @@ namespace Gemelo
         public string local;            // clave del local (1903_P1_24) o null
         public bool movil;              // hojas, vidrios y persiana los dibuja Unity
         public bool en_malla;           // … y aun así siguen en la malla fundida (el .mcam no se ha regenerado)
+        public bool cortina;            // paño de muro cortina (vestíbulos, pasillos, escaleras): solo se ilumina de noche
         public float[] c;               // centro del plano de la carpintería (mundo)
         public float[] d;               // dirección del hueco en planta (x, z)
         public float[] n;               // normal hacia la calle (x, z)
