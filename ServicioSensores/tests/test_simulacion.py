@@ -421,10 +421,14 @@ def _medir(cat: Catalogo) -> tuple[float, float, float]:
         t0 = time.perf_counter()
         sim.avanzar(t, 18000, None)
         grande.append(time.perf_counter() - t0)
-    t0 = time.perf_counter()
-    for sid in cat.sensores:
-        sim.lectura(sid)
-    lectura = time.perf_counter() - t0
+    # Una sola pasada es muy sensible a la carga de la máquina (Unity abierto): la mejor de tres
+    lecturas = []
+    for _ in range(3):
+        t0 = time.perf_counter()
+        for sid in cat.sensores:
+            sim.lectura(sid)
+        lecturas.append(time.perf_counter() - t0)
+    lectura = min(lecturas)
     return sorted(normal)[len(normal) // 2], sorted(grande)[len(grande) // 2], lectura
 
 
