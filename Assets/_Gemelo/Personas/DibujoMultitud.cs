@@ -42,8 +42,10 @@ namespace Gemelo
         readonly RecursosPersonas rec;
         readonly Multitud m;
         readonly Mesh[] mallas;
-        readonly Material mat;
+        readonly Material mat;   // copia propia del material lejano: lleva siempre un buffer de instancias asignado
         GraphicsBuffer datos, args;
+        // Buffers sustituidos al crecer: se liberan unos fotogramas después, cuando ya no los usa ningún dibujo en curso
+        readonly List<(GraphicsBuffer b, int frame)> retirados = new();
         Instancia[] buf = new Instancia[0];
         readonly GraphicsBuffer.IndirectDrawIndexedArgs[] argsBuf;
         readonly MaterialPropertyBlock[] mpbs;
@@ -75,7 +77,7 @@ namespace Gemelo
             this.rec = rec;
             this.m = m;
             mallas = rec != null ? rec.mallasLejanas : new Mesh[0];
-            mat = rec != null ? rec.materialLejano : null;
+            mat = rec != null && rec.materialLejano != null ? new Material(rec.materialLejano) { name = rec.materialLejano.name + " (gemelo)" } : null;
             int grupos = Mathf.Max(1, mallas.Length) * 2;
             argsBuf = new GraphicsBuffer.IndirectDrawIndexedArgs[grupos];
             mpbs = new MaterialPropertyBlock[grupos];
@@ -83,6 +85,10 @@ namespace Gemelo
             cuenta = new int[grupos];
             base_ = new int[grupos];
             args = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, grupos, GraphicsBuffer.IndirectDrawIndexedArgs.size);
+            // El buffer de instancias se reserva de entrada para el máximo de personas (64 B cada una) y se asigna
+            // también al material: así ningún dibujo de este shader se queda sin él (el aviso de Vulkan «Shader requires
+            // a compute buffer "_Instancias"» y la llamada descartada), ni siquiera mientras se compila un shader
+            if (mat != null) Reservar(Mathf.Max(256, Ajustes.Actual.maxPersonas));
             raiz = new GameObject("Personas").transform;
             raiz.SetParent(padre, false);
             var sh = Resources.Load<Shader>("GemeloPersonas/MarcaPersonas");
@@ -94,13 +100,31 @@ namespace Gemelo
             if (raiz != null) raiz.gameObject.SetActive(si);
         }
 
+        void Reservar(int n)
+        {
+            if (datos != null) retirados.Add((datos, Time.frameCount));
+            int cap = Mathf.NextPowerOfTwo(Mathf.Max(256, n));
+            datos = new GraphicsBuffer(GraphicsBuffer.Target.Structured, cap, Marshal.SizeOf<Instancia>());
+            buf = new Instancia[cap];
+            mat.SetBuffer(idInst, datos);
+        }
+
+        void LiberarRetirados()
+        {
+            for (int i = retirados.Count - 1; i >= 0; i--)
+                if (Time.frameCount - retirados[i].frame > 3) { retirados[i].b.Release(); retirados.RemoveAt(i); }
+        }
+
         public void Liberar()
         {
+            foreach (var r in retirados) r.b.Release();
+            retirados.Clear();
             datos?.Release();
             args?.Release();
             datos = args = null;
             if (raiz != null) Object.Destroy(raiz.gameObject);
             if (matMarca != null) Object.Destroy(matMarca);
+            if (mat != null) Object.Destroy(mat);
         }
 
         /// <summary>Para pruebas: si es true, también dan sombra del sol los que están quietos bajo techo.</summary>
@@ -305,6 +329,7 @@ namespace Gemelo
 
             // Instanciados
             if (mat == null || mallas.Length == 0) { Instanciadas = 0; return; }
+            LiberarRetirados();
             int nv = mallas.Length;
             System.Array.Clear(cuenta, 0, cuenta.Length);
             foreach (var p in lista)
@@ -317,13 +342,7 @@ namespace Gemelo
             for (int g = 0; g < cuenta.Length; g++) { base_[g] = total; total += cuenta[g]; }
             Instanciadas = total;
             if (total == 0) return;
-            if (datos == null || datos.count < total)
-            {
-                datos?.Release();
-                int cap = Mathf.NextPowerOfTwo(Mathf.Max(256, total));
-                datos = new GraphicsBuffer(GraphicsBuffer.Target.Structured, cap, Marshal.SizeOf<Instancia>());
-                buf = new Instancia[cap];
-            }
+            if (datos == null || datos.count < total) Reservar(total);
             var fill = (int[])base_.Clone();
             foreach (var p in lista)
             {
