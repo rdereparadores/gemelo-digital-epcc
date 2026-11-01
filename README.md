@@ -11,8 +11,9 @@ según su ocupación.
 - **Escena del campus generada desde datos.** El terreno sale del LiDAR del IGN (MDT de 0,5 m). Calles, aceras,
   parque y vegetación salen de OpenStreetMap y de la ortofoto PNOA. Los edificios se construyen a partir de los
   planos oficiales de 2013, el Catastro y el LiDAR: muros, huecos, escaleras, unos 500 locales amueblados según su
-  uso, fachadas y cubiertas. No hay modelado a mano: la geometría la generan scripts de Python y constructores de
-  editor.
+  uso, fachadas y cubiertas. No hay modelado a mano: la geometría la generaron scripts de Python y constructores de
+  editor. Este repositorio trae la escena ya generada; los generadores en Python y el material de partida (planos,
+  LiDAR, ortofotos, capturas) no se publican.
 - **App del gemelo.** Un menú inicial da paso a dos modos:
   - *Explorar el campus*: un avatar en tercera persona que entra en los edificios, se sienta y lanza acciones
     sobre la estancia (empezar una clase, abrir ventanas, activar una alarma…).
@@ -31,7 +32,6 @@ según su ocupación.
 - **Unity 6000.6.3f1** (URP 17, Input System y AI Navigation, que se instalan solos desde `Packages/manifest.json`).
   El proyecto se desarrolla y se mide en Linux con Vulkan.
 - **Python ≥ 3.12 y [uv](https://docs.astral.sh/uv/)** para el servicio de sensores.
-- Solo para regenerar la escena: Python 3.14 con numpy, shapely y Pillow (ver [Herramientas](Herramientas/README.md)).
 
 ## Cómo arrancar
 
@@ -64,25 +64,24 @@ La pestaña Ajustes ▸ Controles permite cambiar la sensibilidad, el campo de v
 
 La escena va limitada por la GPU. Ajustes ▸ Gráficos tiene los preajustes Bajo, Medio, Alto y Ultra; el de
 fábrica es Alto, que en una Radeon 780M integrada gasta un 22–25 % menos de GPU que Ultra sin diferencia visible.
-Medidas y herramientas de medida en [Referencias/Rendimiento.md](Referencias/Rendimiento.md).
+Medidas y herramientas de medida en [Documentacion/Rendimiento.md](Documentacion/Rendimiento.md).
 
 ## Estructura
 
 | Carpeta | Contenido |
 |---|---|
-| `Assets/_Politecnica/` | Edificios de la escuela: mallas generadas, mobiliario, materiales, prefabs y componentes (`EdificioPolitecnica`, `Local`, `Puerta`). Se generan con [Herramientas/politecnica](Herramientas/politecnica/README.md) |
+| `Assets/_Politecnica/` | Edificios de la escuela: mallas generadas, mobiliario, materiales, prefabs y componentes (`EdificioPolitecnica`, `Local`, `Puerta`). Generados desde los planos, el Catastro y el LiDAR |
 | `Assets/_Ambientacion/` | Entorno: terreno, suelo, viales, parque, vegetación, equipamiento urbano y ambiente, con sus constructores de editor. Créditos de texturas en [CREDITOS.md](Assets/_Ambientacion/Suelo/Texturas/CREDITOS.md) |
 | `Assets/_Gemelo/` | App del gemelo: núcleo, personas, ambiente, control e interfaz ([README](Assets/_Gemelo/README.md); personas en [su README](Assets/_Gemelo/Personas/README.md)) |
 | `Assets/Scripts/` | Controlador en primera persona de la escena de trabajo, benchmark y configuración de rendimiento |
-| `Herramientas/` | Generadores en Python del entorno y de los personajes ([README](Herramientas/README.md)) |
-| `Referencias/` | Material de partida: MDT, ortofotos, OSM, capturas y el dosier de la Politécnica ([README](Referencias/README.md)) |
 | `ServicioSensores/` | Servicio de sensores, panel web, contrato de la API y cliente de Unity de ejemplo ([README](ServicioSensores/README.md)) |
-| `Datos/` | Datos intermedios de los generadores (splatmaps, accesos de los edificios). Las descargas, los rásteres de viales y las salidas de auditoría no se versionan: se regeneran con los scripts |
+| `Documentacion/` | Rendimiento: cómo se mide y qué se decidió ([Rendimiento.md](Documentacion/Rendimiento.md)) |
 
 ## Créditos y licencias de terceros
 
-- **Personajes y animaciones** de [Mixamo](https://www.mixamo.com) (Adobe), en `Assets/_Gemelo/Personas/Mixamo/`,
-  sujetos a las condiciones de uso de Mixamo.
+- **Personajes y animaciones** de [Mixamo](https://www.mixamo.com) (Adobe), en `Assets/_Gemelo/Personas/Mixamo/`:
+  se usan como parte del proyecto según las condiciones de Mixamo y no se pueden redistribuir por separado (ver
+  [LICENCIA_MIXAMO.md](Assets/_Gemelo/Personas/Mixamo/LICENCIA_MIXAMO.md)).
 - **Texturas** CC0 de [Poly Haven](https://polyhaven.com), con el color corregido. Autoría en
   [CREDITOS.md](Assets/_Ambientacion/Suelo/Texturas/CREDITOS.md). Dos fotos CC0 de Wikimedia Commons en
   `Assets/_Politecnica/Texturas/foto_bn_LICENCIA.txt`.
@@ -94,13 +93,15 @@ Medidas y herramientas de medida en [Referencias/Rendimiento.md](Referencias/Ren
   - MDT, LiDAR y ortofoto PNOA: IGN/CNIG, CC BY 4.0 (scne.es).
   - Catastro: Dirección General del Catastro.
   - OpenStreetMap: ODbL, © colaboradores de OpenStreetMap.
-  - Las capturas de Google Maps y Street View de `Referencias/` son solo referencia visual (imágenes © Google,
-    Airbus y Maxar).
-
-  El detalle está en [Referencias/README.md](Referencias/README.md) y en
-  [Referencias/Politecnica/03_geodatos.md](Referencias/Politecnica/03_geodatos.md).
-- **Planos de planta** de 2013 y documentación de los edificios: Universidad de Extremadura (ver el
-  [dosier de la Politécnica](Referencias/Politecnica/00_INDICE.md)).
+  - Usados como fuente de los generadores (la escena los incorpora ya transformados en terreno, viales y edificios).
+- **Planos de planta** de 2013 y documentación de los edificios: Universidad de Extremadura.
 - **Datos de sensores**: [SmartPoliTech](http://smartpolitech.unex.es), Escuela Politécnica de Cáceres.
 
-Licencia del proyecto: pendiente de definir.
+## Licencia
+
+El proyecto se distribuye bajo [Creative Commons Atribución 4.0 Internacional (CC BY 4.0)](LICENSE): puedes usarlo,
+modificarlo y redistribuirlo, también con fines comerciales, siempre que cites la autoría. Por ejemplo:
+
+> «Gemelo digital de la Escuela Politécnica de Cáceres», de Iván, bajo CC BY 4.0.
+
+Los materiales de terceros de la lista anterior conservan su propia licencia y quedan fuera de esta.

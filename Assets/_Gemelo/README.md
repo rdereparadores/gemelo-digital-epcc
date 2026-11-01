@@ -84,7 +84,7 @@ núcleo como evento o propiedad de `GemeloApp`.
   - Búsquedas: `Local(clave)`, `PorEspacio(spaceId)`, `Edificio(cod|id)`, `LocalEn(punto)` y `EdificioEn(punto)`.
 - **`AliasEstancias`**: claves del servicio que no casan tal cual con un local (sótanos `Pm1` → `P-1`, estancias
   fusionadas con la vecina, divisiones como C-10 → 23A/23B/23C). La tabla `Nucleo/Resources/AliasEstancias.json` la
-  escribe `Herramientas/politecnica/alias_gemelo.py`. `ClienteGemelo.Estancia(clave)` ya devuelve el estado por local
+  escribe el generador de edificios. `ClienteGemelo.Estancia(clave)` ya devuelve el estado por local
   del modelo: en las fusiones suma ocupación, ventanas y radiadores; en las divisiones reparte la ocupación por
   superficie. Solo se quedan sin local los tres patios descubiertos de 1905.
 - **`Ajustes`** (`Ajustes.Actual`, `Ajustes.Aplicar()` y el evento `Ajustes.Cambiados`): se guardan en JSON en
@@ -102,7 +102,7 @@ núcleo como evento o propiedad de `GemeloApp`.
   | Ultra | MSAA 4× | 4 cascadas, 150 m, 4096 px | Completa | 100 % | 2 | 90 m |
 
   Ultra es la configuración que tenía la escena antes de existir los preajustes; Alto cuesta un 22–25 % menos de GPU
-  sin diferencia visible (ver [Rendimiento](../../Referencias/Rendimiento.md#app-del-gemelo)).
+  sin diferencia visible (ver [Rendimiento](../../Documentacion/Rendimiento.md#app-del-gemelo)).
 - **`Escalas`**: nombre, unidad, rango, valor y color de cada capa, más los colores del confort y de la severidad.
   La paleta es la de la UEx.
 
@@ -170,7 +170,7 @@ crea el resto:
   plantas cuentan como más lejos), y de día bajan con la luz natural (`FactorDia`), porque la luz ambiente ya alumbra
   los interiores.
 - `Ventanas`: hojas y persianas de las estancias con sensor, a partir de `Resources/Ambiente/Ventanas/<código>.json`
-  (lo escribe el generador de edificios; ver [Ventanas del gemelo](../../Herramientas/politecnica/README.md#ventanas-del-gemelo)).
+  (lo escribe el generador de edificios).
   Los paños de muro cortina van en el mismo JSON con `cortina: true` y solo sirven para iluminarlos de noche.
 - `Indicadores`: insignias de las alertas sobre cada estancia.
 - `Emergencias`: sirena, estroboscópicos, balizas y charcos con el sombreador `Gemelo/Agua` (suelo visto a través
@@ -226,7 +226,7 @@ Herramientas solo para pruebas; no cambian nada si no se llaman.
   [Personas](Personas/README.md#cómo-se-prueba)).
 - **`RecorridoRendimiento`** (`Control/`): con `-recorrido <carpeta>` la build recorre vistas fijas de los tres modos y
   deja `recorrido.json` y una captura por vista. Opciones y ejemplo en
-  [Rendimiento](../../Referencias/Rendimiento.md#la-app-recorridorendimiento).
+  [Rendimiento](../../Documentacion/Rendimiento.md#la-app-recorridorendimiento).
 
 ## Convenciones
 
@@ -235,7 +235,7 @@ Herramientas solo para pruebas; no cambian nada si no se llaman.
   `Keyboard.current` y `Mouse.current`.
 - Nada de cambios a mano en `MainScene`. Lo persistente (NavMesh, materiales, prefabs) lo generan constructores de
   editor en `<módulo>/Editor/`.
-- **Rendimiento**: la escena va limitada por la GPU (ver [Rendimiento](../../Referencias/Rendimiento.md)). Hay que
+- **Rendimiento**: la escena va limitada por la GPU (ver [Rendimiento](../../Documentacion/Rendimiento.md)). Hay que
   instanciar en vez de crear miles de objetos y no añadir luces con sombra.
 - **Stencil**: el bit 3 (valor 8) significa «aquí se ve una persona». Lo escriben los sombreadores de Personas
   (`MultitudInstanciada` y el material `MarcaPersonas` que llevan los avatares en la vista cenital con capa) y lo

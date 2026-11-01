@@ -1,9 +1,8 @@
 # Créditos de las texturas
 
 Todas las texturas PBR del proyecto son de [Poly Haven](https://polyhaven.com), con licencia **CC0** (dominio
-público). Se descargan y se les corrige el color hacia los tonos reales de Cáceres con
-`Herramientas/preparar_texturas.py` (entorno) y `Herramientas/politecnica/preparar_texturas.py` (edificios de la
-escuela).
+público). Se descargaron y se les corrigió el color hacia los tonos reales de Cáceres con los scripts de preparación
+del proyecto (no incluidos en el repositorio).
 
 ## Suelo (`Assets/_Ambientacion/Suelo/Texturas/`)
 

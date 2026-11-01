@@ -51,7 +51,7 @@ edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y 
 - Las hojas de puerta (`Puerta`) y los triggers de los locales no cuentan.
 - Áreas: 0 suelo/acera (coste 1), 3 terreno (1,8), 4 calzada (2,5): se prefiere la acera y se cruza por donde toca.
 - **Escaleras**: todas las de los siete edificios se andan por la malla (el generador corta los muros que las tapiaban
-  y cose las mesetas a sus tramos; ver [Herramientas/politecnica](../../../Herramientas/politecnica/README.md)). No
+  y cose las mesetas a sus tramos). No
   hay enlaces «ascensor» ni costuras a través de tabiques (`CoserForzado`, desactivado: unían azoteas sin puerta con
   los locales de al lado atravesando la fachada).
 - **Costuras**: el voxelizado deja algunos trozos sueltos separados por centímetros. El builder busca los trozos que no
@@ -152,25 +152,21 @@ lleva cada personaje.
 
 ### Cómo se rehace
 
-1. Descargar de Mixamo a `Datos/descargas/mixamo/` (caché ignorada por git): personajes «FBX for Unity», con piel y
-   en T-pose, en `personajes/<Nombre>.fbx`, y animaciones «FBX for Unity» sin piel (esqueleto de Y Bot), las de
-   locomoción *in place*, en `animaciones/<nombre>.fbx` (nombres en la tabla de clips).
-2. `/usr/bin/python3.14 -I Herramientas/mixamo/preparar_mixamo.py [Nombre…]` (unos 2 min con todo). Sin Blender: lee
-   el FBX binario (`fbx_binario.py`), extrae las texturas embebidas y lo vuelve a escribir sin ellas (mallas, pesos y
-   esqueleto `mixamorig:*` idénticos, así que Unity lo importa como cualquier FBX de Mixamo, sin nodo raíz de más).
-   Deja en `Mixamo/Personajes/<N>/` el FBX (~2,5 MB), el color a 1024 px (JPG; PNG con alfa si el pelo o las
-   pestañas recortan con ella, con el color de los texeles transparentes rellenado desde los vecinos para que no
-   salga el halo blanco al filtrar), la normal (JPG), una máscara de 512 px con el *gloss* en A (→ smoothness de
-   URP/Lit) y `<N>.json` con los materiales, la altura y los colores dominantes por zonas (en T-pose: manos y cara,
-   pecho, brazos, muslos, pies, pelo o casco/gorra). Copia también las animaciones a `Mixamo/Animaciones/`.
-   `MIXAMO_DEPURAR=<carpeta>` guarda una vista de las muestras de color; `MIXAMO_DESTINO=<carpeta>` escribe en otro
-   sitio (pruebas).
-3. En Unity, al importar, `ImportadorMixamo` aplica: Humanoid con *Create From This Model* (también las animaciones,
+Licencia: los personajes y animaciones son de Adobe y se usan según las condiciones de Mixamo (ver
+[LICENCIA_MIXAMO.md](Mixamo/LICENCIA_MIXAMO.md)).
+
+Los FBX de `Mixamo/` ya vienen preparados: se descargaron de Mixamo («FBX for Unity»; personajes en T-pose y
+animaciones sin piel sobre Y Bot, la locomoción *in place*) y un script propio, que no forma parte del repositorio,
+les sacó las texturas embebidas (color a 1024 px, normal y una máscara con el *gloss*) y escribió un
+`<Nombre>.json` por personaje con sus materiales, su altura y sus colores dominantes por zonas del cuerpo. A partir
+de ahí, todo se rehace en Unity:
+
+1. Al importar, `ImportadorMixamo` aplica: Humanoid con *Create From This Model* (también las animaciones,
    con el avatar de su esqueleto de Y Bot), escala del archivo (Remy viene a 3,8 m y se importa a 1,78), LOD de
    malla, tangentes, sin cámaras ni blendshapes; clips con giro, altura y posición horneados en la pose (referencia
    original) y en bucle; texturas a 1024 como mucho, normales como *Normal map*,
    máscaras lineales y el color con alfa conservando la cobertura en los mipmaps.
-4. **Tools ▸ Gemelo ▸ Personajes de Mixamo** (`ConstructorMixamo.Construir()`, ~30 s): materiales URP/Lit en
+2. **Tools ▸ Gemelo ▸ Personajes de Mixamo** (`ConstructorMixamo.Construir()`, ~30 s): materiales URP/Lit en
    `Personajes/<N>/Materiales/` (pelo y pestañas con *Alpha Clipping* 0,45 y a dos caras; smoothness 0,5 × gloss),
    reimporta cada FBX con ellos (`AddRemap`), crea los dos `AnimatorOverrideController` (`Persona_Hombre`,
    `Persona_Mujer`) sobre `Maniquies/Persona.controller`, un prefab por personaje en `Mixamo/Prefabs/` (con el móvil

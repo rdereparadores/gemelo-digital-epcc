@@ -74,7 +74,7 @@ Se inspira en OGC SensorThings API (Thing → Datastream → Observation) y en S
 `type`: `classroom`, `computer_lab`, `lab`, `office`, `corridor`, `hall`, `technical_room`,
 `restroom`, `cafeteria`, `meeting_room`, `outdoor`, `building` (sensores de todo el edificio) u `other`.
 
-`floor` es `null` en las zonas de edificio entero y en el exterior. `unity_room` es la clave de `Referencias/Politecnica/datos/interiores.json` (`<edificio>_<planta>_<num>`),
+`floor` es `null` en las zonas de edificio entero y en el exterior. `unity_room` es la clave del local en la escena de Unity (`<edificio>_<planta>_<num>`, la de `InfoLocal.clave` en el gemelo),
 o `null` si la estancia no está en el modelo.
 
 ### Sensor

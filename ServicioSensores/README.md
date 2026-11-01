@@ -33,7 +33,7 @@ Los ajustes y la política de fuentes se guardan en `datos/estado/`, que no se v
 | [`docs/CONTRATO_API.md`](docs/CONTRATO_API.md) | Contrato de la API v1: convenciones, recursos y modelo |
 | [`docs/SENSORES_SMARTPOLITECH.md`](docs/SENSORES_SMARTPOLITECH.md) | Investigación: qué publica SmartPoliTech y en qué estado está |
 | `herramientas/inventariar.py` | Inventario de SmartPoliTech → `datos/inventario_smartpolitech.json` |
-| `herramientas/generar_catalogo.py` | Inventario + `Referencias/Politecnica/datos/interiores.json` → `datos/catalogo.json` |
+| `herramientas/generar_catalogo.py` | Inventario + `interiores.json` del modelo de edificios → `datos/catalogo.json` (el catálogo ya va generado; el `interiores.json` sale de los generadores de la escena, que no se publican) |
 | `src/gemelo_sensores/` | Servicio: `api.py` (rutas), `gemelo.py` (orquestación), `smartpolitech.py` (cliente), `simulacion/` (motor) |
 | `panel/` | Panel de control estático (HTML, CSS y módulos ES; sin compilación) con la identidad corporativa de la UEx |
 | `clientes/unity/` | Cliente C# mínimo para otros proyectos de Unity (ver abajo) |
