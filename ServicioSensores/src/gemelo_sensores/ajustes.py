@@ -17,12 +17,12 @@ Modo = Literal["real", "simulated", "auto"]
 
 class AjustesUpstream(BaseModel):
     enabled: bool = True
-    base_url: str = "http://smartpolitech.unex.es"
+    base_url: str = Field("http://smartpolitech.unex.es", pattern=r"^https?://[^\s/]+")
     datasource_id: int = 1
     database: str = "sensors"
     poll_interval_s: float = Field(60, ge=10, le=3600)
     timeout_s: float = Field(20, ge=1, le=120)
-    stale_after_s: float = Field(7200, ge=60, description="Un dato real más viejo que esto no cuenta en modo auto")
+    stale_after_s: float = Field(7200, ge=60, le=30 * 86400, description="Un dato real más viejo que esto no cuenta en modo auto")
     lookback_s: float = Field(7 * 86400, ge=3600, le=90 * 86400,
                               description="Hasta dónde se busca el último dato real (el modo real lo sirve aunque sea viejo)")
 
@@ -30,7 +30,7 @@ class AjustesUpstream(BaseModel):
 class AjustesSimulacion(BaseModel):
     tick_s: float = Field(5, ge=0.5, le=60, description="Cada cuánto avanza el motor (segundos de reloj real)")
     seed: int = 42
-    history_interval_s: float = Field(300, ge=10, le=3600, description="Resolución del búfer de histórico")
+    history_interval_s: float = Field(300, ge=60, le=3600, description="Resolución del búfer de histórico")
 
 
 class AjustesStream(BaseModel):

@@ -447,3 +447,29 @@ def test_rendimiento_catalogo_real():
           f"{normal * 1000:.1f} ms, avanzar(5 h) {grande * 1000:.1f} ms, lectura de todos {lectura * 1000:.1f} ms")
     assert normal < 0.020
     assert grande < 0.050
+
+
+# ------------------------------------------------------------ regresiones de la revisión del 02-11
+@pytest.mark.parametrize("params", [{"flow_l_min": "nan"}, {"flow_l_min": "inf"}, {"flow_l_min": -500}])
+def test_fuga_con_caudal_no_valido_se_rechaza(sim, params):
+    with pytest.raises(ValueError):
+        sim.crear_evento("water_leak", "INF-P00-AUL001", None, params, MARTES_NOV_10H)
+
+
+@pytest.mark.parametrize("valor", [1e400, -3, 2.5, "muchos"])
+def test_clase_con_personas_no_validas_se_rechaza(sim, valor):
+    with pytest.raises(ValueError):
+        sim.crear_evento("class_start", "INF-P00-AUL001", None, {"people": valor}, MARTES_NOV_10H)
+
+
+def test_duracion_de_evento_acotada(sim):
+    with pytest.raises(ValueError):
+        sim.crear_evento("open_windows", "INF-P00-AUL001", 1e308, {}, MARTES_NOV_10H)
+
+
+def test_clase_no_pasa_del_aforo(sim):
+    t = MARTES_NOV_10H
+    sim.crear_evento("class_start", "INF-P00-AUL001", 3600, {"people": 10000}, t)
+    t = correr(sim, t, 600)
+    estado = sim.estado_espacio("INF-P00-AUL001")
+    assert estado["occupancy"] <= estado["capacity"] + 0.5

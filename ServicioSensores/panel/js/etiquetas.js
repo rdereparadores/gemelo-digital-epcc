@@ -96,7 +96,7 @@ export const EVENTOS = {
   sensor_failure: 'Fallo de sensor',
 };
 
-export const PLANTAS = { PS1: 'Sótano', P00: 'Planta baja', P01: 'Primera planta', P02: 'Segunda planta', EXT: 'Exterior' };
+export const PLANTAS = { PS2: 'Segundo sótano', PS1: 'Sótano', P00: 'Planta baja', P01: 'Primera planta', P02: 'Segunda planta', EXT: 'Exterior' };
 
 export const etiquetaTipo = (k) => TIPOS_SENSOR[k] || k;
 export const etiquetaPropiedad = (p) => PROPIEDADES[p] || p;

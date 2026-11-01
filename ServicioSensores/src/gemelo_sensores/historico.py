@@ -166,7 +166,9 @@ class Historico:
                 if valores:
                     previas.append((t, valores, "simulated"))
             salida[s.id] = previas + salida.get(s.id, [])
-        return salida, corte
+        # La reconstrucción cubre 24 h antes del búfer: una ventana más antigua queda vacía y no se puede decir
+        # que se haya reconstruido (antes devolvía reconstructed_until con todas las series vacías)
+        return salida, (corte if hasta >= t0 else None)
 
     async def reales(self, sensores: list[Sensor], desde: datetime, hasta: datetime) -> dict[str, list[Muestra]]:
         """Histórico real de SmartPoliTech de cada sensor (los que no responden a tiempo se quedan fuera)."""

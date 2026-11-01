@@ -49,7 +49,7 @@ def _clases(iv: list[Intervalo], tipo: str, cap: int, c: int, ordinal: int, dia_
                 asist = a_min + (a_max - a_min) * u01(c, ordinal * 1000 + k, 5)
                 if n_franja == 0 and i == 0:
                     asist *= 0.8  # a las 8:30 siempre falta gente
-                n = max(3, round(cap * asist))
+                n = min(cap, max(3, round(cap * asist)))   # (el mínimo de 3 no puede pasar del aforo)
                 iv.append((ini, fin, n + 1, "practica" if tipo == "lab" else "clase"))
                 i += dur
             else:
@@ -65,7 +65,7 @@ def _examenes(iv: list[Intervalo], tipo: str, cap: int, c: int, ordinal: int) ->
     for j, ((a, b), p) in enumerate(zip(FRANJAS_EXAMEN, probs)):
         k = ordinal * 1000 + 500 + j
         if u01(c, k, 1) < p:
-            n = max(4, round(cap * (0.3 + 0.4 * u01(c, k, 2))))
+            n = min(cap, max(4, round(cap * (0.3 + 0.4 * u01(c, k, 2)))))
             ini = a - 15.0 + 10.0 * u01(c, k, 3)
             fin = b - 40.0 * u01(c, k, 4)  # la gente va acabando antes
             iv.append((ini, fin, n + 2, "examen"))

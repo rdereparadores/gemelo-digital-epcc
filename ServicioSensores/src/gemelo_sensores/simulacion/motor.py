@@ -38,6 +38,7 @@ from .escenarios import ESCENARIOS, ConfigEscenario
 from .interfaz import Escenario, Evento, Exterior
 from .ocupacion import PRIORIDAD, ocupacion_cafeteria, programar_dia
 
+DURACION_MAX_S = 30 * 86400.0  # tope de duration_s de un evento (sin tope, 1e308 rompía la tabla del panel)
 TIPOS_EVENTO = ("open_windows", "close_windows", "class_start", "class_end", "heating_off", "heating_on",
                 "fire_alarm", "power_outage", "water_leak", "sensor_failure")
 
@@ -792,7 +793,8 @@ class Simulador:
                     p = PRIORIDAD[ac]
                     if p > pr:
                         pr, act = p, ac
-            return float(tot), act
+            # los intervalos que se solapan (personal y clase) se suman: como mucho el aforo y quien da la clase
+            return float(min(tot, s.cap + 2)), act
         if modo == _CAFETERIA:
             if e.alarma:
                 return 0.0, ""
@@ -1120,21 +1122,24 @@ class Simulador:
     def crear_evento(self, tipo: str, objetivo: str, duracion_s: float | None, params: dict, ahora: datetime) -> Evento:
         if tipo not in TIPOS_EVENTO:
             raise ValueError(f"tipo de evento desconocido: '{tipo}' (válidos: {', '.join(TIPOS_EVENTO)})")
-        if duracion_s is not None and duracion_s < 0:
-            raise ValueError("duration_s no puede ser negativa")
+        if duracion_s is not None and not (0 <= duracion_s <= DURACION_MAX_S):
+            raise ValueError(f"duration_s debe estar entre 0 y {DURACION_MAX_S:.0f} s (30 días)")
         params = dict(params or {})
         if tipo == "class_start" and "people" in params:
             try:
-                if int(params["people"]) < 0:
+                n = float(params["people"])
+                if not (math.isfinite(n) and n == int(n) and 0 <= n <= 10000):
                     raise ValueError
-            except (TypeError, ValueError):
-                raise ValueError("params.people debe ser un entero no negativo") from None
-        for k in ("flow_l_min",):
-            if k in params:
-                try:
-                    float(params[k])
-                except (TypeError, ValueError):
-                    raise ValueError(f"params.{k} debe ser un número") from None
+            except (TypeError, ValueError, OverflowError):
+                raise ValueError("params.people debe ser un entero entre 0 y 10000") from None
+        if "flow_l_min" in params:
+            # (NaN o infinito pasaban la validación y rompían el tick en cada ciclo)
+            try:
+                q = float(params["flow_l_min"])
+                if not (math.isfinite(q) and 0 < q <= 600):
+                    raise ValueError
+            except (TypeError, ValueError, OverflowError):
+                raise ValueError("params.flow_l_min debe ser un caudal entre 0 y 600 L/min") from None
         if tipo == "sensor_failure" and params.get("mode", "none") not in ("none", "frozen"):
             raise ValueError("params.mode debe ser 'none' o 'frozen'")
         return self._nuevo_evento(tipo, objetivo, duracion_s, params, ahora).ev
@@ -1152,7 +1157,7 @@ class Simulador:
                 salas = [s for s in salas if s.tipo in _TIPOS_DOCENTES]
         if tipo == "class_end":
             if duracion_s is None:
-                duracion_s = self._resto_de_clase(salas)
+                duracion_s = float(round(self._resto_de_clase(salas)))
             for ei in self._eventos:
                 if ei.ev.active and ei.ev.type == "class_start" and set(map(id, ei.salas)) <= set(map(id, salas)):
                     self._terminar(ei)
@@ -1256,7 +1261,8 @@ class Simulador:
             elif tipo == "class_start":
                 for s in ei.salas:
                     n = p.get("people")
-                    s.forz_ocup = float(int(n)) if n is not None else float(round(0.75 * s.cap))
+                    # (como mucho el aforo de la sala: con people=100000 un aula de 54 plazas llegaba a 2498 personas)
+                    s.forz_ocup = float(min(int(float(n)), s.cap)) if n is not None else float(round(0.75 * s.cap))
             elif tipo == "class_end":
                 for s in ei.salas:
                     if s.modo in (_PROGRAMADA, _CAFETERIA):
@@ -1610,6 +1616,11 @@ class Simulador:
                 "precipitation_rate": round(e.lluvia, 1), "cloud_cover": round(e.nubosidad, 2),
                 "solar_irradiance": round(e.ghi), "sun_elevation": round(math.degrees(e.alt_sol), 1),
                 "co2_concentration": round(e.co2), "pm25": round(e.pm25, 1)}
+
+    def calefaccion_en_marcha(self, edificio_id: str) -> bool | None:
+        """Si la caldera del edificio da agua caliente ahora mismo (None si no se simula ese edificio)."""
+        e = self._edificios.get(edificio_id)
+        return None if e is None or not self._iniciado else bool(getattr(e, "planta_on", False))
 
     def estado_espacio(self, espacio_id: str) -> dict | None:
         """Estado interno de una estancia (sin ruido de sensor), para depurar y para pruebas."""

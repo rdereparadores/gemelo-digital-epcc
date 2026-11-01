@@ -198,9 +198,11 @@ class ClienteSmartPoliTech:
 
     async def historico(self, sensor: Sensor, desde: datetime, hasta: datetime, limite: int) -> list[LecturaReal]:
         """Lecturas reales entre dos instantes, la más reciente primero."""
-        if not sensor.upstream:
+        # (con el sondeo desactivado no se sale a SmartPoliTech, tampoco para el histórico)
+        if not sensor.upstream or not self.ajustes.enabled:
             return []
         m, mapa = sensor.upstream["measurement"], sensor.upstream["fields"]
+        desde, hasta = desde.astimezone(UTC), hasta.astimezone(UTC)   # la consulta va en UTC con «Z»
         if any(e.endswith("|agua_hoy") for e in mapa.values()):
             return []  # el contador de agua solo tiene sentido como acumulado del día
         q = (f'SELECT * FROM "{m}" WHERE time >= \'{desde:%Y-%m-%dT%H:%M:%SZ}\' '

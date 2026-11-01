@@ -374,11 +374,16 @@ Escenarios: `normal_day`, `winter_morning`, `summer_afternoon`, `exam_period`, `
 `heating_off`, `heating_on`, `fire_alarm`, `power_outage`, `water_leak`, `sensor_failure`
 (`target` = id de sensor). `target` puede ser un sensor, una estancia, un edificio o `campus`.
 
+Límites (fuera de ellos, `422`): `duration_s` entre 0 y 30 días (`null` = sin límite; `class_start` dura 50 min y
+`class_end` hasta la siguiente clase si no se indica); `params.people`, entero de 0 a 10 000, que se recorta al aforo
+de cada sala; `params.flow_l_min`, caudal mayor que 0 y hasta 600 L/min. Las fechas (`clock`, `from`, `to`) deben
+caer entre los años 2000 y 2100.
+
 ### Sistema
 
 | Método y ruta | Respuesta |
 |---|---|
-| `GET /api/v1/health` | `{"status": "ok"\|"degraded", "checks": {...}}` (200 o 503) |
+| `GET /api/v1/health` | `{"status": "ok"\|"degraded", "checks": {...}}` (200 o 503). `degraded` si el último tick que terminó bien es viejo (`checks.simulation.error` trae el fallo) o si el bucle de sondeo dejó de dar vueltas |
 | `GET /api/v1/upstream` | Estado del enlace con SmartPoliTech (ver abajo) |
 | `POST /api/v1/upstream/refresh` | Fuerza un sondeo (`202`) |
 

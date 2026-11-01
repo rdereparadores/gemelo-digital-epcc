@@ -260,7 +260,7 @@ export function montar(contenedor, rutaInicial) {
     };
     const control = segmentado({
       etiqueta: `Modo del sensor ${s.name}`, compacto: true, valor: excepcion(s, politica),
-      opciones: OPCIONES_REGLA.map((o) => (o.valor === 'real' && !s.real_available
+      opciones: OPCIONES_REGLA.map((o) => ((o.valor === 'real' || o.valor === 'auto') && !s.real_available
         ? { ...o, deshabilitado: true, titulo: 'No existe en SmartPoliTech: solo puede ser simulado' } : o)),
       alCambiar: async (v, fs) => {
         fs.ocupado(true);
@@ -368,7 +368,7 @@ export function montar(contenedor, rutaInicial) {
       const cambios = {};
       let omitidos = 0;
       for (const s of sensores) {
-        if (modo === 'real' && !s.real_available) { omitidos++; continue; }
+        if ((modo === 'real' || modo === 'auto') && !s.real_available) { omitidos++; continue; }
         if (modo === null) { if (politica.sensors[s.id]) cambios[s.id] = null; continue; }
         if (politica.sensors[s.id] !== modo) cambios[s.id] = modo;
       }

@@ -24,7 +24,7 @@ export function montar(contenedor) {
   vaciar(contenedor, h('div', { class: 'vista' },
     h('div', { class: 'vista-cabecera' }, h('div', {}, h('h1', {}, 'Simulación'),
       h('p', {}, 'Controla el reloj del motor de simulación, el escenario y el clima, e inyecta eventos (ventanas, clases, averías…) para ver la respuesta del gemelo.'))),
-    h('div', { class: 'rejilla', style: { gridTemplateColumns: 'minmax(260px, 1fr) minmax(0, 2.2fr)' } },
+    h('div', { class: 'rejilla simulacion' },
       h('section', { class: 'tarjeta' }, h('header', {}, h('h2', {}, 'Reloj')), cajaReloj),
       h('section', { class: 'tarjeta' }, h('header', {}, h('h2', {}, 'Parámetros')), cajaForm)),
     h('section', { class: 'tarjeta' }, h('header', {}, h('h2', {}, 'Inyectar evento')), cajaEventoForm),
@@ -199,7 +199,7 @@ export function montar(contenedor) {
     }
     function actualizarResumen() {
       const d = Number(entradaDur.value);
-      resumen.textContent = `${EVENTOS[selTipo.value]} en ${objetivo() || '…'} ${d > 0 ? `durante ${d} min (hora simulada)` : 'sin límite de duración'}.`;
+      resumen.textContent = `${EVENTOS[selTipo.value]} en ${objetivo() || '…'} ${d > 0 ? `durante ${d} min (hora simulada)` : selTipo.value === 'class_start' ? 'durante 50 min (lo que dura una clase)' : selTipo.value === 'class_end' ? 'hasta la hora de la siguiente clase' : 'sin límite de duración'}.`;
     }
 
     vaciar(cajaEventoForm, h('form', { class: 'formulario', onsubmit: async (e) => {
@@ -220,7 +220,7 @@ export function montar(contenedor) {
       h('div', { class: 'campo', style: { width: '220px' } }, h('label', { for: ids.tipo }, 'Tipo de evento'), selTipo),
       h('div', { class: 'campo', style: { width: 'auto' } }, h('span', { class: 'etiqueta' }, 'Ámbito'), ambitos),
       campoEdificio, campoEstancia, campoSensor,
-      h('div', { class: 'campo', style: { width: 'auto' } }, h('label', { for: ids.dur }, 'Duración (min, 0 = sin límite)'), entradaDur),
+      h('div', { class: 'campo', style: { width: 'auto' } }, h('label', { for: ids.dur }, 'Duración (min, 0 = la de por defecto)'), entradaDur),
       campoPersonas),
     h('div', { class: 'lado' }, resumen, h('button', { type: 'submit', class: 'boton primario derecha' }, 'Inyectar evento'))));
     if (listaEdificios.length) rellenarEstancias();
@@ -253,7 +253,9 @@ export function montar(contenedor) {
     const terminados = evs.filter((e) => e.active === false);
     const ahora = horaSimulada()?.getTime() ?? Date.now();
     const filaEv = (ev) => {
-      const fin = ev.end || ev.ends_at || (ev.start && ev.duration_s ? new Date(new Date(ev.start).getTime() + ev.duration_s * 1000).toISOString() : null);
+      // (una duración fuera del rango de Date lanzaba RangeError y dejaba la tabla sin cargar)
+      const tFin = ev.start && ev.duration_s ? new Date(ev.start).getTime() + ev.duration_s * 1000 : NaN;
+      const fin = ev.end || ev.ends_at || (Number.isFinite(tFin) && Math.abs(tFin) <= 8.64e15 ? new Date(tFin).toISOString() : null);
       return h('tr', {},
         h('td', {}, h('span', { class: `chip ${ev.active === false ? 'neutro' : 'estado-ok'}` }, ev.active === false ? 'Terminado' : 'Activo')),
         h('td', {}, h('strong', {}, EVENTOS[ev.type] || ev.type), h('div', { class: 'sub mono' }, ev.id)),

@@ -86,6 +86,11 @@ class Gemelo:
         self.weather_source = "real"
         self.sim_time = datetime.now(UTC)
         self._ultimo_tick_real: datetime | None = None
+        # último tick que terminó sin error y último fallo (para /health: un tick que revienta en cada ciclo no
+        # puede dar «ok»), y última vuelta completa del bucle de sondeo
+        self.ultimo_tick_ok: datetime | None = None
+        self.error_tick: str | None = None
+        self.ultima_vuelta_sondeo: datetime | None = None
 
         self.servidas: dict[str, Observacion] = {}
         self.historial: dict[str, deque[Observacion]] = {}
@@ -111,7 +116,9 @@ class Gemelo:
             await asyncio.sleep(self.ajustes.simulation.tick_s)
             try:
                 self.tick()
-            except Exception:  # noqa: BLE001 - un fallo del modelo no debe tumbar el servicio
+                self.ultimo_tick_ok, self.error_tick = datetime.now(UTC), None
+            except Exception as e:  # noqa: BLE001 - un fallo del modelo no debe tumbar el servicio
+                self.error_tick = f"{type(e).__name__}: {e}"
                 log.exception("fallo en el tick de simulación")
 
     async def _bucle_sondeo(self) -> None:
@@ -124,8 +131,13 @@ class Gemelo:
                     pass
             primero = False
             self._sondeo_pedido.clear()
-            if self.ajustes.upstream.enabled:
-                await self.sondear()
+            # (cualquier excepción aquí mataba la tarea en silencio y no se volvía a sondear nunca)
+            try:
+                if self.ajustes.upstream.enabled:
+                    await self.sondear()
+            except Exception:  # noqa: BLE001
+                log.exception("fallo en el bucle de sondeo")
+            self.ultima_vuelta_sondeo = datetime.now(UTC)
 
     async def sondear(self) -> None:
         sensores = [s for s in self.catalogo.sensores.values() if s.real_available and self.modo(s) != "simulated"]
@@ -134,7 +146,10 @@ class Gemelo:
         except Exception as e:  # noqa: BLE001
             self.cliente.estado.error(f"{type(e).__name__}: {e}")
             log.exception("fallo al sondear SmartPoliTech")
-        self.tick(avanzar=False)
+        try:
+            self.tick(avanzar=False)
+        except Exception:  # noqa: BLE001
+            log.exception("fallo al servir los datos tras el sondeo")
 
     def pedir_sondeo(self) -> None:
         self._sondeo_pedido.set()
@@ -285,7 +300,12 @@ class Gemelo:
         radiadores = [o for s, o in obs if s.kind == "radiator_valve"]
         v = lambda p: metricas[p]["value"] if p in metricas else None  # noqa: E731
         abiertas = sum(1 for o in ventanas if o.values.get("window_open", 0) >= 0.5)
-        activos = sum(1 for o in radiadores if o.values.get("valve_position", 0) > 5)
+        # Una válvula termostática se abre con la sala fría aunque la caldera esté parada: sin agua caliente no
+        # calienta, y no cuenta como radiador encendido (salían alertas de ventanas abiertas con radiadores
+        # encendidos de madrugada y en fin de semana). Los datos reales se cuentan tal cual
+        caldera = getattr(self.sim, "calefaccion_en_marcha", lambda _: None)(e.building_id)
+        activos = sum(1 for o in radiadores if o.values.get("valve_position", 0) > 5
+                      and (o.source != "simulated" or caldera is not False))
         alertas = self._alertas(e, v, abiertas, activos, sensores, obs)
         estado = {
             "space_id": e.id,

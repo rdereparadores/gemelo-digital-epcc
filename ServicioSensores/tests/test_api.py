@@ -157,3 +157,42 @@ def test_transformaciones_de_smartpolitech():
     assert _transformar("people|num", {"people": "15"}) == 15.0
     assert _transformar("counter1+counter2|agua_hoy", {"counter1": 2, "counter2": 3}) == 5.0
     assert _transformar("et|kwh_desde_wh", {"et": 23090016.0}) == 23090.016
+
+
+# ------------------------------------------------------------ regresiones de la revisión del 02-11
+
+def test_patch_de_simulacion_atomico_y_fechas_acotadas(cliente):
+    r = cliente.patch("/api/v1/simulation", json={"scenario": "fire_drill", "clock": "no-es-fecha"}, headers=MERGE)
+    assert r.status_code == 400
+    assert cliente.get("/api/v1/simulation").json()["scenario"] == "normal_day"   # no se aplica a medias
+    for fecha in ("9999-12-31T23:59:00Z", "0001-01-01T00:00:00Z"):
+        assert cliente.patch("/api/v1/simulation", json={"clock": fecha}, headers=MERGE).status_code == 422
+    assert cliente.get(f"/api/v1/spaces/{NORBA}/history", params={"to": "0001-01-01T00:00:00Z"}).status_code == 422
+
+
+def test_patch_vacio_de_sensor_no_quita_la_excepcion(cliente):
+    cliente.patch(f"/api/v1/sensors/{REAL}", json={"mode": "real"}, headers=MERGE)
+    assert cliente.patch(f"/api/v1/sensors/{REAL}", json={}, headers=MERGE).status_code == 200
+    assert cliente.get("/api/v1/source-policy").json()["sensors"][REAL] == "real"
+
+
+def test_politica_no_pone_virtuales_en_real_ni_auto(cliente):
+    for modo in ("real", "auto"):
+        r = cliente.patch("/api/v1/source-policy", json={"sensors": {VIRTUAL: modo}}, headers=MERGE)
+        assert r.status_code == 409
+    assert cliente.patch(f"/api/v1/sensors/{VIRTUAL}", json={"mode": "auto"}, headers=MERGE).status_code == 409
+
+
+def test_ajustes_fuera_de_rango(cliente):
+    for parche in ({"upstream": {"stale_after_s": 1e300}}, {"upstream": {"base_url": "no es una url"}},
+                   {"simulation": {"history_interval_s": 10}}):
+        assert cliente.patch("/api/v1/settings", json=parche, headers=MERGE).status_code == 422, parche
+
+
+def test_salud_avisa_si_el_tick_falla(cliente):
+    g = cliente.gemelo
+    g.tick()
+    g.ultimo_tick_ok = datetime(2026, 1, 1, tzinfo=UTC)
+    g.error_tick = "ValueError: prueba"
+    r = cliente.get("/api/v1/health")
+    assert r.status_code == 503 and r.json()["checks"]["simulation"]["error"] == "ValueError: prueba"

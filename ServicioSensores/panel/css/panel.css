@@ -212,6 +212,7 @@ main { grid-area: main; position: relative; overflow-y: auto; padding: 20px 24px
 .rejilla.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .rejilla.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .rejilla.ajustes { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); align-items: start; }
+.rejilla.simulacion { grid-template-columns: minmax(260px, 1fr) minmax(0, 2.2fr); }
 .rejilla.arriba { align-items: start; }
 @media (max-width: 1480px) { .rejilla.c4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
@@ -518,7 +519,7 @@ td.etiqueta-real a, td.etiqueta-sim a { color: inherit; }
 }
 @media (max-width: 760px) {
   .marca-texto, .pastilla.reloj { display: none; }
-  .rejilla.c4, .rejilla.c2, .rejilla.c3 { grid-template-columns: minmax(0, 1fr); }
+  .rejilla.c4, .rejilla.c2, .rejilla.c3, .rejilla.simulacion { grid-template-columns: minmax(0, 1fr); }
   .explorador { grid-template-columns: minmax(0, 1fr); }
   .arbol { position: static; max-height: none; }
   .arbol .lista { max-height: 320px; }

@@ -117,14 +117,21 @@ def raiz() -> dict:
 @router.get("/health", summary="Salud del servicio", tags=["sistema"])
 def salud(g: G) -> JSONResponse:
     enlace = g.cliente.estado
-    upstream_ok = not g.ajustes.upstream.enabled or enlace.reachable is not False
-    retraso_tick = (datetime.now(UTC) - g._ultimo_tick_real).total_seconds() if g._ultimo_tick_real else 0
+    ahora = datetime.now(UTC)
+    # el bucle de sondeo tiene que seguir dando vueltas (si muere, el enlace parecía bueno para siempre)
+    vuelta = g.ultima_vuelta_sondeo
+    sondeo_vivo = vuelta is None or (ahora - vuelta).total_seconds() < g.ajustes.upstream.poll_interval_s * 3 + 60
+    upstream_ok = not g.ajustes.upstream.enabled or (enlace.reachable is not False and sondeo_vivo)
+    # cuenta el último tick que terminó bien, no el último que empezó (uno que falla en cada ciclo daba «ok»)
+    ref = g.ultimo_tick_ok or g._ultimo_tick_real
+    retraso_tick = (ahora - ref).total_seconds() if ref else 0
     sim_ok = retraso_tick < g.ajustes.simulation.tick_s * 4 + 5
     status = "ok" if upstream_ok and sim_ok else "degraded"
     cuerpo = {"status": status, "checks": {
-        "simulation": {"status": "ok" if sim_ok else "fail", "last_tick": iso(g._ultimo_tick_real)},
+        "simulation": {"status": "ok" if sim_ok else "fail", "last_tick": iso(g.ultimo_tick_ok),
+                       "error": g.error_tick},
         "upstream": {"status": "ok" if upstream_ok else "fail", "enabled": g.ajustes.upstream.enabled,
-                     "last_success": iso(enlace.last_success)},
+                     "last_success": iso(enlace.last_success), "polling": sondeo_vivo},
     }}
     return JSONResponse(cuerpo, status_code=200 if sim_ok else 503)
 
@@ -240,6 +247,8 @@ async def parchear_sensor(g: G, sensor_id: str, request: Request) -> dict:
     parche = await leer_parche(request)
     if set(parche) - {"mode"}:
         raise Problema(422, "Campo no modificable", f"Solo se puede cambiar 'mode' (recibido: {sorted(parche)}).", "/problems/validation")
+    if "mode" not in parche:
+        return g.sensor_json(s)   # merge patch vacío: no cambia nada (antes quitaba la excepción del sensor)
     p = validar(ParcheSensor, parche)
     if p.mode in ("real", "auto") and not s.real_available:
         raise Problema(409, "El sensor no existe en SmartPoliTech", f"'{s.id}' es virtual: solo puede servir datos simulados.",
@@ -276,7 +285,12 @@ def _fecha(v: str | None, nombre: str) -> datetime | None:
         d = datetime.fromisoformat(v.replace("Z", "+00:00"))
     except ValueError as e:
         raise Problema(400, "Fecha no válida", f"'{nombre}' debe ser ISO 8601 (recibido '{v}').") from e
-    return d if d.tzinfo else d.replace(tzinfo=UTC)
+    # (los años extremos reventaban el clima y el calendario: 500 y el reloj aplicado a medias)
+    if not 2000 <= d.year <= 2100:
+        raise Problema(422, "Fecha fuera de rango", f"'{nombre}' debe estar entre los años 2000 y 2100 (recibido '{v}').",
+                       "/problems/validation")
+    # siempre en UTC: quien la use puede formatearla con «Z» sin desplazarla
+    return (d if d.tzinfo else d.replace(tzinfo=UTC)).astimezone(UTC)
 
 
 @router.get("/sensors/{sensor_id}/observations", summary="Histórico de un sensor", tags=["observaciones"])
@@ -380,6 +394,11 @@ def _validar_politica(g: Gemelo, p: aj.PoliticaFuentes) -> None:
              + [f"kinds.{k}" for k in p.kinds if k not in {s.kind for s in c.sensores.values()}])
     if malos:
         raise Problema(422, "Claves desconocidas en la política", ", ".join(malos[:20]), "/problems/validation")
+    # la misma regla que PATCH /sensors/{id}: un sensor virtual solo sirve datos simulados
+    virtuales = [k for k, m in p.sensors.items() if m != "simulated" and not c.sensores[k].real_available]
+    if virtuales:
+        raise Problema(409, "El sensor no existe en SmartPoliTech",
+                       f"Solo pueden servir datos simulados: {', '.join(virtuales[:20])}.", "/problems/sensor-virtual")
 
 
 @router.put("/source-policy", summary="Reemplazar la política de fuentes", tags=["fuentes"], response_model=aj.PoliticaFuentes)
@@ -435,6 +454,11 @@ async def parchear_simulacion(g: G, request: Request) -> dict:
     for campo in ("sim_time", "model_time", "weather_in_use"):  # solo lectura
         parche.pop(campo, None)
     nuevo = validar(EstadoSimulacion, aj.merge_patch(g.estado_simulacion(), parche))
+    # todo validado antes de cambiar nada (un reloj no válido dejaba aplicado el cambio de escenario)
+    inicio = _fecha(nuevo.clock, "clock") if "clock" in parche and nuevo.clock != "live" else None
+    if nuevo.scenario != g.sim.escenario and nuevo.scenario not in {e.id for e in g.sim.escenarios()}:
+        raise Problema(422, "Escenario desconocido", f"'{nuevo.scenario}' no existe; ver /api/v1/simulation/scenarios.",
+                       "/problems/validation")
     if nuevo.scenario != g.sim.escenario:
         try:
             g.sim.poner_escenario(nuevo.scenario)
@@ -446,7 +470,6 @@ async def parchear_simulacion(g: G, request: Request) -> dict:
             g.clock, g.time_scale = "live", 1.0
             g.sim_time = datetime.now(UTC)
         else:
-            inicio = _fecha(nuevo.clock, "clock")
             g.clock, g.sim_time = iso(inicio), inicio
         g._ultimo_tick_real = datetime.now(UTC)  # el salto de reloj empieza a contar desde ahora
     if "time_scale" in parche:
