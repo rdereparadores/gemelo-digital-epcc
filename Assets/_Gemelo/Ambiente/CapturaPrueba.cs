@@ -17,6 +17,7 @@ namespace Gemelo
 
         public static void Tomar(Vector3 pos, Vector3 mira, string ruta, float fov = 60f, int ancho = 1280, int alto = 720)
         {
+            if (!Application.isPlaying) { Debug.LogWarning("[CapturaPrueba] solo en Play Mode"); return; }
             var go = new GameObject("CapturaPrueba");
             go.transform.SetPositionAndRotation(pos, Quaternion.LookRotation(mira - pos));
             var c = go.AddComponent<Camera>();

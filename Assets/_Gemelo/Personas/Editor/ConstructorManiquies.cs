@@ -280,6 +280,8 @@ namespace Gemelo
                 m.SetFloat("_Smoothness", 0.85f);
                 m.EnableKeyword("_EMISSION");
                 m.SetColor("_EmissionColor", new Color(0.05f, 0.08f, 0.12f));
+                // Sin esto URP da la emisión por negra y le quita _EMISSION al validar el material
+                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
             });
             var shLejano = Shader.Find("Gemelo/MultitudInstanciada");
             Material matLejano = shLejano != null ? Material(Carpeta + "/MultitudInstanciada.mat", shLejano, m => { }) : null;

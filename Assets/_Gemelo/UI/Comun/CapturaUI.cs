@@ -11,6 +11,8 @@ namespace Gemelo
     {
         public static void Tomar(string ruta, int ancho = 1920, int alto = 1080)
         {
+            // Fuera de Play Mode la corrutina no corre: dejaría el objeto y la cámara apuntando a la textura en la escena
+            if (!Application.isPlaying) { Debug.LogWarning("[CapturaUI] solo en Play Mode"); return; }
             var go = new GameObject("CapturaUI");
             go.AddComponent<CapturaUI>().StartCoroutine(go.GetComponent<CapturaUI>().Capturar(ruta, ancho, alto));
         }
