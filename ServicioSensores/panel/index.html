@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Gemelo EPCC · Panel</title>
+  <!-- Favicons oficiales de la UEx (Manual de Identidad Corporativa, entornos digitales) -->
+  <link rel="icon" href="marca/favicon.ico" sizes="any">
+  <link rel="icon" href="marca/favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="32x32" href="marca/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="marca/apple-touch-icon.png">
+  <link rel="preload" href="fuentes/Montserrat-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/panel.css">
+  <script>
+    // Aplica el tema guardado antes de pintar, para no parpadear.
+    try { const t = localStorage.getItem('panel.tema'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <!-- Iconos de trazo (24 × 24, currentColor); se usan con <svg><use href="#i-…"></svg> -->
+  <svg xmlns="http://www.w3.org/2000/svg" hidden>
+    <defs>
+      <symbol id="i-resumen" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></symbol>
+      <symbol id="i-fuentes" viewBox="0 0 24 24"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></symbol>
+      <symbol id="i-explorador" viewBox="0 0 24 24"><path d="M4 20.5h16M6 20.5V6.5l6-3 6 3v14M9.5 9.5h1M13.5 9.5h1M9.5 13h1M13.5 13h1M10.5 20.5v-3.5h3v3.5"/></symbol>
+      <symbol id="i-simulacion" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+      <symbol id="i-ajustes" viewBox="0 0 24 24"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></symbol>
+      <symbol id="i-actualizar" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4h-4"/></symbol>
+      <symbol id="i-pausa" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.5 5v14l11-7z" fill="currentColor"/></symbol>
+      <symbol id="i-aviso" viewBox="0 0 24 24"><path d="M12 4 21 19.5H3zM12 10v4.5M12 17v.01"/></symbol>
+      <symbol id="i-error" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.5v.01"/></symbol>
+      <symbol id="i-ok" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-externo" viewBox="0 0 24 24"><path d="M14 4.5h5.5V10M19.5 4.5 11 13M17 14v5.5H4.5V7H10"/></symbol>
+      <symbol id="i-tema" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-enlace" viewBox="0 0 24 24"><path d="M5 12.5a7 7 0 0 1 14 0M8.5 12.5a3.5 3.5 0 0 1 7 0"/><circle cx="12" cy="13" r="1" fill="currentColor"/><path d="M12 14v6"/></symbol>
+    </defs>
+  </svg>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="cabecera">
+    <a class="marca" href="#/resumen" aria-label="Gemelo digital de la Escuela Politécnica de Cáceres · Universidad de Extremadura">
+      <!-- Sello institucional + denominación del centro en Charis SIL (Manual UEx, apdo. 7) -->
+      <img class="sello" src="marca/UEx_sello_negativo-simbolo-amarillo.svg" alt="" width="40" height="40">
+      <span class="marca-texto">
+        <span class="marca-centro">Escuela Politécnica · Cáceres</span>
+        <span class="marca-sub">Gemelo digital · Sensores SmartPoliTech</span>
+      </span>
+    </a>
+    <div class="cabecera-estado" aria-live="polite">
+      <a class="pastilla" id="estado-enlace" href="#/resumen" title="Estado del enlace con SmartPoliTech">
+        <span class="punto" aria-hidden="true"></span><span class="txt">Enlace: …</span>
+      </a>
+      <a class="pastilla reloj" id="estado-reloj" href="#/simulacion" title="Reloj de simulación">
+        <svg class="icono" aria-hidden="true"><use href="#i-simulacion"/></svg><span class="txt">Simulación: …</span>
+      </a>
+    </div>
+    <div class="cabecera-acciones">
+      <button type="button" class="boton fantasma" id="boton-tema" aria-label="Cambiar tema">
+        <svg class="icono" aria-hidden="true"><use href="#i-tema"/></svg><span class="tema-texto">Sistema</span>
+      </button>
+    </div>
+  </header>
+  <nav class="navegacion" aria-label="Secciones">
+    <ul>
+      <li><a href="#/resumen" data-seccion="resumen"><svg class="icono" aria-hidden="true"><use href="#i-resumen"/></svg><span>Resumen</span></a></li>
+      <li><a href="#/fuentes" data-seccion="fuentes"><svg class="icono" aria-hidden="true"><use href="#i-fuentes"/></svg><span>Fuentes de datos</span></a></li>
+      <li><a href="#/explorador" data-seccion="explorador"><svg class="icono" aria-hidden="true"><use href="#i-explorador"/></svg><span>Explorador</span></a></li>
+      <li><a href="#/simulacion" data-seccion="simulacion"><svg class="icono" aria-hidden="true"><use href="#i-simulacion"/></svg><span>Simulación</span></a></li>
+      <li><a href="#/ajustes" data-seccion="ajustes"><svg class="icono" aria-hidden="true"><use href="#i-ajustes"/></svg><span>Ajustes</span></a></li>
+    </ul>
+    <div class="leyenda-fuentes" aria-label="Leyenda de fuentes">
+      <span class="etiqueta-leyenda">Fuente del dato</span>
+      <span class="chip fuente-real">Real</span>
+      <span class="chip fuente-simulated">Simulado</span>
+      <span class="chip fuente-none">Sin datos</span>
+    </div>
+    <div class="nav-pie">
+      <a href="/api/v1/docs" target="_blank" rel="noopener">API · OpenAPI <svg class="icono mini" aria-hidden="true"><use href="#i-externo"/></svg></a>
+      <span>Universidad de Extremadura</span>
+    </div>
+  </nav>
+  <main id="contenido" tabindex="-1"></main>
+  <div class="avisos" id="avisos" role="region" aria-label="Avisos" aria-live="polite"></div>
+</body>
+</html>

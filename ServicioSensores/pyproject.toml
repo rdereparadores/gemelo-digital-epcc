@@ -1,0 +1,28 @@
+[project]
+name = "gemelo-sensores"
+version = "0.1.0"
+description = "Puente REST entre los sensores de SmartPoliTech (EPCC, UEx) y el gemelo digital en Unity"
+readme = "README.md"
+authors = [
+    { name = "Iván", email = "ivruizl@alumnos.unex.es" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "pydantic>=2.14.2",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+gemelo-sensores = "gemelo_sensores:main"
+
+[build-system]
+requires = ["uv_build>=0.12.18,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
+]
