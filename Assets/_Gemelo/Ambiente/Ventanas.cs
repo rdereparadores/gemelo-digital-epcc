@@ -23,7 +23,6 @@ namespace Gemelo
             public float abierta, abiertaObj;     // 0–1
             public float persiana, persianaObj;   // fracción bajada
             public bool conPersiana;
-            public int indiceEnLocal;
         }
 
         class Planta
@@ -80,7 +79,6 @@ namespace Gemelo
                 v.persiana = v.persianaObj = Mathf.Max(0, d.persiana);
                 p.ventanas.Add(v);
                 if (!porLocal.TryGetValue(d.info, out var lista)) porLocal[d.info] = lista = new List<Ventana>();
-                v.indiceEnLocal = lista.Count;
                 lista.Add(v);
             }
             // Materiales de la escena por nombre (los de las mallas de los edificios)

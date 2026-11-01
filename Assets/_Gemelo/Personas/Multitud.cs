@@ -837,8 +837,7 @@ namespace Gemelo
             bool ultimo = p.tramo == p.nTramos - 1;
             float resta = r.Largo - p.s;
             if (ultimo && resta < 1.2f) vObj *= Mathf.Lerp(0.35f, 1f, resta / 1.2f);
-            Vector3 dir;
-            var pos = r.En(p.s, inv, out dir);
+            r.En(p.s, inv, out var dir);
             dir.y = 0;
             float dl = dir.magnitude;
             if (dl > 1e-4f) dir /= dl; else dir = new Vector3(Mathf.Sin(p.rumbo), 0, Mathf.Cos(p.rumbo));
@@ -863,9 +862,6 @@ namespace Gemelo
             p.lateralObj = Mathf.Clamp(lat, -0.6f, 0.6f);
             p.vel = Mathf.MoveTowards(p.vel, vObj, 2.5f * dt);
             p.s += p.vel * dt;
-            // Enlaces «ascensor» (tramos casi verticales): se cruzan de golpe
-            float finSeg = r.FinSegmento(p.s, inv, out float dyS, out float dhS);
-            if (dyS > 1.2f && dyS > dhS * 1.5f) p.s = Mathf.Max(p.s, finSeg + 0.01f);
             while (p.s >= r.Largo)
             {
                 p.s -= r.Largo;
@@ -874,7 +870,7 @@ namespace Gemelo
                 r = p.tramos[p.tramo];
                 inv = p.inversos[p.tramo];
             }
-            pos = r.En(p.s, inv, out dir);
+            var pos = r.En(p.s, inv, out dir);
             // Carril propio, menos dentro de los edificios y nada en los extremos de cada tramo
             float margen = Mathf.Clamp01(Mathf.Min(p.s, r.Largo - p.s) / 1.5f);
             float maxLat = (p.edificio != null ? 0.18f : 0.5f) * margen;

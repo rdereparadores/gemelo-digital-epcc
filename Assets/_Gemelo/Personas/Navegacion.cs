@@ -45,19 +45,6 @@ namespace Gemelo
             return Vector3.LerpUnclamped(p[lo], p[hi], t);
         }
 
-        /// <summary>Distancia (desde el principio del recorrido) a la que acaba el segmento en el que está s.</summary>
-        public float FinSegmento(float s, bool inversa, out float dy, out float dh)
-        {
-            float L = Largo;
-            float t = inversa ? L - s : s;
-            int lo = 0, hi = acum.Length - 1;
-            while (hi - lo > 1) { int m = (lo + hi) >> 1; if (acum[m] <= t) lo = m; else hi = m; }
-            var d = p[hi] - p[lo];
-            dy = Mathf.Abs(d.y);
-            dh = new Vector2(d.x, d.z).magnitude;
-            return inversa ? L - acum[lo] : acum[hi];
-        }
-
         public Vector3 Inicio(bool inversa) => inversa ? p[p.Length - 1] : p[0];
         public Vector3 Fin(bool inversa) => inversa ? p[0] : p[p.Length - 1];
     }
@@ -220,13 +207,6 @@ namespace Gemelo
             return false;
         }
 
-        static float Largo(List<Vector3> l, int desde = 0)
-        {
-            float s = 0;
-            for (int i = desde + 1; i < l.Count; i++) s += Vector3.Distance(l[i - 1], l[i]);
-            return s;
-        }
-
         // ───── Rutas largas por puntos de paso ─────
         // Puntos de paso: las puertas exteriores de cada edificio y el arranque y la llegada de cada escalera (los saca
         // Tools ▸ Gemelo ▸ Malla de navegación). Cuando el buscador no completa una ruta, se parte en dos por el punto
@@ -250,8 +230,6 @@ namespace Gemelo
                         pasosEdificio.Add(e);
                     }
         }
-
-        readonly List<(int i, float h)> candidatas = new();
 
         bool PorPuertas(Vector3 a, Vector3 b, List<Vector3> r)
         {

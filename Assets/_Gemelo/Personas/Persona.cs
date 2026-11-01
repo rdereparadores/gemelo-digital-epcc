@@ -93,7 +93,6 @@ namespace Gemelo
         public float fase;                  // ciclos del paso
         public bool sentada;
         public Gesto gesto;
-        public float tGesto;                // hasta cuándo dura el gesto (Time.time)
         public float tDecision;             // próxima decisión estando quieta
 
         // Dónde está y adónde va

@@ -23,9 +23,7 @@ from .smartpolitech import ClienteSmartPoliTech, LecturaReal
 
 log = logging.getLogger(__name__)
 
-MEDIA = {"air_temperature", "relative_humidity", "co2_concentration", "sound_level", "illuminance", "pm25",
-         "valve_position", "blind_position", "target_temperature", "water_temperature", "wind_speed",
-         "wind_direction", "atmospheric_pressure"}
+# Agregación por propiedad: suma, máximo o ninguna; el resto (temperatura, humedad, CO₂, ruido…) se promedia
 SUMA = {"occupancy", "devices_on", "active_power", "water_volume", "water_flow", "solar_power", "wifi_clients",
         "precipitation"}
 MAXIMO = {"alarm_active", "lights_on", "power_on", "window_open", "door_open"}

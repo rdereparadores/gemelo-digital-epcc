@@ -28,7 +28,7 @@ namespace Gemelo
 
         // Lo que nunca es suelo aunque tenga caras horizontales accesibles. El resto de la geometría fija sí lo es
         // (los rellanos de las entradas, p. ej., van en las mallas «Cubierta_Granito…» del edificio); las islas que
-        // salen en lo alto de muros y cubiertas quedan sueltas y no se usan (ver Navegacion.PuntoEn).
+        // salen en lo alto de muros y cubiertas quedan sueltas y no se usan (ver Navegacion.Punto).
         static readonly string[] obstaculos =
         {
             "Falso_Techo", "Barandilla", "Vidrio", "Persiana", "Carpinteria", "Lucernario", "Placa_FV", "Marco_FV",
@@ -67,13 +67,13 @@ namespace Gemelo
 
             var rec = Recursos();
             rec.malla = malla;
-            int enlaces = Coser(malla, rec, out int sueltos, out int ascensores);
+            int enlaces = Coser(malla, rec, out int sueltos);
             rec.escaleras = Escaleras(malla);
             EditorUtility.SetDirty(rec);
             AssetDatabase.SaveAssets();
 
             var msg = $"Malla de navegación en {reloj.Elapsed.TotalSeconds:F0} s: {fuentesTxt}; " +
-                      $"{enlaces} enlaces de costura ({Forzados} a través de un tabique, {ascensores} de ascensor), {sueltos} trozos sueltos de más de 4 m²; " +
+                      $"{enlaces} enlaces de costura ({Forzados} a través de un tabique), {sueltos} trozos sueltos de más de 4 m²; " +
                       $"{rec.escaleras.Length / 2} tramos de escalera como puntos de paso";
             Debug.Log("[Personas] " + msg);
             return msg;
@@ -149,13 +149,10 @@ namespace Gemelo
         /// solo unía azoteas y terrazas sin puerta con los locales de al lado, atravesando la fachada, y cuartos cuya
         /// puerta no abre el muro; la gente los cruzaba por dentro del muro).</summary>
         public static bool CoserForzado = false;
-        /// <summary>Tercera pasada, «ascensores» verticales entre plantas sin escalera (ver Coser).</summary>
-        public static bool CoserAscensor = false;
         public static int Forzados { get; private set; }
 
-        static int Coser(NavMeshData malla, RecursosPersonas rec, out int sueltos, out int ascensores)
+        static int Coser(NavMeshData malla, RecursosPersonas rec, out int sueltos)
         {
-            ascensores = 0;
             Forzados = 0;
             NavMesh.RemoveAllNavMeshData();
             var inst = NavMesh.AddNavMeshData(malla);
@@ -235,47 +232,27 @@ namespace Gemelo
             }
 
             // Primera pasada: solo costuras sin nada en medio. Segunda (CoserForzado, desactivada): también a través de un
-            // tabique delgado, para los trozos grandes (> 20 m²) que siguen sueltos.
-            // Tercera (desactivada, CoserAscensor): plantas enteras sin escalera en la malla se unían con la de abajo por un
-            // «ascensor», un enlace vertical que las personas cruzaban de golpe. Desde que las escaleras de los siete
-            // edificios se pueden andar (01-11-2026) solo quedaba uno, sin ascensor real (el almacén del −1 de Teleco, que
-            // ya tiene su puerta a la calle): sin él, quien no tenga ruta aparece en su sitio (Multitud.Colocar).
-            bool forzar = false, ascensor = false;
-            var locales = Object.FindObjectsByType<Local>();
-            var interior = new Dictionary<int, bool>();
-            bool Interior(int comp)
-            {
-                if (interior.TryGetValue(comp, out var si)) return si;
-                var vs = verticesDe[comp];
-                si = false;
-                for (int k = 0; k < vs.Count && k < 400 && !si; k += Mathf.Max(1, vs.Count / 40))
-                {
-                    var q = pos[vs[k]];
-                    foreach (var l in locales)
-                        if (Mathf.Abs(q.y - l.cotaSuelo) < 0.4f && l.Contiene(q)) { si = true; break; }
-                }
-                return interior[comp] = si;
-            }
+            // tabique delgado, para los trozos grandes (> 20 m²) que siguen sueltos. Las plantas sin escalera en la malla no
+            // se cosen con nada: quien no tenga ruta aparece en su sitio (Multitud.Colocar).
+            bool forzar = false;
             bool cambio = true;
             while (true)
             {
                 if (!cambio)
                 {
                     if (!forzar && CoserForzado) { forzar = true; pendientes.RemoveAll(c => area[c] < 20f); }
-                    else if (!ascensor && CoserAscensor) { ascensor = forzar = true; }
                     else break;
                 }
                 cambio = false;
                 for (int p = pendientes.Count - 1; p >= 0; p--)
                 {
                     int comp = pendientes[p];
-                    if (ascensor && !Interior(comp)) continue;
                     var elegidos = new List<(Vector3 a, Vector3 b, float d)>();
                     foreach (int i in verticesDe[comp])
                     {
                         var q = pos[i];
                         int cx = Mathf.FloorToInt(q.x), cz = Mathf.FloorToInt(q.z);
-                        float mejor = ascensor ? 1.5f : DistCostura; int mj = -1;
+                        float mejor = DistCostura; int mj = -1;
                         for (int dx = -1; dx <= 1; dx++)
                         for (int dz = -1; dz <= 1; dz++)
                         {
@@ -284,7 +261,7 @@ namespace Gemelo
                             {
                                 var w = pos[j];
                                 float dyv = Mathf.Abs(w.y - q.y);
-                                if (ascensor ? dyv < 2.5f || dyv > 6f : dyv > DyCostura) continue;
+                                if (dyv > DyCostura) continue;
                                 float h = new Vector2(w.x - q.x, w.z - q.z).magnitude;
                                 if (h < mejor) { mejor = h; mj = j; }
                             }
@@ -296,15 +273,14 @@ namespace Gemelo
                     var puestos = new List<Vector3>();
                     foreach (var e in elegidos)
                     {
-                        if (puestos.Count >= (ascensor ? 1 : 4)) break;
+                        if (puestos.Count >= 4) break;
                         bool lejos = true;
                         foreach (var u in puestos) if ((u - e.a).sqrMagnitude < 9f) { lejos = false; break; }
                         if (!lejos || !forzar && !Libre(e.a, e.b)) continue;
                         puestos.Add(e.a);
                         ea.Add(e.a);
                         eb.Add(e.b);
-                        if (ascensor) ascensores++;
-                        else if (forzar && !Libre(e.a, e.b)) Forzados++;
+                        if (forzar && !Libre(e.a, e.b)) Forzados++;
                     }
                     if (puestos.Count == 0) continue;
                     conectadas.Add(comp);

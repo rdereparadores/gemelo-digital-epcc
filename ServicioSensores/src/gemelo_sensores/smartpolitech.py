@@ -12,7 +12,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -217,9 +217,3 @@ class ClienteSmartPoliTech:
             if valores:
                 salida.append(LecturaReal(datetime.fromtimestamp(fila["time"], UTC), valores))
         return salida
-
-
-def edad(lectura: LecturaReal | None, ahora: datetime | None = None) -> timedelta | None:
-    if lectura is None:
-        return None
-    return (ahora or datetime.now(UTC)) - lectura.time

@@ -2,7 +2,6 @@
 // edificios a partir de los polígonos de sus locales) y la planta en la que está el jugador, coloreada por usos,
 // al cambiar de planta; cada fotograma solo se mueve, gira y escala (sin volver a teselar). Gira con la cámara:
 // arriba es hacia donde mira. La flecha amarilla es el jugador.
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Gemelo.Elem;

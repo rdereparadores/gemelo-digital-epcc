@@ -44,7 +44,6 @@ namespace Gemelo
         public static string HoraSeg(DateTime t) => t.ToString("HH:mm:ss", Inv);
         public static string Fecha(DateTime t) => $"{Dias[(int)t.DayOfWeek]}, {t.Day} de {Meses[t.Month - 1]} de {t.Year}";
         public static string FechaCorta(DateTime t) => $"{DiasCortos[(int)t.DayOfWeek]} {t.Day} {MesesCortos[t.Month - 1]} {t.Year}";
-        public static string Dia(DateTime t) => Mayus(Dias[(int)t.DayOfWeek]);
         public static string Mayus(string s) => string.IsNullOrEmpty(s) ? s : char.ToUpper(s[0]) + s.Substring(1);
 
         public static string Escala(float e)
@@ -260,7 +259,6 @@ namespace Gemelo
             _ => nombre ?? id,
         };
 
-        public static string Severidad(string s) => s switch { "critical" => "Crítica", "warning" => "Aviso", _ => "Info" };
 
         public static string Fuente(string s) => s switch { "real" => "Real", "simulated" => "Simulado", "mixed" => "Mixto", _ => "Sin datos" };
     }

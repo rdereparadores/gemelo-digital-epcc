@@ -79,8 +79,8 @@ namespace Gemelo
             raiz = El(r, "raiz");
             raiz.pickingMode = PickingMode.Ignore;
 
-            hud = new HudTercera(this, raiz);
-            cenital = new CentroControl(this, raiz);
+            hud = new HudTercera(raiz);
+            cenital = new CentroControl(raiz);
             menu = new MenuInicial(this, raiz);
             pausa = new MenuPausa(this, raiz);
             ajustes = new PanelAjustes(raiz);

@@ -1,5 +1,4 @@
 using UnityEditor;
-using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 // Build de Linux para medir el rendimiento fuera del editor (Build/Benchmark/Campus.x86_64, ignorado por git).

@@ -82,7 +82,7 @@ namespace Gemelo
             return p;
         }
 
-        public static void Sombra(VisualElement p, float radio = 16f)
+        public static void Sombra(VisualElement p)
         {
             var s = El(p, "sombra");
             s.pickingMode = PickingMode.Ignore;

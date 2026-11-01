@@ -92,23 +92,6 @@ namespace Gemelo
     }
 
     [Serializable]
-    public class Valor
-    {
-        public string property;
-        public float value;
-        public string unit;
-    }
-
-    [Serializable]
-    public class Observacion
-    {
-        public string sensor_id;
-        public string time;
-        public string source;
-        public List<Valor> values;
-    }
-
-    [Serializable]
     public class Escenario
     {
         public string id;
@@ -134,7 +117,4 @@ namespace Gemelo
 
     [Serializable]
     public class ListaEventos { public List<EventoSimulacion> items; }
-
-    [Serializable]
-    public class ListaObservaciones { public List<Observacion> items; }
 }

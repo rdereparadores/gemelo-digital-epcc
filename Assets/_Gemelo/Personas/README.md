@@ -47,7 +47,7 @@ edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y 
 - Áreas: 0 suelo/acera (coste 1), 3 terreno (1,8), 4 calzada (2,5): se prefiere la acera y se cruza por donde toca.
 - **Escaleras**: todas las de los siete edificios se andan por la malla (el generador corta los muros que las tapiaban
   y cose las mesetas a sus tramos; ver `Herramientas/politecnica/README.md`). No hay enlaces «ascensor»
-  (`CoserAscensor`, desactivado) ni costuras a través de tabiques (`CoserForzado`, desactivado: unían azoteas sin
+  ni costuras a través de tabiques (`CoserForzado`, desactivado: unían azoteas sin
   puerta con los locales de al lado atravesando la fachada).
 - **Costuras**: el voxelizado deja algunos trozos sueltos separados por centímetros. El builder busca los trozos que no
   conectan con el principal y los cose con enlaces cortos (≤ 0,9 m, casi a la misma altura y sin nada en medio) que se

@@ -134,9 +134,6 @@ namespace Gemelo
             hayPose = true;
         }
 
-        /// <summary>Pose a la que va la cámara (sin el fundido entre modos).</summary>
-        public Vector3 PosicionDeseada => posDeseada;
-
         void Update() => ActualizarCursor(false);
 
         // Esc se lee en LateUpdate, cuando la UI ya ha tenido ocasión de usarlo (GemeloApp.EscapeConsumido)
@@ -178,8 +175,6 @@ namespace Gemelo
                 Camara.fieldOfView = fovDeseado;
             }
         }
-
-        public bool EnFundido => fundido < 1f;
 
         // Bloqueado solo en tercera persona jugando; libre en el menú, la vista cenital y la pausa
         void ActualizarCursor(bool forzar)

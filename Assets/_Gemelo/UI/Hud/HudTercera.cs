@@ -21,7 +21,7 @@ namespace Gemelo
         float proximo;
         bool dirtyFicha = true;
 
-        public HudTercera(GemeloUI ui, VisualElement padre)
+        public HudTercera(VisualElement padre)
         {
             raiz = El(padre, "capa");
             raiz.pickingMode = PickingMode.Ignore;

@@ -114,9 +114,6 @@ namespace Gemelo
             return s;
         }
 
-        /// <summary>Valor agregado de un edificio en la capa actual (color del aura), por si lo quiere la UI.</summary>
-        public Color ColorEdificio(InfoEdificio e) => edificios.TryGetValue(e, out var s) ? s.actual : Color.clear;
-
         void LateUpdate()
         {
             var control = ControlGemelo.Instancia;

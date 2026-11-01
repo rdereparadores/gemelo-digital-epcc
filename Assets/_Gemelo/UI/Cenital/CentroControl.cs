@@ -31,7 +31,7 @@ namespace Gemelo
         static readonly float[] Velocidades = { 1, 60, 600, 3600 };
         static readonly Capa[] Capas = { Capa.Ninguna, Capa.Ocupacion, Capa.Temperatura, Capa.CO2, Capa.Confort, Capa.Humedad, Capa.Consumo, Capa.Ruido, Capa.Iluminacion };
 
-        public CentroControl(GemeloUI ui, VisualElement padre)
+        public CentroControl(VisualElement padre)
         {
             raiz = El(padre, "capa");
             raiz.pickingMode = PickingMode.Ignore;

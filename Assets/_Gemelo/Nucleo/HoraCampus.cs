@@ -27,7 +27,6 @@ namespace Gemelo
 
         /// <summary>Segundos de modelo por segundo real (1 = tiempo real).</summary>
         public static float Escala => enMarcha ? escala : 0f;
-        public static bool Sincronizada => sincronizada;
         public static string Escenario { get; private set; } = "normal_day";
         public static bool EnDirecto { get; private set; } = true;
 

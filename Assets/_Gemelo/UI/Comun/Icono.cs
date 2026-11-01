@@ -1,6 +1,5 @@
 // Iconos vectoriales de trazo (rejilla de 24×24, como los del panel web) dibujados con Painter2D a partir de
 // trayectos SVG. Toman el color del texto (style.color heredado); si cambia, hay que llamar a MarkDirtyRepaint.
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
