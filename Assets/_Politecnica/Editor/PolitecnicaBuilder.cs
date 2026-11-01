@@ -128,18 +128,28 @@ public static class PolitecnicaBuilder
 
         // Hojas de puerta (pivote en las bisagras, giran solas al acercarse)
         int sinPrefab = 0;
+        Puerta anterior = null;
+        PuertaDef defAnterior = null;
         foreach (var d in m.puertas ?? new PuertaDef[0])
         {
             var padre = Hijo(plantas, d.planta, "Puertas");
             // hoja: la del manifiesto (vidrio con la carpintería del edificio, o la de madera)
             string tipo = !string.IsNullOrEmpty(d.hoja) ? d.hoja : d.tipo == "exterior" ? "Puerta_Exterior" : "Puerta_Interior";
             var go = Instanciar($"{Mobiliario}/{tipo}.mcam", padre, V(d.p), Quaternion.Euler(0, d.yaw, 0), new Vector3(d.ancho, d.alto, 1f));
-            if (go == null) { sinPrefab++; continue; }
+            if (go == null) { sinPrefab++; anterior = null; continue; }
             GameObjectUtility.SetStaticEditorFlags(go, 0);
             foreach (Transform h in go.GetComponentsInChildren<Transform>()) GameObjectUtility.SetStaticEditorFlags(h.gameObject, 0);
             var pu = go.AddComponent<Puerta>();
             pu.apertura = d.apertura;
             pu.exterior = d.tipo == "exterior";
+            // Las dos hojas de un mismo hueco salen seguidas en el manifiesto: enfrentadas (media vuelta), del
+            // mismo ancho y con los cantos juntos en el centro. Se mueven juntas (manda la primera)
+            if (anterior != null && anterior.pareja == null && MismaPuerta(defAnterior, d))
+            {
+                anterior.pareja = pu; pu.pareja = anterior;
+                anterior.principal = true; pu.principal = false;
+            }
+            anterior = pu; defAnterior = d;
         }
 
         // Mobiliario e instalaciones
@@ -168,6 +178,9 @@ public static class PolitecnicaBuilder
             luz.color = Mathf.CorrelatedColorTemperatureToRGB(4000f);
             luz.shadows = LightShadows.None;
             luz.lightmapBakeType = LightmapBakeType.Realtime;
+            // Con sus datos de URP ya puestos: si no, URP los añade al abrir la escena y la deja modificada sin guardar
+            if (!go.TryGetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalLightData>(out _))
+                go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalLightData>();
             if (l.local != null && locales.TryGetValue((l.planta, l.local), out var dueño)) Anadir(ref dueño.luces, luz);
         }
 
@@ -222,6 +235,17 @@ public static class PolitecnicaBuilder
         return $"{cod}: {m.plantas.Length} plantas, {m.locales?.Length ?? 0} locales, {m.puertas?.Length ?? 0} puertas" +
                (sinPrefab > 0 ? $" ({sinPrefab} sin prefab)" : "") +
                (faltan.Count > 0 ? $"; faltan piezas: {string.Join(", ", faltan)}" : "");
+    }
+
+    // ¿Son las dos hojas de una puerta de dos hojas? (mismo hueco: misma planta y casi el mismo ancho, giradas
+    // media vuelta y con los cantos a menos de 10 cm; también dos puertas de una hoja que se cierran una contra
+    // otra, como la de los distribuidores de P0 de Civil)
+    static bool MismaPuerta(PuertaDef a, PuertaDef b)
+    {
+        if (a == null || b == null || a.planta != b.planta || a.tipo != b.tipo) return false;
+        if (Mathf.Abs(a.ancho - b.ancho) > 0.03f || Mathf.Abs(Mathf.DeltaAngle(a.yaw, b.yaw + 180f)) > 2f) return false;
+        Vector3 Canto(PuertaDef p) => V(p.p) + Quaternion.Euler(0, p.yaw, 0) * Vector3.right * p.ancho;
+        return Vector3.Distance(Canto(a), Canto(b)) < 0.10f;
     }
 
     static Transform Hijo(Dictionary<string, Transform> plantas, string planta, string nombre)
