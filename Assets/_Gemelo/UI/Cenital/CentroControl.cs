@@ -140,6 +140,8 @@ namespace Gemelo
                 var d = Txt(col, "", "t-xs", "tenue");
                 var al = El(it, "punto");
                 al.style.marginRight = 0;
+                al.style.marginLeft = 8;
+                al.style.flexShrink = 0;
                 Clic(it, () => GemeloApp.Instancia?.Seleccionar(new Seleccion(ee, null)));
                 edificios[e.codigo] = (it, d, al);
             }

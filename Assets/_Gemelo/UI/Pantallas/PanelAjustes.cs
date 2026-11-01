@@ -80,9 +80,8 @@ namespace Gemelo
                 () => A.campoVision, v => A.campoVision = v, v => Formato.Num(v) + "°");
             Deslizador(c, "Velocidad de la cámara cenital", "Desplazamiento y zoom del centro de control", 0.25f, 3f, 0.05f,
                 () => A.velocidadCamaraCenital, v => A.velocidadCamaraCenital = v, v => Formato.Num(v, 2) + "×");
-            var ayuda = Txt(c, "Tercera persona: WASD para moverse, ratón para mirar, Mayús para correr, espacio para saltar, C para sentarse, E y 1–9 para las acciones, Esc para la pausa.\nCentro de control: arrastrar para desplazar, rueda para el zoom, clic para seleccionar.", "t-xs", "tenue");
-            ayuda.style.whiteSpace = WhiteSpace.Normal;
-            ayuda.style.marginTop = 14;
+            Fila(c, "Teclas en tercera persona", "WASD mover · ratón mirar · Mayús correr · Espacio saltar · C sentarse · E y 1–9 acciones · Esc pausa");
+            Fila(c, "Teclas en el centro de control", "WASD o botón central desplazar · rueda zoom · Q/E girar · botón derecho inclinar · clic seleccionar · F centrar · Inicio vista general");
 
             // ─── Audio
             var au = Contenido(tabs.Agregar("Audio"));

@@ -5,7 +5,7 @@ digital del campus en Unity. Cada sensor sirve datos reales, simulados o «auto�
 reciente; si no, simulado). Lleva un panel de control web para elegir la fuente, manejar la
 simulación y ajustar el servicio.
 
-```
+```text
 SmartPoliTech (Grafana + InfluxDB) ──sondeo──▶ ┌────────────────────────┐ ──REST/SSE──▶ Unity (ClienteGemelo)
                                                 │ política de fuentes     │
 Motor de simulación (por estancia) ──tick────▶ │ estado agregado, ETag   │ ──────────▶ Panel /panel/
@@ -30,13 +30,13 @@ Los ajustes y la política de fuentes se guardan en `datos/estado/`, que no se v
 
 | Ruta | Qué es |
 |---|---|
-| `docs/CONTRATO_API.md` | Contrato de la API v1: convenciones, recursos y modelo |
-| `docs/SENSORES_SMARTPOLITECH.md` | Investigación: qué publica SmartPoliTech y en qué estado está |
+| [`docs/CONTRATO_API.md`](docs/CONTRATO_API.md) | Contrato de la API v1: convenciones, recursos y modelo |
+| [`docs/SENSORES_SMARTPOLITECH.md`](docs/SENSORES_SMARTPOLITECH.md) | Investigación: qué publica SmartPoliTech y en qué estado está |
 | `herramientas/inventariar.py` | Inventario de SmartPoliTech → `datos/inventario_smartpolitech.json` |
 | `herramientas/generar_catalogo.py` | Inventario + `Referencias/Politecnica/datos/interiores.json` → `datos/catalogo.json` |
 | `src/gemelo_sensores/` | Servicio: `api.py` (rutas), `gemelo.py` (orquestación), `smartpolitech.py` (cliente), `simulacion/` (motor) |
 | `panel/` | Panel de control estático (HTML, CSS y módulos ES; sin compilación) con la identidad corporativa de la UEx |
-| `clientes/unity/` | Cliente C# para Unity (ver abajo) |
+| `clientes/unity/` | Cliente C# mínimo para otros proyectos de Unity (ver abajo) |
 | `tests/` | `uv run pytest` |
 
 El panel sigue el Manual de Identidad Corporativa de la UEx: sello institucional en negativo sobre la
@@ -55,7 +55,11 @@ uv run python herramientas/generar_catalogo.py
 
 ## Unity
 
-Los scripts de `clientes/unity/` se copian a `Assets/` (por ejemplo, a `Assets/_Gemelo/Scripts/`):
+La app del gemelo de este repositorio ya trae su propio cliente, más completo, en `Assets/_Gemelo/Nucleo/`
+(ver [su README](../Assets/_Gemelo/README.md)), y tiene permitido el HTTP en Player Settings.
+
+`clientes/unity/` es un cliente mínimo de ejemplo para usar el servicio desde **otro** proyecto de Unity. No se copia
+a este: sus clases (`Gemelo.ClienteGemelo`…) chocarían con las del gemelo.
 
 1. Un GameObject con `ClienteGemelo`, con `urlBase` = `http://127.0.0.1:8800`. Sondea `/api/v1/state`
    cada `intervalo` segundos; con `If-None-Match`, si nada ha cambiado la respuesta es un 304 vacío.
@@ -65,5 +69,5 @@ Los scripts de `clientes/unity/` se copian a `Assets/` (por ejemplo, a `Assets/_
 3. `IndicadorEstancia` es un ejemplo que tiñe un renderer por temperatura, CO₂, ocupación o confort.
 4. `ClienteGemelo.Instancia.CrearEvento("open_windows", "INF-P01-AUL024")` dispara eventos de simulación desde la escena.
 
-En Unity 6 el editor bloquea por defecto las descargas por HTTP: hay que permitirlas en Player
-Settings ▸ Allow downloads over HTTP, o servir el servicio detrás de HTTPS.
+Unity 6 bloquea por defecto las descargas por HTTP: hay que permitirlas en Player Settings ▸ Allow downloads over
+HTTP, o servir el servicio detrás de HTTPS.

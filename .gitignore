@@ -56,3 +56,6 @@ __pycache__/
 # Salidas de las auditorías (se regeneran con Herramientas/auditar*.py y Tools ▸ Auditoría)
 /Datos/auditoria_*
 /Datos/entorno_*
+
+# Herramientas locales del asistente (no forman parte del proyecto)
+/.claude/

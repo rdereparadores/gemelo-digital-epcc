@@ -329,7 +329,8 @@ class Gemelo:
             a.append({"code": "co2_high", "severity": "warning", "message": f"CO₂ por encima de 1000 ppm ({co2:.0f})"})
         if abiertas and activos:
             a.append({"code": "window_open_heating", "severity": "warning",
-                      "message": f"{abiertas} ventana(s) abierta(s) con {activos} radiador(es) calentando"})
+                      "message": f"{abiertas} {'ventana abierta' if abiertas == 1 else 'ventanas abiertas'} con "
+                                 f"{activos} {'radiador' if activos == 1 else 'radiadores'} encendido{'' if activos == 1 else 's'}"})
         if t is not None and t < 17 and ocup > 0:
             a.append({"code": "temperature_low", "severity": "warning", "message": f"{t:.1f} °C con gente dentro"})
         if t is not None and t > 27:

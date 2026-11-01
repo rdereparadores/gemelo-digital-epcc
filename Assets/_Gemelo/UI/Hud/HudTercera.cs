@@ -97,14 +97,19 @@ namespace Gemelo
             SinPicking(der);
 
             // ─── Interacciones, abajo en el centro
-            interacciones = El(raiz, "columna");
+            // (columna centrada en pantalla cuyas filas se estiran a la más ancha: quedan alineadas y del mismo ancho)
+            var zonaAcciones = El(raiz, "columna");
+            zonaAcciones.pickingMode = PickingMode.Ignore;
+            zonaAcciones.style.position = Position.Absolute;
+            zonaAcciones.style.left = 0; zonaAcciones.style.right = 0; zonaAcciones.style.bottom = 36;
+            zonaAcciones.style.alignItems = Align.Center;
+            interacciones = El(zonaAcciones, "columna");
             interacciones.pickingMode = PickingMode.Ignore;
-            interacciones.style.position = Position.Absolute;
-            interacciones.style.left = 0; interacciones.style.right = 0; interacciones.style.bottom = 36;
-            interacciones.style.alignItems = Align.Center;
+            interacciones.style.alignItems = Align.Stretch;
 
             var app = GemeloApp.Instancia;
             app.InteraccionesCambiadas += PintarInteracciones;
+            app.PausaCambiada += pausa => Mostrar(interacciones, !pausa);   // no asoman bajo el menú de pausa
             app.LocalActualCambiado += _ => dirtyFicha = true;
             app.Cliente.EstadoActualizado += _ => dirtyFicha = true;
         }

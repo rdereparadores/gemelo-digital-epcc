@@ -1,6 +1,6 @@
 # Personas (`Assets/_Gemelo/Personas/`)
 
-NPCs del gemelo: tantas personas en cada estancia como dice el servicio (1:1 con `occupancy`), que se mueven por el
+NPC del gemelo: tantas personas en cada estancia como dice el servicio (1:1 con `occupancy`), que se mueven por el
 campus cuando los datos cambian, se sientan, charlan, miran el móvil y evacúan los edificios con alarma de incendio.
 Solo usa el núcleo (`Assets/_Gemelo/Nucleo/`) y `Assets/_Politecnica/Runtime/`.
 
@@ -51,9 +51,9 @@ edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y 
 - Las hojas de puerta (`Puerta`) y los triggers de los locales no cuentan.
 - Áreas: 0 suelo/acera (coste 1), 3 terreno (1,8), 4 calzada (2,5): se prefiere la acera y se cruza por donde toca.
 - **Escaleras**: todas las de los siete edificios se andan por la malla (el generador corta los muros que las tapiaban
-  y cose las mesetas a sus tramos; ver `Herramientas/politecnica/README.md`). No hay enlaces «ascensor»
-  ni costuras a través de tabiques (`CoserForzado`, desactivado: unían azoteas sin
-  puerta con los locales de al lado atravesando la fachada).
+  y cose las mesetas a sus tramos; ver [Herramientas/politecnica](../../../Herramientas/politecnica/README.md)). No
+  hay enlaces «ascensor» ni costuras a través de tabiques (`CoserForzado`, desactivado: unían azoteas sin puerta con
+  los locales de al lado atravesando la fachada).
 - **Costuras**: el voxelizado deja algunos trozos sueltos separados por centímetros. El builder busca los trozos que no
   conectan con el principal y los cose con enlaces cortos (≤ 0,9 m, casi a la misma altura y sin nada en medio) que se
   guardan en `RecursosPersonas` y se añaden en ejecución con `NavMesh.AddLink`.
@@ -61,7 +61,7 @@ edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y 
   escalera (huellas de peldaño agrupadas, en la malla). El buscador de Unity tiene un tope de nodos y no completa las
   rutas largas por interiores llenos de muebles (del aparcamiento a la P2 del Común): entonces `Navegacion.Calcular` la
   parte por el punto de paso (escalera o puerta exterior del edificio de un extremo) que menos la alarga, hasta tres
-  veces; solo si así tampoco, sigue desde donde se quedó (lo que antes daba los rodeos).
+  veces; solo si así tampoco, sigue desde donde se quedó.
 - En ejecución las rutas se densifican (altura de la malla cada 0,6 m en escaleras y cada 2,5 m fuera) y las de nodo a
   nodo (acceso de estancia, llegada, punto de reunión) se guardan en caché.
 
@@ -89,10 +89,9 @@ edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y 
   Su gente se levanta (con un tiempo de reacción de 0,3–3 s) y corre (2,4–3,5 m/s) por la malla —sale por la puerta
   exterior que le cae más a mano— hasta un punto de reunión fuera (a ~16 m del edificio, lejos de las calzadas), y espera
   allí charlando o con el móvil. No entra nadie nuevo. Al acabar la alarma, vuelven a sus sitios según los datos o se van.
-- **Puertas**: `Puerta.Presencia` (estático en `_Politecnica/Runtime/Puerta.cs`) lo registra este módulo con una
-  consulta a la rejilla (`Rejilla.EnPaso`): las puertas se abren para los NPCs de pie y para `GemeloApp.Jugador` que
-  estén en el rectángulo de paso de la puerta (delante o detrás del hueco, no a lo largo del muro); los sentados y la
-  cámara no cuentan.
+- **Puertas**: este módulo registra `Puerta.Presencia` con una consulta a la rejilla (`Rejilla.EnPaso`) y al
+  jugador: las puertas se abren para los NPC de pie y el jugador que estén en su rectángulo de paso (ver
+  [Convenciones](../README.md#convenciones)).
 
 ## Dibujo
 
@@ -135,7 +134,7 @@ edificios con todas sus plantas y escaleras, pasarelas, aparcamientos, parada y 
 
 ## Personajes de Mixamo
 
-Los NPC cercanos y el jugador son personajes de Mixamo (selección aprobada por el usuario el 01-11-2026):
+Los NPC cercanos y el jugador son personajes de Mixamo:
 
 | Papel | Personajes | Dónde salen (`Reparto.cs`) |
 |---|---|---|
@@ -147,7 +146,7 @@ Los NPC cercanos y el jugador son personajes de Mixamo (selección aprobada por 
 
 El sexo (y con él el andar y la malla lejana) sale de la semilla de cada persona (58 % hombres); el personaje se
 elige entre los de ese sexo y papel (de dos al azar, el menos repetido). El servicio no publica ocupación de los
-despachos (01-11-2026), así que casi todo el personal que se ve está en aulas, laboratorios y salas de juntas (con
+despachos, así que casi todo el personal que se ve está en aulas, laboratorios y salas de juntas (con
 ~1.800 personas, ~90 son profesorado, 2 de mantenimiento y 2 de vigilancia). `Multitud.porPersonaje` cuenta cuántos
 lleva cada personaje.
 
@@ -182,8 +181,8 @@ lleva cada personaje.
 5. Revisar sin Play Mode: `Gemelo.GaleriaPersonajes.Render("/ruta.png", "Sentado", 1.5f)` (o `Reposo`, `Andar`,
    `SentadoMovil`, `SentadoEscribiendo`, `MovilDePie`, `HablarDePie`…).
 
-Lo versionado de Mixamo ocupa ~111 MB (personajes 84 MB, animaciones 26 MB contando las copias recentradas, prefabs
-1,7 MB), frente a ~920 MB de los FBX originales.
+Lo versionado de Mixamo ocupa ~107 MB (personajes 83 MB, animaciones 23 MB contando las copias recentradas, prefabs
+1,6 MB), frente a ~900 MB de los FBX originales.
 
 ### Clips
 
@@ -225,7 +224,7 @@ solo se usan para comparar (`FabricaAvatares.PruebaAvatares`, ver Rendimiento).
 
 ## Rendimiento
 
-Medido en Play Mode en el editor (Radeon 780M, 01-11-2026) con `MedidorPersonas` (tandas de 3 s con y sin multitud,
+Medido con `MedidorPersonas` en Play Mode en el editor (Radeon 780M; tandas de 3 s con y sin multitud,
 intercaladas), con 1.190–1.570 personas simuladas:
 
 | Vista | Animadas / instanciadas visibles | GPU | Hilo principal | Simulación | Dibujo (CPU) |
@@ -235,45 +234,34 @@ intercaladas), con 1.190–1.570 personas simuladas:
 | Aula de 112 alumnos | 40 / 434 | +2,2 ms | +1,5 ms | 0,59–0,64 ms | 0,43 ms |
 | Pasillo, solo instanciadas | 0 / 471 | +1,1 ms | +1,3 ms | 0,56–0,68 ms | 0,39 ms |
 
-- Cada avatar animado cuesta ~0,05 ms de GPU y ~0,07 ms de hilo principal: con 120 (el valor de fábrica de
-  `Ajustes.maxAnimadas`) se iban a +7 ms de GPU y +9 ms de CPU, de ahí el tope de 40.
-- **Pulido del 01-11-2026** (tercera persona en el aula NORBA 1903_P1_24, con `Gemelo.MedidorRendimiento.AB`, tandas
-  de 2 s intercaladas y mediana por parejas; ruido de una prueba A/A en ese momento: ±1,5 ms). Antes se dibujaban 36
-  avatares animados y 177 maniquíes, casi todos de las aulas, plantas y edificios de al lado; ahora, 7 y 6 (los del aula
-  y el pasillo). Al atardecer (con sombras del sol): GPU −2,8 ms (mediana; −4,3 ms de media), hilo principal −0,9 ms,
-  SetPass de 345 a 222, 0,5 M triángulos menos. De noche (sin sombras del sol; ruido ±0,5 ms): GPU −1,4 ms, hilo
-  principal −0,8 ms, `Time.smoothDeltaTime` −0,8 ms, SetPass de 245 a 176. En la calle y en la vista cenital, igual
-  (dentro del ruido).
-- **Mixamo frente a maniquíes** (01-11-2026, tope de 40 animados, tercera persona; `FabricaAvatares.PruebaAvatares`
-  pone los maniquíes en su lugar; tres parejas de tandas de 6 s en régimen estable, tras 8 s de asentarse cada
-  cambio; el editor iba a 35-45 ms por fotograma): plaza del Común (40 animados y 227 instanciados), GPU +1,8 ms
-  (+0,4 a +3,1) e hilo principal +1,2 ms; aula NORBA 1903_P1_24 con clase (20-24 sentados, 40 animados contando el
-  pasillo), GPU +3,1 ms, hilo principal +1,5 ms y 1,1 M triángulos más. Antes de las rebajas (sin LOD de malla, piel
-  de 4 huesos y sombra del pelo) y alternando cada 3 s, salían +9 a +27 ms: casi todo era **crear** los personajes
-  (cada cambio rehacía 40 de golpe), de ahí el tope de 3 creaciones por selección. Lo que queda es sobre todo el
-  sombreado de más triángulos y renderers (~7 por personaje).
-- La simulación (reconciliar + rutas + paso) se queda en 0,4–0,9 ms. Las rutas se calculan con un presupuesto de
-  0,6 ms por fotograma; en el arranque de una evacuación grande hay picos de 1–5 ms durante unos segundos mientras se
-  calculan las rutas de cada estancia al punto de reunión (luego quedan en caché).
+- **Animados**: cada uno cuesta ~0,05 ms de GPU y ~0,07 ms de hilo principal. Con 120 se iban a +7 ms de GPU y +9 ms
+  de CPU, de ahí el valor de fábrica de 40. En la build, bajar de 40 a 20 ahorra 1–1,5 ms de GPU.
+- **Mixamo frente a maniquíes** (40 animados, tercera persona, `FabricaAvatares.PruebaAvatares`): GPU +1,8 ms en la
+  plaza del Común y +3,1 ms en el aula NORBA (1903_P1_24) con clase; hilo principal +1,2 y +1,5 ms. Lo que queda es
+  sobre todo el sombreado de más triángulos y renderers (~7 por personaje).
+- **Ocultar tras los muros y sombras bajo techo**: en el aula NORBA se pasa de dibujar 36 animados y 177 maniquíes
+  (casi todos de las aulas y plantas vecinas) a 7 y 6. Al atardecer, con sombras del sol, ahorra 2,8 ms de GPU
+  (mediana) y 0,9 ms de hilo principal; de noche, 1,4 y 0,8 ms. En la calle y en la vista cenital no cambia nada.
+- **Simulación** (reconciliar + rutas + paso): 0,4–0,9 ms. Las rutas se calculan con un presupuesto de 0,6 ms por
+  fotograma; al empezar una evacuación grande hay picos de 1–5 ms durante unos segundos mientras se calculan las
+  rutas de cada estancia al punto de reunión (luego quedan en caché).
 
 ## Limitaciones conocidas
 
-- Personajes de Mixamo: no se han probado con la hora acelerada ni con saltos de reloj (no se podía tocar el reloj
-  del servicio mientras trabajaban otros agentes); el reparto se hace en `Multitud.Nueva` y las cuentas de
-  `porPersonaje` salieron coherentes tras arrancar y tras una evacuación. Los clips de sentarse y levantarse no se
-  usan. El móvil de pie queda en la palma, casi tapado por la mano. En los bancos fijos con mesa corrida las manos
-  pueden rozar el tablero.
-
-- La malla deja 20 de 526 accesos de estancia sin ruta desde el aparcamiento (01-11-2026; antes 79 de 509, y otros 10
-  solo «llegaban» por costuras que atravesaban la fachada): locales sin puerta en el modelo (1903 P1 22, 1904 P0 26,
-  terrazas de 1904 P1 y de 1905 P0 13 y P1 T1-T3, altillo 01 del 1907), puertas que no abren el muro en que van
-  (instalaciones 01-04 del −1 de 1903, 1903 P1 28 y su distribuidor, 1904 P1 31-32, terraza 57 de 1905), el almacén
-  del −1 de Teleco (su puerta da bajo el forjado de P0), el cuarto de instalaciones del −1 del 1906 (puerta de 1,67 m
-  bajo la escalera) y el altillo 02 del 1907, que no tiene escalera en el plano. Quien va a uno de ellos aparece en su
-  sitio en vez de andar (se cuenta en `Multitud.Fallos`).
-- Hora acelerada probada en vivo el 01-11-2026 a 60× y 600× (y vuelta a 1× con salto de reloj): sin excepciones;
-  a 60× hay ráfagas de 10–100 teletransportes en cada reconciliación (viajes de más de un cuarto de hora del modelo) y
-  a 600× todo se coloca directamente (cientos de cambios de sitio de golpe cuando cambia la hora de clase, como debe ser).
-- Las estancias del servicio cuyo `unity_room` no existe en el modelo (p. ej. `1901_P2_23`) no se representan.
+- La malla deja 20 de 526 accesos de estancia sin ruta desde el aparcamiento. Quien va a uno de ellos aparece en su
+  sitio en vez de andar (se cuenta en `Multitud.Fallos`). Son:
+  - locales sin puerta en el modelo (1903 P1 22, 1904 P0 26, terrazas de 1904 P1 y de 1905 P0 13 y P1 T1-T3,
+    altillo 01 del 1907);
+  - puertas que no abren el muro en que van (instalaciones 01-04 del −1 de 1903, 1903 P1 28 y su distribuidor,
+    1904 P1 31-32, terraza 57 de 1905);
+  - el almacén del −1 de Teleco (su puerta da bajo el forjado de P0), el cuarto de instalaciones del −1 del 1906
+    (puerta de 1,67 m bajo la escalera) y el altillo 02 del 1907, que no tiene escalera en el plano.
 - Algunos locales sin puerta con malla (instalaciones, galerías, terrazas) no tienen acceso y no reciben gente.
+- Las estancias del servicio cuyo `unity_room` no existe en el modelo (p. ej. `1901_P2_23`) no se representan.
 - La última aproximación al asiento es en línea recta (entre filas de pupitres la malla está cortada por las sillas).
+- Hora acelerada: probada a 60× y 600× (y vuelta a 1× con salto de reloj) sin excepciones. A 60× hay ráfagas de
+  10–100 teletransportes en cada reconciliación; a 600× todo se coloca directamente. Los personajes de Mixamo aún no
+  se han probado con la hora acelerada ni con saltos de reloj; las cuentas de `Multitud.porPersonaje` salen
+  coherentes tras arrancar y tras una evacuación.
+- Personajes de Mixamo: no se usan clips de sentarse y levantarse. El móvil de pie queda en la palma, casi tapado por
+  la mano. En los bancos fijos con mesa corrida las manos pueden rozar el tablero.

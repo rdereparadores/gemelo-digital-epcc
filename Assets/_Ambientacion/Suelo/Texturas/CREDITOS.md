@@ -1,7 +1,11 @@
-# Texturas del suelo
+# Créditos de las texturas
 
-Todas son de [Poly Haven](https://polyhaven.com) con licencia **CC0** (dominio público).
-Color corregido hacia el tono del suelo de Cáceres con `Herramientas/preparar_texturas_suelo.py`.
+Todas las texturas PBR del proyecto son de [Poly Haven](https://polyhaven.com), con licencia **CC0** (dominio
+público). Se descargan y se les corrige el color hacia los tonos reales de Cáceres con
+`Herramientas/preparar_texturas.py` (entorno) y `Herramientas/politecnica/preparar_texturas.py` (edificios de la
+escuela).
+
+## Suelo (`Assets/_Ambientacion/Suelo/Texturas/`)
 
 | Capa | Textura | Autoría |
 |---|---|---|
@@ -14,14 +18,14 @@ Color corregido hacia el tono del suelo de Cáceres con `Herramientas/preparar_t
 | Pavimento | concrete_pavement | Charlotte Baglioni |
 | Pedregal | rocky_trail | Amal Kumar |
 
-Texturas de mallas (Assets/_Ambientacion/Viales/Texturas), también CC0 de Poly Haven:
+## Viales (`Assets/_Ambientacion/Viales/Texturas/`)
 
 | Uso | Textura | Autoría |
 |---|---|---|
 | Acera (baldosa de tacos) | concrete_tiles | Dimitrios Savva |
 | Bordillo | concrete_floor_worn_001 | Dimitrios Savva, Rico Cilliers |
 
-Parque (Assets/_Ambientacion/Parque/Texturas) y cortezas (Assets/_Ambientacion/Vegetacion/Texturas), CC0 de Poly Haven:
+## Parque y cortezas (`Assets/_Ambientacion/Parque/Texturas/` y `Assets/_Ambientacion/Vegetacion/Texturas/`)
 
 | Uso | Textura | Autoría |
 |---|---|---|
@@ -35,7 +39,7 @@ Parque (Assets/_Ambientacion/Parque/Texturas) y cortezas (Assets/_Ambientacion/V
 | Corteza de palmera | palm_bark | Charlotte Baglioni |
 | Corteza de sauce | bark_willow | Dario Barresi, Dimitrios Savva |
 
-Edificios (Assets/_Ambientacion/Edificios/Texturas), CC0 de Poly Haven:
+## Edificios del entorno (`Assets/_Ambientacion/Edificios/Texturas/`)
 
 | Uso | Textura | Autoría |
 |---|---|---|
@@ -43,4 +47,16 @@ Edificios (Assets/_Ambientacion/Edificios/Texturas), CC0 de Poly Haven:
 | Fachada ocre | yellow_plaster | Rob Tuytel |
 | Ladrillo visto | red_brick | Rob Tuytel |
 
-Cielo (Assets/_Ambientacion/Ambiente/cielo.hdr): kloofendal_43d_clear_puresky de Poly Haven, CC0, de Greg Zaal.
+## Escuela Politécnica (`Assets/_Politecnica/Texturas/`)
+
+Texturas base de Poly Haven (la autoría está en la página de cada una): beige_wall_002, box_profile_metal_sheet,
+gravel_embedded_concrete, gravel_floor_02, painted_plaster_wall, rough_linen, smooth_concrete_floor, terrazzo_tiles,
+velour_velvet, white_maple_veneer y white_sandstone_bricks. El alicatado y el falso techo se generan por código, y
+también los rótulos de fachada, que llevan los logotipos de la UEx y de la Escuela.
+
+Las láminas en blanco y negro del Salón de Grados (`foto_bn_1.png` y `foto_bn_2.png`) son recortes de dos fotos CC0
+de Wikimedia Commons; origen en `foto_bn_LICENCIA.txt`.
+
+## Cielo
+
+`Assets/_Ambientacion/Ambiente/cielo.hdr`: kloofendal_43d_clear_puresky, de Greg Zaal (Poly Haven, CC0).
