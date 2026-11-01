@@ -1,4 +1,4 @@
-// Sonido ambiente: viento y pájaros de día fuera, lluvia (más apagada dentro) y el rumor de la gente del local
+// Sonido ambiente: viento y pájaros de día fuera, lluvia (más apagada dentro y algo bajo un porche, según el mapa de techo de Lluvia) y el rumor de la gente del local
 // donde está la cámara (GemeloApp.LocalActual), según su ocupación. Volúmenes de Ajustes (general × ambiente).
 // Los sonidos se sintetizan al arrancar (SintesisAudio).
 using UnityEngine;
@@ -79,8 +79,14 @@ namespace Gemelo
             viento.pitch = 0.8f + 0.04f * amb.Viento;
             Fijar(pajaros, vol * 0.25f * dia * (1f - amb.Nubes * 0.6f) * (amb.Lluvia > 0.1f ? 0.1f : 1f) * exterior * alto, dt);
             float ll = lluvia != null ? lluvia.Intensidad : Mathf.Clamp01(amb.Lluvia / 4f);
-            Fijar(agua, vol * 0.55f * ll * (dentro ? 0.45f : 1f), dt);
-            if (filtroAgua != null) filtroAgua.cutoffFrequency = dentro ? 1200f : 16000f;
+            // Lluvia: apagada dentro de un edificio; bajo un porche o una pasarela, algo menos clara (y en la vista
+            // cenital, siempre como fuera)
+            bool enEdificio = !cenital && (dentro || (lluvia != null && lluvia.Dentro));
+            bool aCubierto = !cenital && lluvia != null && lluvia.Cubierto;
+            Fijar(agua, vol * 0.55f * ll * (enEdificio ? 0.4f : aCubierto ? 0.8f : 1f), dt);
+            if (filtroAgua != null)
+                filtroAgua.cutoffFrequency = Mathf.MoveTowards(filtroAgua.cutoffFrequency,
+                    enEdificio ? 1100f : aCubierto ? 5000f : 16000f, dt * 20000f);
             Fijar(rumor, vol * 0.5f * ocupacion, dt);
         }
 

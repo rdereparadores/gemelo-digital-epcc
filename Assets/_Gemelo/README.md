@@ -183,7 +183,7 @@ crea el resto:
 - `CieloYSol`: sol o luna en la `Directional Light`, cielo `Gemelo/Cielo` (el HDR de `Cielo.mat` con sol propio,
   ocaso, nubes, estrellas y luna), Trilight y niebla. Con el sol alto y despejado deja lo calibrado de
   `AmbienteBuilder`; con `Ajustes.sincronizarSol = false` lo devuelve todo como estaba.
-- `Lluvia` (trazos en la GPU alrededor de la cámara) y `Farolas` (destellos en las luminarias y las luces más cercanas).
+- `Lluvia` (trazos en la GPU alrededor de la cámara; no llueve bajo techo: la primera vez que llueve hornea un mapa de altura del techo visto desde arriba, 0,2 m por texel, ~135 ms, con `GemeloAlturaTecho.shader`, y las gotas por debajo se descartan en el sombreador; `Cubierto`/`Dentro` dicen si la cámara está a cubierto, para el sonido) y `Farolas` (destellos en las luminarias y las luces más cercanas).
 - `LucesInteriores`: intensidad de `Local.luces` (`EdificioPolitecnica` sigue decidiendo `enabled` por distancia),
   ventanas y muros cortina iluminados de noche, apagón y señales verdes de salida. Los locales grandes traen varias
   luces (una cada ~20 m², con la intensidad según la superficie que alumbran; las pone el generador): solo quedan
