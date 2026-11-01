@@ -7,6 +7,10 @@ partir de `GemeloApp`, salvo los assets que generan los builders de editor (mall
 Para probarlo hay que arrancar el servicio (`cd ServicioSensores && uv run gemelo-sensores`) y entrar en Play
 Mode en `MainScene`. Con `-sinGemelo` o `-benchmark` el gemelo no arranca.
 
+Build de Linux: **Tools ▸ Gemelo ▸ Build de Linux** (`Nucleo/Editor/ConstruirGemelo.cs`) deja
+`Build/Linux/GemeloPolitecnica.x86_64` con un `LEEME.txt`. Permite HTTP (el servicio va en local por HTTP), ventana
+redimensionable y sigue corriendo en segundo plano. El servicio tiene que estar arrancado igual que en el editor.
+
 ## Módulos
 
 | Carpeta | Qué hace | Depende de |
