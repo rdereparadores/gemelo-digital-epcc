@@ -149,32 +149,14 @@
    "textura": "pintura_interior"
   },
   {
-   "nombre": "Suelo_8E8E8A",
-   "color": "#ADB3C1",
-   "textura": "terrazo",
-   "suavidad": 1.0
-  },
-  {
    "nombre": "Suelo_9C9A96",
    "color": "#BDC2D1",
    "textura": "terrazo",
    "suavidad": 1.0
   },
   {
-   "nombre": "Suelo_A9A6A0",
-   "color": "#CDD1DE",
-   "textura": "terrazo",
-   "suavidad": 1.0
-  },
-  {
    "nombre": "Suelo_B9B2A6",
    "color": "#E0E0E7",
-   "textura": "terrazo",
-   "suavidad": 1.0
-  },
-  {
-   "nombre": "Suelo_BDB6A8",
-   "color": "#E5E5E9",
    "textura": "terrazo",
    "suavidad": 1.0
   },
