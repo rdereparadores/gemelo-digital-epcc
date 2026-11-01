@@ -3,8 +3,9 @@ name = "gemelo-sensores"
 version = "0.1.0"
 description = "Puente REST entre los sensores de SmartPoliTech (EPCC, UEx) y el gemelo digital en Unity"
 readme = "README.md"
+license = "MIT"
 authors = [
-    { name = "Iván", email = "ivruizl@alumnos.unex.es" }
+    { name = "Iván Ruiz López", email = "ivruizl@alumnos.unex.es" }
 ]
 requires-python = ">=3.12"
 dependencies = [

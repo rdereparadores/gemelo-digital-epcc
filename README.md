@@ -99,9 +99,11 @@ Medidas y herramientas de medida en [Documentacion/Rendimiento.md](Documentacion
 
 ## Licencia
 
-El proyecto se distribuye bajo [Creative Commons Atribución 4.0 Internacional (CC BY 4.0)](LICENSE): puedes usarlo,
-modificarlo y redistribuirlo, también con fines comerciales, siempre que cites la autoría. Por ejemplo:
+- **Código** (C#, shaders, USS y el servicio en Python): [MIT](LICENSE).
+- **Assets** (escenas, mallas, prefabs, materiales, texturas, animaciones y datos propios) y documentación:
+  [CC BY 4.0](LICENSE-ASSETS). Se pueden usar, modificar y redistribuir, también con fines comerciales, citando la
+  autoría. Por ejemplo:
 
-> «Gemelo digital de la Escuela Politécnica de Cáceres», de Iván, bajo CC BY 4.0.
+  > «Gemelo digital de la Escuela Politécnica de Cáceres», de Iván Ruiz López, bajo CC BY 4.0.
 
-Los materiales de terceros de la lista anterior conservan su propia licencia y quedan fuera de esta.
+Los materiales de terceros de la lista anterior conservan su propia licencia y quedan fuera de estas.
