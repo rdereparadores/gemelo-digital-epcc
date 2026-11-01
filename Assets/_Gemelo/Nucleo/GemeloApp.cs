@@ -94,6 +94,27 @@ namespace Gemelo
         /// <summary>Transform del avatar del jugador (null fuera de la tercera persona). Lo pone el módulo de control.</summary>
         public Transform Jugador { get; set; }
 
+        /// <summary>¿Está el puntero sobre un panel de la UI? Recibe la posición en píxeles de pantalla como la da
+        /// Mouse.current.position (origen abajo a la izquierda). La rellena la UI; Control no hace clic, arrastre
+        /// ni zoom donde devuelva true. Null = no hay UI.</summary>
+        public static Func<Vector2, bool> PunteroSobreUI;
+
+        /// <summary>Frame (Time.frameCount) en que la UI usó la tecla Esc para algo suyo (cerrar un desplegable, un
+        /// popover…). Control lee Esc en LateUpdate y no hace nada con el Esc de ese frame.</summary>
+        public static int EscapeConsumido = -1;
+
+        // El proyecto entra en Play Mode sin recargar el dominio: los estáticos sobreviven entre sesiones. Se limpian
+        // aquí, antes de que los módulos se suscriban en BeforeSceneLoad, para no acumular suscripciones.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void Reiniciar()
+        {
+            Arrancado = null;
+            FabricaAvatar = null;
+            PunteroSobreUI = null;
+            EscapeConsumido = -1;
+            Instancia = null;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Arrancar()
         {
