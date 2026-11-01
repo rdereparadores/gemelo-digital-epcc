@@ -141,44 +141,39 @@ namespace Gemelo
         }
 
         /// <summary>Ruta de a a b (puntos ya en la malla o cerca). Si no se llega, termina en lo más cercano.
-        /// Si el buscador se queda corto (rutas largas con muchos polígonos), lo reintenta al revés.</summary>
+        /// El buscador de Unity tiene un tope de nodos y en las rutas largas por interiores llenos de muebles se queda
+        /// corto: entonces se pasa por las puertas exteriores de los edificios de los extremos (la que da la ruta más
+        /// corta de las tres que mejor caen), y solo si así tampoco, se sigue desde donde se quedó.</summary>
         public Ruta Calcular(Vector3 a, Vector3 b)
         {
             RutasCalculadas++;
-            if (!NavMesh.CalculatePath(a, b, Filtro, camino) || camino.status == NavMeshPathStatus.PathInvalid || camino.corners.Length == 0)
-                return null;
-            var c = camino.corners;
-            bool completa = camino.status == NavMeshPathStatus.PathComplete;
+            esquinas.Clear();
+            bool completa = Esquinas(a, b, esquinas);
+            if (esquinas.Count == 0) return null;
+            if (!completa && PorPuertas(a, b, via))
+            {
+                esquinas.Clear();
+                esquinas.AddRange(via);
+                completa = true;
+            }
             if (!completa)
             {
-                // A veces la búsqueda se agota en un sentido y no en el otro
-                if (NavMesh.CalculatePath(b, a, Filtro, camino) && camino.status == NavMeshPathStatus.PathComplete)
+                // Se sigue desde donde llegó, mientras avance
+                float antes = Vector3.Distance(esquinas[esquinas.Count - 1], b);
+                for (int k = 0; k < 3 && !completa; k++)
                 {
-                    c = camino.corners;
-                    System.Array.Reverse(c);
-                    completa = true;
-                }
-                else
-                {
-                    // El buscador tiene un tope de nodos: en rutas largas por interiores llenos de muebles se queda corto.
-                    // Se sigue desde donde llegó, mientras avance.
-                    var todo = new List<Vector3>(c);
-                    float antes = Vector3.Distance(todo[todo.Count - 1], b);
-                    for (int k = 0; k < 3 && !completa; k++)
-                    {
-                        if (!NavMesh.CalculatePath(todo[todo.Count - 1], b, Filtro, camino) || camino.corners.Length < 2) break;
-                        float ahora = Vector3.Distance(camino.corners[camino.corners.Length - 1], b);
-                        if (ahora > antes - 1f && camino.status != NavMeshPathStatus.PathComplete) break;
-                        for (int i = 1; i < camino.corners.Length; i++) todo.Add(camino.corners[i]);
-                        completa = camino.status == NavMeshPathStatus.PathComplete;
-                        antes = ahora;
-                    }
-                    c = todo.ToArray();
+                    if (!NavMesh.CalculatePath(esquinas[esquinas.Count - 1], b, Filtro, camino) || camino.corners.Length < 2) break;
+                    float ahora = Vector3.Distance(camino.corners[camino.corners.Length - 1], b);
+                    if (ahora > antes - 1f && camino.status != NavMeshPathStatus.PathComplete) break;
+                    for (int i = 1; i < camino.corners.Length; i++) esquinas.Add(camino.corners[i]);
+                    completa = camino.status == NavMeshPathStatus.PathComplete;
+                    antes = ahora;
                 }
             }
+            var c = esquinas;
             tmp.Clear();
             tmp.Add(c[0]);
-            for (int i = 1; i < c.Length; i++)
+            for (int i = 1; i < c.Count; i++)
             {
                 Vector3 p0 = c[i - 1], p1 = c[i];
                 float largo = Vector3.Distance(p0, p1);
@@ -204,6 +199,108 @@ namespace Gemelo
                 tmp.Add(p1);
             }
             return new Ruta(tmp, completa);
+        }
+
+        readonly List<Vector3> esquinas = new(256), via = new(256);
+
+        // Esquinas de la ruta de a a b; true si llega. Si la búsqueda se agota en un sentido, se prueba en el otro.
+        bool Esquinas(Vector3 a, Vector3 b, List<Vector3> r)
+        {
+            r.Clear();
+            if (!NavMesh.CalculatePath(a, b, Filtro, camino) || camino.status == NavMeshPathStatus.PathInvalid || camino.corners.Length == 0)
+                return false;
+            if (camino.status == NavMeshPathStatus.PathComplete) { r.AddRange(camino.corners); return true; }
+            var parcial = camino.corners;
+            if (NavMesh.CalculatePath(b, a, Filtro, camino) && camino.status == NavMeshPathStatus.PathComplete)
+            {
+                for (int i = camino.corners.Length - 1; i >= 0; i--) r.Add(camino.corners[i]);
+                return true;
+            }
+            r.AddRange(parcial);
+            return false;
+        }
+
+        static float Largo(List<Vector3> l, int desde = 0)
+        {
+            float s = 0;
+            for (int i = desde + 1; i < l.Count; i++) s += Vector3.Distance(l[i - 1], l[i]);
+            return s;
+        }
+
+        // ───── Rutas largas por puntos de paso ─────
+        // Puntos de paso: las puertas exteriores de cada edificio y el arranque y la llegada de cada escalera (los saca
+        // Tools ▸ Gemelo ▸ Malla de navegación). Cuando el buscador no completa una ruta, se parte en dos por el punto
+        // de paso que menos la alarga (de los tres mejores del edificio de cada extremo), y así hasta tres veces.
+        readonly List<Vector3> pasos = new();
+        readonly List<InfoEdificio> pasosEdificio = new();
+        bool pasosListos;
+        int presupuesto;
+
+        void PrepararPasos()
+        {
+            pasosListos = true;
+            var rec = RecursosPersonas.Cargar();
+            if (rec != null && rec.escaleras != null)
+                foreach (var e in rec.escaleras) { pasos.Add(e); pasosEdificio.Add(RegistroCampus.EdificioEn(e)); }
+            foreach (var e in RegistroCampus.Edificios)
+                foreach (var pu in e.puertasExteriores)
+                    if (Punto(RegistroCampus.CentroPuerta(pu) + Vector3.up * 0.2f, 0.8f, out var q, 1f))
+                    {
+                        pasos.Add(q);
+                        pasosEdificio.Add(e);
+                    }
+        }
+
+        readonly List<(int i, float h)> candidatas = new();
+
+        bool PorPuertas(Vector3 a, Vector3 b, List<Vector3> r)
+        {
+            if (!pasosListos) PrepararPasos();
+            if (pasos.Count == 0) return false;
+            presupuesto = 24;
+            var l = new List<Vector3> { a };
+            if (!Unir(a, b, l, 0)) return false;
+            r.Clear();
+            r.AddRange(l);
+            return true;
+        }
+
+        // Añade a salida la ruta de desde a hasta (sin el primer punto); false si no se llega
+        bool Unir(Vector3 desde, Vector3 hasta, List<Vector3> salida, int prof)
+        {
+            if ((desde - hasta).sqrMagnitude < 0.01f) return true;
+            if (--presupuesto < 0) return false;
+            var t = new List<Vector3>(64);
+            if (Esquinas(desde, hasta, t))
+            {
+                for (int i = 1; i < t.Count; i++) salida.Add(t[i]);
+                return true;
+            }
+            if (prof >= 3) return false;
+            var ea = RegistroCampus.EdificioEn(desde);
+            var eb = RegistroCampus.EdificioEn(hasta);
+            float recta = Vector3.Distance(desde, hasta);
+            var cand = new List<(int i, float h)>();
+            for (int i = 0; i < pasos.Count; i++)
+            {
+                var e = pasosEdificio[i];
+                if (e == null || e != ea && e != eb) continue;
+                var w = pasos[i];
+                if ((w - desde).sqrMagnitude < 4f || (w - hasta).sqrMagnitude < 4f) continue;
+                // (las escaleras cuentan con la diferencia de altura: un paso a otra planta alarga de verdad)
+                float h = Vector3.Distance(desde, w) + Vector3.Distance(w, hasta) + 4f * (Mathf.Abs(w.y - desde.y) + Mathf.Abs(w.y - hasta.y) - Mathf.Abs(hasta.y - desde.y));
+                if (h > recta * 2.5f + 40f) continue;
+                cand.Add((i, h));
+            }
+            cand.Sort((x, y) => x.h.CompareTo(y.h));
+            for (int k = 0; k < cand.Count && k < 3 && presupuesto > 0; k++)
+            {
+                var w = pasos[cand[k].i];
+                int n = salida.Count;
+                if (Unir(desde, w, salida, prof + 1) && Unir(w, hasta, salida, prof + 1)) return true;
+                salida.RemoveRange(n, salida.Count - n);
+            }
+            return false;
         }
     }
 }

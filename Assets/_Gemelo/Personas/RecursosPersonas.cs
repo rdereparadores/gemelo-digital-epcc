@@ -14,6 +14,8 @@ namespace Gemelo
         [Tooltip("Enlaces que cosen trozos de la malla que el voxelizado deja sueltos (rellanos de escaleras…)")]
         public Vector3[] enlacesA = new Vector3[0];
         public Vector3[] enlacesB = new Vector3[0];
+        [Tooltip("Arranque y llegada de cada tramo de escalera (por pares, en la malla): puntos de paso para las rutas largas")]
+        public Vector3[] escaleras = new Vector3[0];
 
         [Header("Avatares cercanos (Animator humanoide)")]
         [Tooltip("Prefabs con Animator humanoide. Los maniquíes generados, o personajes de Mixamo")]

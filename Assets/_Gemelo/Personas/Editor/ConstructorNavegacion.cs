@@ -42,12 +42,51 @@ namespace Gemelo
             EditorUtility.DisplayDialog("Malla de navegación", r, "Vale");
         }
 
-        public static string Construir(float radio = 0.2f, float altura = 1.8f, float escalon = 0.36f, float pendiente = 40f, float voxel = 0.08f, int tesela = 512, bool mallasRender = false)
+        // Agente de 0,18 m de radio con vóxel de 6 cm: con 0,2 m y 8 cm las puertas de 0,65-0,68 m de los despachos de
+        // Teleco y de algunos de Civil e Informática quedaban sin paso (la erosión del radio se redondea a vóxeles enteros).
+        // Alto de 1,7 m: los cuartos bajo las escaleras tienen la puerta rebajada a 1,79 m (bajos_escalera del generador)
+        public static string Construir(float radio = 0.18f, float altura = 1.7f, float escalon = 0.36f, float pendiente = 40f, float voxel = 0.06f, int tesela = 512, bool mallasRender = false)
         {
             var reloj = Stopwatch.StartNew();
+            var datos = ConstruirDatos(Zona, out string fuentesTxt, radio, altura, escalon, pendiente, voxel, tesela, mallasRender);
+            if (datos == null) return "No se pudo construir la malla";
+            datos.name = "Campus";
+
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(RutaAsset)!);
+            var previo = AssetDatabase.LoadAssetAtPath<NavMeshData>(RutaAsset);
+            if (previo != null)
+            {
+                EditorUtility.CopySerialized(datos, previo);
+                EditorUtility.SetDirty(previo);
+                AssetDatabase.SaveAssets();
+                Object.DestroyImmediate(datos);
+            }
+            else AssetDatabase.CreateAsset(datos, RutaAsset);
+            AssetDatabase.ImportAsset(RutaAsset);
+            var malla = AssetDatabase.LoadAssetAtPath<NavMeshData>(RutaAsset);
+
+            var rec = Recursos();
+            rec.malla = malla;
+            int enlaces = Coser(malla, rec, out int sueltos, out int ascensores);
+            rec.escaleras = Escaleras(malla);
+            EditorUtility.SetDirty(rec);
+            AssetDatabase.SaveAssets();
+
+            var msg = $"Malla de navegación en {reloj.Elapsed.TotalSeconds:F0} s: {fuentesTxt}; " +
+                      $"{enlaces} enlaces de costura ({Forzados} a través de un tabique, {ascensores} de ascensor), {sueltos} trozos sueltos de más de 4 m²; " +
+                      $"{rec.escaleras.Length / 2} tramos de escalera como puntos de paso";
+            Debug.Log("[Personas] " + msg);
+            return msg;
+        }
+
+        /// <summary>Construye la malla de una zona (sin guardarla ni coserla): la usa Construir y sirve para probar
+        /// cambios en una escalera sin rehacer todo el campus.</summary>
+        public static NavMeshData ConstruirDatos(Bounds zona, out string resumen, float radio = 0.18f, float altura = 1.7f, float escalon = 0.36f,
+            float pendiente = 40f, float voxel = 0.06f, int tesela = 512, bool mallasRender = false)
+        {
             var fuentes = new List<NavMeshBuildSource>();
             int capas = ~(1 << 2);   // Ignore Raycast: los triggers de los locales
-            NavMeshBuilder.CollectSources(Zona, capas, mallasRender ? NavMeshCollectGeometry.RenderMeshes : NavMeshCollectGeometry.PhysicsColliders, AreaNoCaminable,
+            NavMeshBuilder.CollectSources(zona, capas, mallasRender ? NavMeshCollectGeometry.RenderMeshes : NavMeshCollectGeometry.PhysicsColliders, AreaNoCaminable,
                 new List<NavMeshBuildMarkup>(), fuentes);
 
             var buenas = new List<NavMeshBuildSource>(fuentes.Count);
@@ -84,34 +123,8 @@ namespace Gemelo
             ajustes.minRegionArea = 1.5f;
             ajustes.buildHeightMesh = true;
 
-            var datos = NavMeshBuilder.BuildNavMeshData(ajustes, buenas, Zona, Vector3.zero, Quaternion.identity);
-            if (datos == null) return "No se pudo construir la malla";
-            datos.name = "Campus";
-
-            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(RutaAsset)!);
-            var previo = AssetDatabase.LoadAssetAtPath<NavMeshData>(RutaAsset);
-            if (previo != null)
-            {
-                EditorUtility.CopySerialized(datos, previo);
-                EditorUtility.SetDirty(previo);
-                AssetDatabase.SaveAssets();
-                Object.DestroyImmediate(datos);
-            }
-            else AssetDatabase.CreateAsset(datos, RutaAsset);
-            AssetDatabase.ImportAsset(RutaAsset);
-            var malla = AssetDatabase.LoadAssetAtPath<NavMeshData>(RutaAsset);
-
-            var rec = Recursos();
-            rec.malla = malla;
-            int enlaces = Coser(malla, rec, out int sueltos);
-            EditorUtility.SetDirty(rec);
-            AssetDatabase.SaveAssets();
-
-            var msg = $"Malla de navegación en {reloj.Elapsed.TotalSeconds:F0} s: {buenas.Count} fuentes " +
-                      $"({nSuelo} suelo, {nTierra} terreno, {nCalzada} calzada, {nObst} obstáculos; {fuera} descartadas); " +
-                      $"{enlaces} enlaces de costura, {sueltos} trozos sueltos de más de 4 m²";
-            Debug.Log("[Personas] " + msg);
-            return msg;
+            resumen = $"{buenas.Count} fuentes ({nSuelo} suelo, {nTierra} terreno, {nCalzada} calzada, {nObst} obstáculos; {fuera} descartadas)";
+            return NavMeshBuilder.BuildNavMeshData(ajustes, buenas, zona, Vector3.zero, Quaternion.identity);
         }
 
         public const string RutaRecursos = "Assets/_Gemelo/Personas/Resources/RecursosPersonas.asset";
@@ -132,9 +145,18 @@ namespace Gemelo
         // principal y se cosen con enlaces cortos donde hay un vértice de cada lado a menos de 0,9 m, casi a la misma
         // altura y sin nada en medio (un muro).
         const float DistCostura = 0.9f, DyCostura = 0.45f, AreaMinima = 4f;
+        /// <summary>Segunda pasada de costuras, a través de tabiques delgados (desactivada: con las escaleras ya andables
+        /// solo unía azoteas y terrazas sin puerta con los locales de al lado, atravesando la fachada, y cuartos cuya
+        /// puerta no abre el muro; la gente los cruzaba por dentro del muro).</summary>
+        public static bool CoserForzado = false;
+        /// <summary>Tercera pasada, «ascensores» verticales entre plantas sin escalera (ver Coser).</summary>
+        public static bool CoserAscensor = false;
+        public static int Forzados { get; private set; }
 
-        static int Coser(NavMeshData malla, RecursosPersonas rec, out int sueltos)
+        static int Coser(NavMeshData malla, RecursosPersonas rec, out int sueltos, out int ascensores)
         {
+            ascensores = 0;
+            Forzados = 0;
             NavMesh.RemoveAllNavMeshData();
             var inst = NavMesh.AddNavMeshData(malla);
             var tri = NavMesh.CalculateTriangulation();
@@ -212,11 +234,12 @@ namespace Gemelo
                 return true;
             }
 
-            // Primera pasada: solo costuras sin nada en medio. Segunda: también a través de un tabique delgado, para los
-            // trozos grandes (> 20 m²) que siguen sueltos (algún tramo de escalera del modelo queda tapiado por el muro
-            // de la caja; la gente lo atraviesa por la costura, que es corta).
-            // Tercera: plantas enteras sin escalera en la malla (el modelo de alguna escalera no se puede andar): se
-            // unen con la planta de abajo por un «ascensor», un enlace vertical que las personas cruzan de golpe.
+            // Primera pasada: solo costuras sin nada en medio. Segunda (CoserForzado, desactivada): también a través de un
+            // tabique delgado, para los trozos grandes (> 20 m²) que siguen sueltos.
+            // Tercera (desactivada, CoserAscensor): plantas enteras sin escalera en la malla se unían con la de abajo por un
+            // «ascensor», un enlace vertical que las personas cruzaban de golpe. Desde que las escaleras de los siete
+            // edificios se pueden andar (01-11-2026) solo quedaba uno, sin ascensor real (el almacén del −1 de Teleco, que
+            // ya tiene su puerta a la calle): sin él, quien no tenga ruta aparece en su sitio (Multitud.Colocar).
             bool forzar = false, ascensor = false;
             var locales = Object.FindObjectsByType<Local>();
             var interior = new Dictionary<int, bool>();
@@ -234,10 +257,14 @@ namespace Gemelo
                 return interior[comp] = si;
             }
             bool cambio = true;
-            while (cambio || !forzar || !ascensor)
+            while (true)
             {
-                if (!cambio && forzar && !ascensor) { ascensor = true; cambio = true; }
-                if (!cambio) { forzar = true; pendientes.RemoveAll(c => area[c] < 20f); }
+                if (!cambio)
+                {
+                    if (!forzar && CoserForzado) { forzar = true; pendientes.RemoveAll(c => area[c] < 20f); }
+                    else if (!ascensor && CoserAscensor) { ascensor = forzar = true; }
+                    else break;
+                }
                 cambio = false;
                 for (int p = pendientes.Count - 1; p >= 0; p--)
                 {
@@ -276,6 +303,8 @@ namespace Gemelo
                         puestos.Add(e.a);
                         ea.Add(e.a);
                         eb.Add(e.b);
+                        if (ascensor) ascensores++;
+                        else if (forzar && !Libre(e.a, e.b)) Forzados++;
                     }
                     if (puestos.Count == 0) continue;
                     conectadas.Add(comp);
@@ -288,6 +317,82 @@ namespace Gemelo
             rec.enlacesB = eb.ToArray();
             sueltos = pendientes.Count;
             return ea.Count;
+        }
+
+        // ───────────── Escaleras ─────────────
+        // Arranque y llegada de cada escalera (huellas de peldaño de los edificios, agrupadas por vecindad en planta y en
+        // altura), en la malla. Navegacion los usa como puntos de paso cuando el buscador no completa una ruta larga.
+        public static Vector3[] Escaleras(NavMeshData malla)
+        {
+            var caras = new List<(Vector3 c, float a)>();
+            foreach (var mc in Object.FindObjectsByType<MeshCollider>())
+            {
+                if (!mc.enabled || mc.sharedMesh == null || !mc.name.Contains("Peldano")) continue;
+                if (mc.GetComponentInParent<EdificioPolitecnica>() == null) continue;
+                var m = mc.sharedMesh;
+                var v = m.vertices;
+                var t = m.triangles;
+                var tr = mc.transform;
+                for (int i = 0; i < t.Length; i += 3)
+                {
+                    Vector3 A = tr.TransformPoint(v[t[i]]), B = tr.TransformPoint(v[t[i + 1]]), C = tr.TransformPoint(v[t[i + 2]]);
+                    var n = Vector3.Cross(B - A, C - A);
+                    float ar = n.magnitude * 0.5f;
+                    if (ar < 0.005f || n.y / (2 * ar) < 0.99f) continue;
+                    caras.Add(((A + B + C) / 3f, ar));
+                }
+            }
+            // Unión-búsqueda: huellas a menos de 0,6 m en planta y 0,36 m en altura (peldaños seguidos y mesetas)
+            var padre = new int[caras.Count];
+            for (int i = 0; i < padre.Length; i++) padre[i] = i;
+            int Raiz(int x) { while (padre[x] != x) { padre[x] = padre[padre[x]]; x = padre[x]; } return x; }
+            var celdas = new Dictionary<Vector2Int, List<int>>();
+            for (int i = 0; i < caras.Count; i++)
+            {
+                var k = new Vector2Int(Mathf.FloorToInt(caras[i].c.x / 0.6f), Mathf.FloorToInt(caras[i].c.z / 0.6f));
+                if (!celdas.TryGetValue(k, out var l)) celdas[k] = l = new List<int>();
+                l.Add(i);
+            }
+            for (int i = 0; i < caras.Count; i++)
+            {
+                var c = caras[i].c;
+                var k = new Vector2Int(Mathf.FloorToInt(c.x / 0.6f), Mathf.FloorToInt(c.z / 0.6f));
+                for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++)
+                {
+                    if (!celdas.TryGetValue(k + new Vector2Int(dx, dz), out var l)) continue;
+                    foreach (int j in l)
+                    {
+                        if (j <= i) continue;
+                        var d = caras[j].c - c;
+                        if (Mathf.Abs(d.y) <= 0.36f && d.x * d.x + d.z * d.z < 0.36f) padre[Raiz(j)] = Raiz(i);
+                    }
+                }
+            }
+            var bajo = new Dictionary<int, Vector3>();
+            var alto = new Dictionary<int, Vector3>();
+            for (int i = 0; i < caras.Count; i++)
+            {
+                int r = Raiz(i);
+                var c = caras[i].c;
+                if (!bajo.TryGetValue(r, out var b) || c.y < b.y) bajo[r] = c;
+                if (!alto.TryGetValue(r, out var a) || c.y > a.y) alto[r] = c;
+            }
+            NavMesh.RemoveAllNavMeshData();
+            var inst = NavMesh.AddNavMeshData(malla);
+            var res = new List<Vector3>();
+            foreach (var kv in bajo)
+            {
+                var b = kv.Value;
+                var a = alto[kv.Key];
+                if (a.y - b.y < 1.0f) continue;           // escalones sueltos (accesos de una o dos huellas)
+                if (!NavMesh.SamplePosition(b, out var hb, 0.5f, NavMesh.AllAreas) || !NavMesh.SamplePosition(a, out var ha, 0.5f, NavMesh.AllAreas))
+                    continue;
+                res.Add(hb.position);
+                res.Add(ha.position);
+            }
+            inst.Remove();
+            return res.ToArray();
         }
 
         static int Area(Component comp)
