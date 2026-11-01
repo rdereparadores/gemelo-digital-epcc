@@ -167,10 +167,63 @@ namespace Gemelo
                 foreach (var e in b.spaces)
                 {
                     if (!string.IsNullOrEmpty(e.space_id)) porEspacio[e.space_id] = e;
-                    if (!string.IsNullOrEmpty(e.unity_room)) porSala[e.unity_room] = e;
+                    if (string.IsNullOrEmpty(e.unity_room)) continue;
+                    var destinos = AliasEstancias.Destinos(e.unity_room);
+                    if (destinos == null) PonerSala(e.unity_room, e, 1f);
+                    else foreach (var d in destinos) PonerSala(d.clave, e, d.fraccion);
                 }
             }
             EstadoActualizado?.Invoke(estado);
+        }
+
+        // Estado de un local del modelo a partir de una estancia del servicio. En las divisiones (fracción < 1) le toca su
+        // parte de la ocupación; en las fusiones (varias estancias del servicio en un local) se suman ocupación, ventanas y
+        // radiadores, y el resto de magnitudes son las de la estancia cuya clave coincide con la del local.
+        void PonerSala(string clave, EstadoEstancia e, float fraccion)
+        {
+            if (fraccion < 0.999f) e = Copia(e, fraccion);
+            if (!porSala.TryGetValue(clave, out var previa)) { porSala[clave] = e; return; }
+            bool nuevaPrincipal = e.unity_room == clave && previa.unity_room != clave;
+            var baseE = Copia(nuevaPrincipal ? e : previa, 1f);
+            var otra = nuevaPrincipal ? previa : e;
+            float occ = Suma(baseE, otra, "occupancy");
+            if (!float.IsNaN(occ)) Fijar(baseE, "occupancy", occ);
+            baseE.windows_open += otra.windows_open; baseE.windows_total += otra.windows_total;
+            baseE.radiators_active += otra.radiators_active; baseE.radiators_total += otra.radiators_total;
+            if (otra.alerts != null) { baseE.alerts ??= new List<Alerta>(); baseE.alerts.AddRange(otra.alerts); }
+            porSala[clave] = baseE;
+        }
+
+        static float Suma(EstadoEstancia a, EstadoEstancia b, string prop)
+        {
+            float x = a.Valor(prop), y = b.Valor(prop);
+            return float.IsNaN(x) ? y : float.IsNaN(y) ? x : x + y;
+        }
+
+        static void Fijar(EstadoEstancia e, string prop, float v)
+        {
+            int i = e.metrics.FindIndex(m => m.property == prop);
+            if (i < 0) return;
+            var m = e.metrics[i];
+            e.metrics[i] = new Metrica { property = m.property, value = v, unit = m.unit, source = m.source, sensor_count = m.sensor_count };
+        }
+
+        static EstadoEstancia Copia(EstadoEstancia e, float fraccion)
+        {
+            var c = new EstadoEstancia
+            {
+                space_id = e.space_id, unity_room = e.unity_room, time = e.time, comfort = e.comfort,
+                metrics = e.metrics != null ? new List<Metrica>(e.metrics) : new List<Metrica>(),
+                alerts = e.alerts != null ? new List<Alerta>(e.alerts) : null,
+                windows_open = e.windows_open, windows_total = e.windows_total,
+                radiators_active = e.radiators_active, radiators_total = e.radiators_total,
+            };
+            if (fraccion < 0.999f)
+            {
+                float occ = c.Valor("occupancy");
+                if (!float.IsNaN(occ)) Fijar(c, "occupancy", Mathf.Round(occ * fraccion));
+            }
+            return c;
         }
 
         void Parchear(string ruta, string json, Action<bool> hecho) => Enviar("PATCH", ruta, json, hecho);

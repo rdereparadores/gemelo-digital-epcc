@@ -76,6 +76,11 @@ núcleo como evento o propiedad de `GemeloApp`.
   - `Local` (componente de la escena) trae el polígono exacto, `cotaSuelo`, `asientos` (sillas, taburetes,
     butacas y bancos del local) y `luces`.
   - Búsquedas: `Local(clave)`, `PorEspacio(spaceId)`, `Edificio(cod|id)`, `LocalEn(punto)` y `EdificioEn(punto)`.
+- **`AliasEstancias`**: claves del servicio que no casan tal cual con un local (sótanos `Pm1` → `P-1`, estancias
+  fusionadas con la vecina, divisiones como C-10 → 23A/23B/23C). La tabla `Nucleo/Resources/AliasEstancias.json` la
+  escribe `Herramientas/politecnica/alias_gemelo.py`. `ClienteGemelo.Estancia(clave)` ya devuelve el estado por local
+  del modelo: en las fusiones suma ocupación, ventanas y radiadores; en las divisiones reparte la ocupación por superficie.
+  Solo se quedan sin local los tres patios descubiertos de 1905.
 - **`Ajustes`** (`Ajustes.Actual`, `Ajustes.Aplicar()` y el evento `Ajustes.Cambiados`): se guardan en JSON en
   `persistentDataPath`.
 - **`Escalas`**: nombre, unidad, rango, valor y color de cada capa, más los colores del confort y de la severidad.

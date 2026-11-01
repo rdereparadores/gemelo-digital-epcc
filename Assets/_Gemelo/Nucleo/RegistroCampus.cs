@@ -111,11 +111,21 @@ namespace Gemelo
             if (estado?.buildings == null) return;
             foreach (var b in estado.buildings)
                 foreach (var s in b.spaces)
-                    if (!string.IsNullOrEmpty(s.unity_room) && Locales.TryGetValue(s.unity_room, out var il) && il.idServicio == null)
-                    {
-                        il.idServicio = s.space_id;
-                        porEspacio[s.space_id] = il;
-                    }
+                {
+                    if (string.IsNullOrEmpty(s.unity_room) || porEspacio.ContainsKey(s.space_id)) continue;
+                    var destinos = AliasEstancias.Destinos(s.unity_room);
+                    if (destinos == null) Enlazar(s.space_id, s.unity_room, true);
+                    else foreach (var d in destinos) Enlazar(s.space_id, d.clave, false);
+                }
+        }
+
+        // El id del servicio de un local es el de su estancia homónima; si no la hay (división, sótano renombrado), el
+        // del alias. Todas las estancias del servicio apuntan a su local (las fusionadas, al que las acoge).
+        static void Enlazar(string spaceId, string clave, bool directo)
+        {
+            if (!Locales.TryGetValue(clave, out var il)) return;
+            if (!porEspacio.ContainsKey(spaceId)) porEspacio[spaceId] = il;
+            if (directo || il.idServicio == null) il.idServicio = spaceId;
         }
 
         public static InfoEdificio Edificio(string codigoOId) =>

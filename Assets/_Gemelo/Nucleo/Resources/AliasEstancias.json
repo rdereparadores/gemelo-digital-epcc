@@ -1,0 +1,222 @@
+{
+ "alias": [
+  {
+   "servicio": "1901_P0_20",
+   "modelo": [
+    "1901_P0_21"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1901_P0_23",
+   "modelo": [
+    "1901_P0_22"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1901_P2_23",
+   "modelo": [
+    "1901_P2_23A",
+    "1901_P2_23B",
+    "1901_P2_23C"
+   ],
+   "fraccion": [
+    0.3312,
+    0.3376,
+    0.3312
+   ]
+  },
+  {
+   "servicio": "1902_P0_17",
+   "modelo": [
+    "1902_P0_18"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_P0_07",
+   "modelo": [
+    "1903_P0_08"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_P0_37",
+   "modelo": [
+    "1903_P0_36"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_P1_13",
+   "modelo": [
+    "1903_P1_12"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_P1_16",
+   "modelo": [
+    "1903_P1_17"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_P1_18",
+   "modelo": [
+    "1903_P1_17"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_P1_39",
+   "modelo": [
+    "1903_P1_39A",
+    "1903_P1_39B"
+   ],
+   "fraccion": [
+    0.5382,
+    0.4618
+   ]
+  },
+  {
+   "servicio": "1903_P1_sn",
+   "modelo": [
+    "1903_P1_WC2"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_Pm1_01",
+   "modelo": [
+    "1903_P-1_01"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_Pm1_02",
+   "modelo": [
+    "1903_P-1_02"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_Pm1_03",
+   "modelo": [
+    "1903_P-1_03"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1903_Pm1_04",
+   "modelo": [
+    "1903_P-1_04"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1905_Pm1_01",
+   "modelo": [
+    "1905_P-2_01"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1905_Pm1_02",
+   "modelo": [
+    "1905_P-2_02"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1905_Pm1_03",
+   "modelo": [
+    "1905_P-2_03"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1905_Pm1_04",
+   "modelo": [
+    "1905_P-2_04"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1905_Pm1_05",
+   "modelo": [
+    "1905_P-2_05"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1905_Pm1_06",
+   "modelo": [
+    "1905_P-2_06"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1905_Pm1_07",
+   "modelo": [
+    "1905_P-2_07"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  },
+  {
+   "servicio": "1905_Pm1_08",
+   "modelo": [
+    "1905_P-1_08"
+   ],
+   "fraccion": [
+    1.0
+   ]
+  }
+ ],
+ "sin_local": [
+  "1905_P0_10",
+  "1905_P0_15",
+  "1905_P0_28"
+ ]
+}
