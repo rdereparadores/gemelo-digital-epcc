@@ -213,6 +213,8 @@ y `type` `"boolean"` en la definición de la propiedad.
 | `GET /api/v1/spaces/{id}/state` | `SpaceState` |
 | `GET /api/v1/buildings/{id}/state` | `BuildingState` |
 | `GET /api/v1/state` | `CampusState`: todo el campus en un documento, con `ETag` |
+| `GET /api/v1/spaces/{id}/history?properties=&hours=&step_s=&to=&source=` | `History`: series agregadas de una estancia |
+| `GET /api/v1/buildings/{id}/history?properties=&hours=&step_s=&to=&source=` | `History`: series agregadas de un edificio |
 
 `SpaceState`:
 
@@ -249,6 +251,38 @@ media, ocupación total, potencia, agua de hoy…), `spaces` (lista de `SpaceSta
 (lista de `BuildingState`). `weather` lleva `metrics` (las del exterior, reales o simuladas) y el
 estado del cielo del modelo, pensado para la iluminación de Unity: `sun_elevation` (grados),
 `cloud_cover` (0–1), `solar_irradiance` (W/m²) y `precipitation_rate` (mm/h).
+
+`History` (para las gráficas): una serie por propiedad, agregada como en `SpaceState` (estancia) o
+`BuildingState` (edificio), en cubos de `step_s` segundos que terminan en `to`.
+
+```json
+{
+  "space_id": "INF-P01-AUL024",
+  "from": "2026-11-03T03:30:00Z",
+  "to": "2026-11-03T09:30:00Z",
+  "step_s": 300,
+  "source": "auto",
+  "reconstructed_until": "2026-11-03T09:25:00Z",
+  "series": [
+    {"property": "air_temperature", "unit": "Cel", "aggregation": "mean", "source": "simulated",
+     "points": [{"time": "2026-11-03T03:30:00Z", "value": 19.8}, {"time": "2026-11-03T03:35:00Z", "value": 19.7}]}
+  ]
+}
+```
+
+- Parámetros: `properties` (separadas por comas; por defecto, todas las agregables de los sensores),
+  `hours` (0–24, por defecto 6), `step_s` (60–3600, por defecto 300; como mucho 1440 cubos), `to`
+  (ISO 8601; por defecto, `sim_time`) y `source`: `auto` (real en los sensores que se sirven como
+  reales, simulado en el resto), `simulated` o `real` (solo histórico de SmartPoliTech).
+- `points` solo trae los cubos con datos; `time` es el inicio del cubo. El valor de cada sensor en un
+  cubo es la media de sus lecturas (el máximo en los booleanos); después se agrega entre sensores y
+  estancias como en el estado (la ocupación del edificio es la suma de sus estancias).
+- Los simulados salen del búfer de 24 h. Si no cubre la ventana (el servicio acaba de arrancar o el
+  reloj ha saltado), el tramo que falta se reconstruye simulando de nuevo esas horas con el mismo
+  escenario y sin eventos; `reconstructed_until` dice hasta dónde (`null` si no ha hecho falta). La
+  primera consulta tras un salto de reloj tarda unos segundos; las siguientes salen de la caché.
+- Los reales salen del histórico de SmartPoliTech (como mucho unos 12 s por petición; los sensores que
+  no responden a tiempo se quedan fuera, y con `source=auto` se usa su simulado).
 
 ### Política de fuentes y ajustes
 

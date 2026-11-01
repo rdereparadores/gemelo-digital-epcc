@@ -17,6 +17,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .api import Problema, router
 from .gemelo import Gemelo
+from .historico import router as router_historico
 
 PANEL = Path(__file__).resolve().parents[2] / "panel"
 PROBLEMA = "application/problem+json"
@@ -85,6 +86,7 @@ def crear_app(gemelo: Gemelo | None = None, tareas: bool = True) -> FastAPI:
         return problema(request, 422, "Datos no válidos", detalle, "/problems/validation")
 
     app.include_router(router)
+    app.include_router(router_historico)
 
     @app.middleware("http")
     async def _sin_cache_panel(request: Request, call_next):
