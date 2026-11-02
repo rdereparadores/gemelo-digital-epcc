@@ -162,6 +162,9 @@ namespace Gemelo
         /// para que el jugador no se siente encima de un NPC. Null = nadie lo sabe: libre.</summary>
         public static Func<Vector3, bool> AsientoOcupado;
 
+        /// <summary>Asiento en el que está sentado el jugador (null de pie): ningún NPC lo elige mientras tanto.</summary>
+        public static Vector3? AsientoJugador;
+
         /// <summary>Frame (Time.frameCount) en que la UI usó la tecla Esc para algo suyo (cerrar un desplegable, un
         /// popover…). Control lee Esc en LateUpdate y no hace nada con el Esc de ese frame.</summary>
         public static int EscapeConsumido = -1;
@@ -176,6 +179,7 @@ namespace Gemelo
             FabricaJugador = null;
             PunteroSobreUI = null;
             AsientoOcupado = null;
+            AsientoJugador = null;
             EscapeConsumido = -1;
             Instancia = null;
         }

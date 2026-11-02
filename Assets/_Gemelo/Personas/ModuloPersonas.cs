@@ -119,7 +119,10 @@ namespace Gemelo
             int n = Multitud.rejilla.Vecinos(asiento, 0.4f, 0.8f, vecinos);
             for (int i = 0; i < n; i++)
                 if (vecinos[i].sentada) return true;
-            return false;
+            // (el que va de camino tiene la plaza reservada)
+            var il = RegistroCampus.LocalEn(asiento + Vector3.up * 0.1f);
+            var e = il != null ? Multitud.Estancia(il.clave) : null;
+            return e != null && e.PlazaCerca(asiento, out int i2) && e.plazas[i2].ocupante >= 0;
         }
 
         // Para las puertas: la persona (o el jugador) más cerca, a ras de la puerta

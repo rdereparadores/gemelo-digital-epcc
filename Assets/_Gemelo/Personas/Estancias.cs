@@ -56,13 +56,29 @@ namespace Gemelo
             int n = plazas.Length;
             if (n == 0) return -1;
             int ini = r.Next(n);
-            // En las aulas la gente se reparte, pero tiende a las filas centrales: dos intentos al azar y si no, la primera libre
+            // La del jugador (si está sentado aquí) no se elige
+            int jugador = GemeloApp.AsientoJugador is Vector3 aj && PlazaCerca(aj, out int ij) ? ij : -1;
             for (int k = 0; k < n; k++)
             {
                 int i = (ini + k) % n;
-                if (plazas[i].ocupante < 0) return i;
+                if (plazas[i].ocupante < 0 && i != jugador) return i;
             }
             return -1;
+        }
+
+        /// <summary>La plaza a menos de 0,35 m (en planta) de un asiento, si la hay.</summary>
+        public bool PlazaCerca(Vector3 asiento, out int indice)
+        {
+            indice = -1;
+            float md = 0.35f * 0.35f;
+            for (int i = 0; i < plazas.Length; i++)
+            {
+                var d = plazas[i].pos - asiento;
+                if (Mathf.Abs(d.y) > 1f) continue;
+                float h = d.x * d.x + d.z * d.z;
+                if (h < md) { md = h; indice = i; }
+            }
+            return indice >= 0;
         }
 
         /// <summary>Un sitio libre para estar de pie dentro del local (lejos de los que ya hay).</summary>
@@ -70,17 +86,47 @@ namespace Gemelo
         {
             if (puntos == null) BuscarPuntos(r);
             p = acceso;
-            if (puntos.Count == 0) return accesible;
+            if (puntos.Count == 0) return Holgura(r, acceso, ref p) || accesible;
             for (int intento = 0; intento < 8; intento++)
             {
                 var q = puntos[r.Next(puntos.Count)];
-                bool libre = true;
-                foreach (var m in miembros)
-                    if ((m.objetivo - q).sqrMagnitude < 0.8f) { libre = false; break; }
                 p = q;
-                if (libre) return true;
+                if (Cercania(q) >= 0.8f) return true;
             }
+            // Todos los probados están ocupados: el punto más despejado y, si aun así hay alguien encima, un hueco
+            // alrededor (antes se devolvía el último probado y varios acababan de pie en el mismo sitio)
+            float mejor = -1f;
+            foreach (var q in puntos)
+            {
+                float c = Cercania(q);
+                if (c > mejor) { mejor = c; p = q; }
+            }
+            if (mejor < 0.8f) Holgura(r, p, ref p);
             return true;
+        }
+
+        // Distancia² al objetivo más cercano de los miembros
+        float Cercania(Vector3 q)
+        {
+            float d = float.MaxValue;
+            foreach (var m in miembros) d = Mathf.Min(d, (m.objetivo - q).sqrMagnitude);
+            return d;
+        }
+
+        // Un sitio libre (en la malla y dentro del local) a 0,6–1,2 m de centro, si lo hay
+        bool Holgura(System.Random r, Vector3 centro, ref Vector3 p)
+        {
+            var nav = Navegacion.Instancia;
+            if (nav == null) return false;
+            for (int intento = 0; intento < 10; intento++)
+            {
+                float a = (float)r.NextDouble() * Mathf.PI * 2f, d = 0.6f + 0.6f * (float)r.NextDouble();
+                var q = centro + new Vector3(Mathf.Sin(a), 0, Mathf.Cos(a)) * d;
+                if (!nav.Punto(q, 0.3f, out var h, 0.4f) || !info.local.Contiene(h) || Cercania(h) < 0.5f) continue;
+                p = h;
+                return true;
+            }
+            return false;
         }
 
         void BuscarPuntos(System.Random r)

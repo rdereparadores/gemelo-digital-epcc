@@ -166,7 +166,9 @@ namespace Gemelo
                 float largo = Vector3.Distance(p0, p1);
                 float dy = Mathf.Abs(p1.y - p0.y);
                 bool fuera = RegistroCampus.EdificioEn(p0) == null && RegistroCampus.EdificioEn(p1) == null;
-                float paso = dy > 0.05f && !fuera ? 0.6f : fuera && largo > 4f ? 2.5f : 0f;
+                // Fuera, el terreno ondula entre esquina y esquina: un punto por metro (cada 2,5 m se quedaba hasta
+                // 1,5 m en el aire en las cuestas de los pies de las escaleras exteriores)
+                float paso = dy > 0.05f && !fuera ? 0.6f : fuera ? 1f : 0f;
                 if (paso > 0f && largo > paso * 1.5f)
                 {
                     int n = Mathf.CeilToInt(largo / paso);
@@ -175,7 +177,11 @@ namespace Gemelo
                     {
                         var q = Vector3.Lerp(p0, p1, k / (float)n);
                         q.y = Mathf.Lerp(yPrev, q.y, 0.5f);
-                        if (NavMesh.SamplePosition(q, out var h, 0.8f, NavMesh.AllAreas))
+                        bool hay = NavMesh.SamplePosition(q, out var h, 0.8f, NavMesh.AllAreas);
+                        // (con más radio, solo si el punto de la malla está en la misma vertical: no salta a otra planta)
+                        if (!hay && fuera && NavMesh.SamplePosition(q, out h, 2f, NavMesh.AllAreas))
+                            hay = new Vector2(h.position.x - q.x, h.position.z - q.z).sqrMagnitude < 0.09f;
+                        if (hay)
                         {
                             q.y = h.position.y;
                             tmp.Add(new Vector3(q.x, q.y, q.z));

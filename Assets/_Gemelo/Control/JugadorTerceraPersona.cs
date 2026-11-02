@@ -213,6 +213,7 @@ namespace Gemelo
             velH = Vector3.zero;
             vy = 0;
             sentado = true;
+            GemeloApp.AsientoJugador = mejor.position;
             if (anim != null)
             {
                 if (paramSentado) anim.SetBool(hSentado, true);
@@ -226,6 +227,7 @@ namespace Gemelo
         {
             if (!sentado) return;
             sentado = false;
+            GemeloApp.AsientoJugador = null;
             if (anim != null && paramSentado) anim.SetBool(hSentado, false);
             var t = cuerpo.transform;
             t.position = posLevantarse;

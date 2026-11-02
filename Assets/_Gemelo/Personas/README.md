@@ -255,6 +255,11 @@ intercaladas), con 1.190–1.570 personas simuladas:
 - Algunos locales sin puerta con malla (instalaciones, galerías, terrazas) no tienen acceso y no reciben gente.
 - Las estancias del servicio cuyo `unity_room` no existe en el modelo (p. ej. `1901_P2_23`) no se representan.
 - La última aproximación al asiento es en línea recta (entre filas de pupitres la malla está cortada por las sillas).
+  Una ruta parcial solo se remata así si el hueco es de menos de 2 m, en la misma planta y sin un muro de por medio a
+  1,7 m de altura; si no, el viaje se resuelve sin andar (`Multitud.Fallos`), en vez de atravesar muros o forjados.
+- Fuera, las rutas llevan un punto por metro pegado a la malla, para seguir las cuestas del terreno.
+- En las escaleras la velocidad de la animación es la del recorrido en 3D (en planta se avanza ~16 % menos): los
+  pies patinan algo al subir y bajar.
 - Hora acelerada: probada a 60× y 600× (y vuelta a 1× con salto de reloj) sin excepciones. A 60× hay ráfagas de
   10–100 teletransportes en cada reconciliación; a 600× todo se coloca directamente. Los personajes de Mixamo aún no
   se han probado con la hora acelerada ni con saltos de reloj; las cuentas de `Multitud.porPersonaje` salen

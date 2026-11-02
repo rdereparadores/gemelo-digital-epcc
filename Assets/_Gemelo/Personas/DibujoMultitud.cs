@@ -35,6 +35,7 @@ namespace Gemelo
             public int cuerpo;             // índice del prefab (personaje o variante)
             public List<GameObject> marcas; // copias de los renderers de varias submallas con la marca en todas (Mixamo)
             public Persona p;
+            public float y = float.NaN;    // altura sobre el suelo aplicada (suavizada al sentarse y levantarse)
         }
 
         public const int TopeAnimadas = 80;
@@ -310,8 +311,10 @@ namespace Gemelo
             {
                 if (c.marcado != marcar) Marcar(c, marcar);
                 var p = c.p;
+                // La altura del asiento acompaña a la transición del Animator (~0,5 s) en vez de saltar de golpe
                 float y = p.sentada && p.estado == EstadoPersona.Quieta ? p.alturaAsiento - AsientoClip * p.ap.escala : 0f;
-                c.tr.SetPositionAndRotation(p.pos + Vector3.up * y, Quaternion.Euler(0f, p.rumbo * Mathf.Rad2Deg, 0f));
+                c.y = float.IsNaN(c.y) ? y : Mathf.Lerp(c.y, y, 1f - Mathf.Exp(-9f * Time.deltaTime));
+                c.tr.SetPositionAndRotation(p.pos + Vector3.up * c.y, Quaternion.Euler(0f, p.rumbo * Mathf.Rad2Deg, 0f));
                 if (!c.go.activeSelf) c.go.SetActive(true);
                 float escribe = Escritura(p);
                 bool manos = ManosOcupadas(p, escribe);
@@ -458,6 +461,7 @@ namespace Gemelo
                 if (rec.colorearAvatares) FabricaAvatares.Colorear(c.go, p.ap);
             }
             c.p = p;
+            c.y = float.NaN;
             p.avatar = cercanos.Count;
             cercanos.Add(c);
             float y = p.sentada ? p.alturaAsiento - AsientoClip * p.ap.escala : 0f;

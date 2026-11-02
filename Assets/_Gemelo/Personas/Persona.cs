@@ -96,6 +96,7 @@ namespace Gemelo
         public bool sentada;
         public Gesto gesto;
         public float tDecision;             // próxima decisión estando quieta
+        public float tLibre;                // sin estancia: no se va del campus antes (tras una alarma espera un poco)
 
         // Dónde está y adónde va
         public Estancia destino;            // estancia asignada (null si va o viene de fuera)
@@ -118,6 +119,7 @@ namespace Gemelo
         public int nTramos, tramo;
         public float s;                     // distancia recorrida en el tramo
         public float lateral, lateralObj;   // desplazamiento a un lado del camino (carril propio y esquivar)
+        public Vector3 desvio;              // ese desplazamiento ya aplicado, suavizado (sin saltos en las esquinas)
         public float tArranque;             // no echa a andar antes (levantarse, reaccionar a la alarma)
         public bool pendienteRuta;
         public float multVel = 1f;

@@ -352,7 +352,7 @@ namespace Gemelo
                         if (p.evacuando == e)
                         {
                             p.evacuando = null;
-                            p.tDecision = ahora + 25f;   // espera un rato por si vuelve a su sitio
+                            p.tLibre = ahora + 25f;      // espera un rato por si vuelve a su sitio
                         }
             }
 
@@ -384,11 +384,13 @@ namespace Gemelo
                         }
                         var p = e.miembros[idx];
                         Soltar(p);
-                        p.tDecision = ahora;
+                        p.tLibre = ahora;
                         libres.Add(p);
                     }
                 }
-                else if (v > n + 0.6f) deficits.Add((e, Mathf.RoundToInt(v) - n));
+                // (los locales sin acceso en la malla no reciben gente: antes se llenaban con los que quedaban libres,
+                // que entraban atravesando muros)
+                else if (v > n + 0.6f && e.accesible) deficits.Add((e, Mathf.RoundToInt(v) - n));
             }
             // También los que esperan sin sitio (tras una alarma)
             foreach (var p in activas)
@@ -440,7 +442,7 @@ namespace Gemelo
             // Y lo que sobra se va (tras esperar un poco los que salen de una alarma)
             foreach (var p in libres)
                 if (colocar && p.evacuando == null) Desactivar(p);
-                else if (ahora >= p.tDecision) Salir(p);
+                else if (ahora >= p.tLibre) Salir(p);
 
             // Por encima del tope (si se baja en los ajustes)
             while (activas.Count > max) Desactivar(activas[activas.Count - 1]);
@@ -486,6 +488,8 @@ namespace Gemelo
             p.destino = null; p.donde = null; p.plaza = -1; p.grupo = -1; p.llegada = null; p.saliendo = false; p.evacuando = null;
             p.sentada = false; p.gesto = Gesto.Nada; p.vel = 0; p.nTramos = 0; p.pendienteRuta = false; p.avatar = -1;
             p.lateral = p.lateralObj = ((float)rnd.NextDouble() - 0.5f) * 0.4f;
+            p.desvio = Vector3.zero;
+            p.tLibre = 0f;
             p.fase = (float)rnd.NextDouble();
             p.multVel = 1f;
             p.edificio = e.edificio;
@@ -696,6 +700,12 @@ namespace Gemelo
             if (!nav.Punto(a, 1.6f, out var a2, 1.2f) || !nav.Punto(b, 1.6f, out var b2, 1.2f)) return null;
             var r = nav.Calcular(a2, b2);
             if (r == null) return null;
+            // Ruta parcial: se remata en línea recta solo si el hueco es corto, en la misma planta y sin un muro de por
+            // medio (a 1,7 m: por encima de mesas y monitores). Si no, nada (antes se atravesaban muros y forjados)
+            var fin = r.p[r.p.Length - 1];
+            if (!r.completa && (new Vector2(fin.x - b2.x, fin.z - b2.z).sqrMagnitude > 4f || Mathf.Abs(fin.y - b2.y) > 0.4f
+                                || Physics.Linecast(fin + Vector3.up * 1.7f, b2 + Vector3.up * 1.7f, ~(1 << 2), QueryTriggerInteraction.Ignore)))
+                return null;
             if ((a - a2).sqrMagnitude < 0.01f && (b - r.p[r.p.Length - 1]).sqrMagnitude < 0.01f) return r;
             var l = new List<Vector3>(r.p.Length + 2);
             if ((a - a2).sqrMagnitude >= 0.01f) l.Add(a);
@@ -721,6 +731,15 @@ namespace Gemelo
             p.s = 0;
             int nodoB;
             Vector3 posB;
+            // Sin adónde ir (la alarma acabó con su ruta de evacuación aún en la cola): se queda donde está y la
+            // siguiente reconciliación le busca sitio (antes, NullReferenceException con p.destino.nodo)
+            if (!p.saliendo && p.evacuando == null && p.destino == null)
+            {
+                p.objetivo = p.pos;
+                p.rumboFinal = p.rumbo;
+                Colocar(p);
+                return;
+            }
             if (p.saliendo) { nodoB = p.llegada.nodo; posB = p.llegada.pos; }
             else if (p.evacuando != null) { nodoB = p.evacuando.nodoReunion; posB = p.evacuando.reunion; }
             else { nodoB = p.destino.nodo; posB = p.destino.acceso; }
@@ -776,6 +795,7 @@ namespace Gemelo
         {
             p.nTramos = 0;
             p.vel = 0;
+            p.desvio = Vector3.zero;
             p.pos = p.objetivo;
             if (p.saliendo) { Desactivar(p); return; }
             if (p.evacuando != null)
@@ -915,7 +935,8 @@ namespace Gemelo
             if (dir.sqrMagnitude > 1e-6f)
             {
                 dir.Normalize();
-                pos += new Vector3(dir.z, 0, -dir.x) * p.lateral;
+                p.desvio = Vector3.MoveTowards(p.desvio, new Vector3(dir.z, 0, -dir.x) * p.lateral, 1.2f * dt);
+                pos += p.desvio;
                 float objetivo = Mathf.Atan2(dir.x, dir.z);
                 p.rumbo = Mathf.LerpAngle(p.rumbo * Mathf.Rad2Deg, objetivo * Mathf.Rad2Deg, 1f - Mathf.Exp(-8f * dt)) * Mathf.Deg2Rad;
             }
