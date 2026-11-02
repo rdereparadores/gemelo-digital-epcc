@@ -107,6 +107,10 @@ namespace Gemelo
         /// ni zoom donde devuelva true. Null = no hay UI.</summary>
         public static Func<Vector2, bool> PunteroSobreUI;
 
+        /// <summary>¿Hay alguien sentado en el asiento de esa posición? Lo registra el módulo Personas (Control no lo ve)
+        /// para que el jugador no se siente encima de un NPC. Null = nadie lo sabe: libre.</summary>
+        public static Func<Vector3, bool> AsientoOcupado;
+
         /// <summary>Frame (Time.frameCount) en que la UI usó la tecla Esc para algo suyo (cerrar un desplegable, un
         /// popover…). Control lee Esc en LateUpdate y no hace nada con el Esc de ese frame.</summary>
         public static int EscapeConsumido = -1;
@@ -120,6 +124,7 @@ namespace Gemelo
             FabricaAvatar = null;
             FabricaJugador = null;
             PunteroSobreUI = null;
+            AsientoOcupado = null;
             EscapeConsumido = -1;
             Instancia = null;
         }

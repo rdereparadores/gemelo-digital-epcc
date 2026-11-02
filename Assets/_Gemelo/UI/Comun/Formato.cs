@@ -199,8 +199,21 @@ namespace Gemelo
             var lo = l.local;
             string uso = Uso(lo.uso);
             if (!string.IsNullOrEmpty(lo.codigo)) return lo.codigo.Length <= 8 ? $"{uso} {lo.codigo}" : lo.codigo;
-            if (!string.IsNullOrEmpty(lo.rotulo) && lo.rotulo.Length <= 28) return Mayus(lo.rotulo.ToLowerInvariant());
+            if (!string.IsNullOrEmpty(lo.rotulo) && lo.rotulo.Length <= 28) return Mayus(Minusculas(lo.rotulo));
             return $"{uso} {lo.numero}";
+        }
+
+        // Rótulo del plano en minúsculas salvo las siglas (WC, PC, CPD, SAI…: palabras de hasta 4 letras en mayúsculas)
+        static string Minusculas(string r)
+        {
+            var w = r.Split(' ');
+            for (int i = 0; i < w.Length; i++)
+            {
+                bool sigla = w[i].Length >= 2 && w[i].Length <= 4;
+                foreach (char ch in w[i]) if (!char.IsUpper(ch)) { sigla = false; break; }
+                if (!sigla) w[i] = w[i].ToLowerInvariant();
+            }
+            return string.Join(" ", w);
         }
 
         public static string NombreEdificio(InfoEdificio e) => e == null ? "" : !string.IsNullOrEmpty(e.nombre) ? e.nombre : "Edificio " + e.codigo;

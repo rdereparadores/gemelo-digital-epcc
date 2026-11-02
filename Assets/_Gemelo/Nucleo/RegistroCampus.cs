@@ -155,6 +155,24 @@ namespace Gemelo
             return null;
         }
 
+        static readonly Vector3[] anillo =
+        {
+            new(0.9f, 0, 0), new(-0.9f, 0, 0), new(0, 0, 0.9f), new(0, 0, -0.9f),
+            new(0.64f, 0, 0.64f), new(-0.64f, 0, 0.64f), new(0.64f, 0, -0.64f), new(-0.64f, 0, -0.64f),
+        };
+
+        /// <summary>Edificio en cuyo interior está el punto aunque no caiga en ningún local (en una puerta, un rellano…):
+        /// hay un local a menos de 0,9 m. EdificioEn mira la caja envolvente, que abarca plazas y calles (en la calle el
+        /// HUD decía «Zonas comunes» del Edificio Común).</summary>
+        public static InfoEdificio EdificioDentro(Vector3 p)
+        {
+            var l = LocalEn(p);
+            if (l != null) return l.edificio;
+            foreach (var o in anillo)
+                if ((l = LocalEn(p + o)) != null) return l.edificio;
+            return null;
+        }
+
         public static Vector3 CentroPuerta(Puerta p) => p.transform.position + p.transform.right * (p.transform.lossyScale.x / 2f);
 
         static void Geometria(InfoLocal il)

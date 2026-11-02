@@ -200,7 +200,7 @@ namespace Gemelo
             }
             else
             {
-                var e = RegistroCampus.EdificioEn(pos);
+                var e = RegistroCampus.EdificioDentro(pos);
                 Texto(edificio, e != null ? $"{e.codigo} · {Formato.NombreEdificio(e).ToUpperInvariant()}" : "CAMPUS DE CÁCERES");
                 Texto(local, e != null ? "Zonas comunes" : "Exteriores de la Escuela Politécnica");
             }

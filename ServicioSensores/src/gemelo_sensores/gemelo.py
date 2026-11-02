@@ -352,9 +352,9 @@ class Gemelo:
                       "message": f"{abiertas} {'ventana abierta' if abiertas == 1 else 'ventanas abiertas'} con "
                                  f"{activos} {'radiador' if activos == 1 else 'radiadores'} encendido{'' if activos == 1 else 's'}"})
         if t is not None and t < 17 and ocup > 0:
-            a.append({"code": "temperature_low", "severity": "warning", "message": f"{t:.1f} °C con gente dentro"})
+            a.append({"code": "temperature_low", "severity": "warning", "message": f"{t:.1f} °C con gente dentro".replace(".", ",")})
         if t is not None and t > 27:
-            a.append({"code": "temperature_high", "severity": "warning", "message": f"{t:.1f} °C"})
+            a.append({"code": "temperature_high", "severity": "warning", "message": f"{t:.1f} °C".replace(".", ",")})
         if v("alarm_active"):
             a.append({"code": "fire_alarm", "severity": "critical", "message": "Alarma de incendio activa"})
         if any(o.values.get("battery_voltage", 9) < 2.5 for _, o in obs if o.source == "real"):

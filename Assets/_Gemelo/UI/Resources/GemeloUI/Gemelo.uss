@@ -259,6 +259,8 @@ Label { padding: 0; margin: 0; }
 .velo-oscuro { background-color: rgba(8, 8, 10, 0.55); align-items: center; justify-content: center; }
 .dialogo { width: 860px; max-height: 88%; }
 .dialogo--pausa { width: 900px; flex-direction: row; padding: 0; }
+/* Ajustes se abre encima del menú de pausa: casi opaco, o se leían a través los textos de la pausa */
+.dialogo.panel--fuerte { background-color: rgba(16, 16, 18, 0.985); }
 .dialogo__cabecera { flex-direction: row; align-items: center; margin-bottom: 6px; }
 .dialogo__titulo { font-size: 22px; -unity-font-definition: resource("GemeloUI/Fuentes/Montserrat-SemiBold"); }
 

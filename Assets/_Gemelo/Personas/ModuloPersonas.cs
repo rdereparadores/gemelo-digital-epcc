@@ -70,11 +70,13 @@ namespace Gemelo
             Dibujo = new DibujoMultitud(rec, Multitud, transform);
             if (app != null && app.Cliente != null) app.Cliente.EstadoActualizado += _ => estadoNuevo = true;
             Puerta.Presencia = Presencia;
+            GemeloApp.AsientoOcupado = AsientoOcupado;
         }
 
         void OnDestroy()
         {
             if (Puerta.Presencia == (Puerta.ConsultaPresencia)Presencia) Puerta.Presencia = null;
+            if (GemeloApp.AsientoOcupado == (System.Func<Vector3, bool>)AsientoOcupado) GemeloApp.AsientoOcupado = null;
             Dibujo?.Liberar();
             nav?.Liberar();
             if (Instancia == this) Instancia = null;
@@ -106,6 +108,18 @@ namespace Gemelo
             if (visible) Dibujo.Dibujar();
             MsDibujoFrame = (float)reloj.Elapsed.TotalMilliseconds;
             MsDibujo = Mathf.Lerp(MsDibujo, MsDibujoFrame, 0.05f);
+        }
+
+        readonly Persona[] vecinos = new Persona[16];
+
+        // Para el jugador: un NPC sentado (o yendo a sentarse) en ese asiento
+        bool AsientoOcupado(Vector3 asiento)
+        {
+            if (Multitud == null) return false;
+            int n = Multitud.rejilla.Vecinos(asiento, 0.4f, 0.8f, vecinos);
+            for (int i = 0; i < n; i++)
+                if (vecinos[i].sentada) return true;
+            return false;
         }
 
         // Para las puertas: la persona (o el jugador) más cerca, a ras de la puerta

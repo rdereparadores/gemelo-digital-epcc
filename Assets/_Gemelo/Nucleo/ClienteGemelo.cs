@@ -190,9 +190,26 @@ namespace Gemelo
             if (!float.IsNaN(occ)) Fijar(baseE, "occupancy", occ);
             baseE.windows_open += otra.windows_open; baseE.windows_total += otra.windows_total;
             baseE.radiators_active += otra.radiators_active; baseE.radiators_total += otra.radiators_total;
-            if (otra.alerts != null) { baseE.alerts ??= new List<Alerta>(); baseE.alerts.AddRange(otra.alerts); }
+            // De la otra estancia, solo las alertas que no dependen de magnitudes que se toman de la principal (la ficha
+            // de BETA mostraba 563 ppm junto a «CO₂ por encima de 1000 ppm (1040)», de la sala de al lado); la de ventanas
+            // con calefacción se rehace con las cuentas sumadas
+            baseE.alerts = baseE.alerts != null ? new List<Alerta>(baseE.alerts) : new List<Alerta>();
+            if (otra.alerts != null)
+                foreach (var a in otra.alerts)
+                    if (a != null && !DeLaPrincipal(a.code)) baseE.alerts.Add(a);
+            baseE.alerts.RemoveAll(a => a != null && a.code == "window_open_heating");
+            if (baseE.windows_open > 0 && baseE.radiators_active > 0)
+                baseE.alerts.Add(new Alerta
+                {
+                    code = "window_open_heating", severity = "warning",
+                    message = $"{baseE.windows_open} {(baseE.windows_open == 1 ? "ventana abierta" : "ventanas abiertas")} con " +
+                              $"{baseE.radiators_active} {(baseE.radiators_active == 1 ? "radiador encendido" : "radiadores encendidos")}",
+                });
             porSala[clave] = baseE;
         }
+
+        static bool DeLaPrincipal(string code) =>
+            code != null && (code.StartsWith("co2_") || code.StartsWith("temperature_") || code == "window_open_heating");
 
         static float Suma(EstadoEstancia a, EstadoEstancia b, string prop)
         {

@@ -145,6 +145,7 @@ namespace Gemelo
         // principal y se cosen con enlaces cortos donde hay un vértice de cada lado a menos de 0,9 m, casi a la misma
         // altura y sin nada en medio (un muro).
         const float DistCostura = 0.9f, DyCostura = 0.45f, AreaMinima = 4f;
+        static readonly float[] AlturasCostura = { 0.45f, 0.9f, 1.2f, 1.6f };
         /// <summary>Segunda pasada de costuras, a través de tabiques delgados (desactivada: con las escaleras ya andables
         /// solo unía azoteas y terrazas sin puerta con los locales de al lado, atravesando la fachada, y cuartos cuya
         /// puerta no abre el muro; la gente los cruzaba por dentro del muro).</summary>
@@ -216,18 +217,23 @@ namespace Gemelo
             var ea = new List<Vector3>();
             var eb = new List<Vector3>();
             var golpes = new RaycastHit[16];
+            // Sin nada en medio a la altura de las rodillas, la cintura, el pecho y la cabeza, con una esfera fina (un
+            // rayo solo a 1,2 m pasaba por encima de la albardilla de un peto, de una prensa o de un taburete y rozaba los
+            // cantos de muro: la gente los cruzaba por dentro)
             bool Libre(Vector3 a, Vector3 b)
             {
-                var o = a + Vector3.up * 1.2f;
                 var d = b - a;
                 float l = d.magnitude;
                 if (l < 1e-3f) return true;
-                int n = Physics.RaycastNonAlloc(o, d / l, golpes, l, ~(1 << 2), QueryTriggerInteraction.Ignore);
-                for (int i = 0; i < n; i++)
-                    if (golpes[i].collider.GetComponentInParent<Puerta>() == null) return false;
-                n = Physics.RaycastNonAlloc(b + Vector3.up * 1.2f, -d / l, golpes, l, ~(1 << 2), QueryTriggerInteraction.Ignore);
-                for (int i = 0; i < n; i++)
-                    if (golpes[i].collider.GetComponentInParent<Puerta>() == null) return false;
+                foreach (float h in AlturasCostura)
+                {
+                    int n = Physics.SphereCastNonAlloc(a + Vector3.up * h, 0.08f, d / l, golpes, l, ~(1 << 2), QueryTriggerInteraction.Ignore);
+                    for (int i = 0; i < n; i++)
+                        if (golpes[i].distance > 0f && golpes[i].collider.GetComponentInParent<Puerta>() == null) return false;
+                    n = Physics.SphereCastNonAlloc(b + Vector3.up * h, 0.08f, -d / l, golpes, l, ~(1 << 2), QueryTriggerInteraction.Ignore);
+                    for (int i = 0; i < n; i++)
+                        if (golpes[i].distance > 0f && golpes[i].collider.GetComponentInParent<Puerta>() == null) return false;
+                }
                 return true;
             }
 

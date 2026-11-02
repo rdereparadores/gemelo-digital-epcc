@@ -154,7 +154,7 @@ namespace Gemelo
             if (planta == null)
             {
                 // Fuera de un local conocido: planta del edificio en el que está (si está dentro de su volumen)
-                var e = RegistroCampus.EdificioEn(pos);
+                var e = RegistroCampus.EdificioDentro(pos);
                 if (e != null)
                     foreach (var pl in e.plantas)
                         if (Mathf.Abs(pos.y - pl.cota - 1.2f) < 1.9f) planta = pl;

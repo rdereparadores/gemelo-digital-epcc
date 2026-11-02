@@ -101,6 +101,12 @@ namespace Gemelo
                     if (mejor >= 0) agregado = mejor;
                 }
                 else if (peso > 0) agregado = (float)(suma / peso);
+                // Edificios cuyos locales no traen potencia (en SCO, ATC… solo hay contador general): la del edificio
+                // repartida entre sus locales, en la misma escala que la media de los locales (antes, sin aura)
+                if (capa == Capa.Consumo && float.IsNaN(agregado) && cli != null && cli.Edificio(e.codigo, out var ee)
+                    && ee.metrics != null)
+                    foreach (var m in ee.metrics)
+                        if (m != null && m.property == "active_power") agregado = m.value / Mathf.Max(1, e.locales.Count);
                 var se = EstadoDe(edificios, e);
                 var ce = Escalas.Color(capa, agregado);
                 se.objetivo = ce.a <= 0f ? SinDatos.Transparente(capa == Capa.Ninguna ? 0f : 0.5f) : ce;

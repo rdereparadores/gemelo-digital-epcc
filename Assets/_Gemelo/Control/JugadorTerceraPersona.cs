@@ -12,7 +12,9 @@ namespace Gemelo
     public class JugadorTerceraPersona : MonoBehaviour
     {
         // Cuerpo (como FirstPersonController)
-        public float radio = 0.22f, piel = 0.02f, altura = 1.8f;
+        // (1,72 m como el agente de la malla de navegación, 1,70: con 1,80 no cabía por las puertas de los cuartos bajo
+        // las escaleras, rebajadas a 1,79 m, y la planta P-1 del 1906 se quedaba sin acceso)
+        public float radio = 0.22f, piel = 0.02f, altura = 1.72f;
         public float andar = 1.7f, correr = 4.6f, aceleracion = 9f, alturaSalto = 0.8f, gravedad = -18f;
 
         // Cámara
@@ -161,7 +163,7 @@ namespace Gemelo
 
         public bool Sentado => sentado;
 
-        /// <summary>Sienta al jugador en el asiento libre más cercano (a menos de 1,3 m) del local en el que está.</summary>
+        /// <summary>Sienta al jugador en el asiento libre (sin un NPC sentado) más cercano (a menos de 1,3 m) del local en el que está.</summary>
         public bool Sentarse()
         {
             if (cuerpo == null || sentado) return sentado;
@@ -173,7 +175,7 @@ namespace Gemelo
             if (il != null && il.local.asientos != null)
                 foreach (var a in il.local.asientos)
                 {
-                    if (a == null) continue;
+                    if (a == null || GemeloApp.AsientoOcupado?.Invoke(a.position) == true) continue;
                     var d = a.position - p;
                     if (Mathf.Abs(d.y) > 0.8f) continue;
                     d.y = 0;
@@ -181,7 +183,7 @@ namespace Gemelo
                 }
             if (mejor == null)
             {
-                app?.Avisar("No hay ningún asiento a mano", NivelAviso.Info);
+                app?.Avisar("No hay ningún asiento libre a mano", NivelAviso.Info);
                 return false;
             }
             // Altura del asiento: el collider de la silla bajo su centro (si sale algo raro, la de una silla normal)
