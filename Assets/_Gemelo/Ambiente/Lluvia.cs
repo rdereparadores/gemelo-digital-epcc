@@ -157,7 +157,7 @@ namespace Gemelo
 
             // Solo el LOD 0 de cada grupo
             var lodsBajos = new HashSet<Renderer>();
-            foreach (var g in FindObjectsByType<LODGroup>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var g in FindObjectsByType<LODGroup>(FindObjectsInactive.Include))
             {
                 var lods = g.GetLODs();
                 for (int i = 1; i < lods.Length; i++)
@@ -177,7 +177,7 @@ namespace Gemelo
             cmd.SetRenderTarget(mapaRT);
             cmd.ClearRenderTarget(false, true, new Color(SinTecho, 0, 0, 0));
             int dibujos = 0;
-            foreach (var r in FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var r in FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include))
             {
                 if (!r.enabled || lodsBajos.Contains(r)) continue;
                 var tr = r.transform;
