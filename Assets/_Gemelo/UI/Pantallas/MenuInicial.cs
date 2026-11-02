@@ -62,12 +62,6 @@ namespace Gemelo
             personas.style.marginLeft = 12;
             url = Txt(lateral, "", "t-xs", "tenue");
             url.style.marginTop = 8;
-            var creditos = El(lateral, "fila");
-            creditos.style.marginTop = 14;
-            var sello = El(creditos, "sello");
-            sello.style.backgroundImage = new StyleBackground(Resources.Load<Texture2D>("GemeloUI/Marca/sello"));
-            sello.style.marginRight = 12;
-            Txt(creditos, "Universidad de Extremadura\nEscuela Politécnica · SmartPoliTech", "t-xs", "tenue");
 
             // Simulación, a la derecha
             tarjetaSim = Panel(raiz);
