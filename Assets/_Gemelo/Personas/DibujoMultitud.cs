@@ -25,6 +25,7 @@ namespace Gemelo
             public GameObject go;
             public Transform tr;
             public Animator an;
+            public float[] nat;            // velocidad natural de sus clips de locomoción (ParamAvatar.Marcha)
             public GameObject movil;
             public SkinnedMeshRenderer[] rend;
             public Material[][] mats;      // materiales propios de cada renderer (sin la marca del stencil)
@@ -316,7 +317,10 @@ namespace Gemelo
                 bool manos = ManosOcupadas(p, escribe);
                 if (c.an != null)
                 {
-                    c.an.SetFloat(idVel, p.vel, 0.12f, Time.deltaTime);
+                    // sin patinar: parámetro y cadencia según la velocidad natural de sus clips
+                    ParamAvatar.Marcha(c.nat, p.sentada ? 0f : p.vel, out float parVel, out float cadencia);
+                    c.an.SetFloat(idVel, parVel, 0.12f, Time.deltaTime);
+                    c.an.speed = cadencia;
                     c.an.SetBool(idSentado, p.sentada);
                     c.an.SetBool(idHabla, p.gesto == Gesto.Habla);
                     c.an.SetBool(idMovil, manos);
@@ -437,6 +441,7 @@ namespace Gemelo
                 if (go == null) return;
                 c = new Cercano { go = go, tr = go.transform, an = go.GetComponent<Animator>(), cuerpo = cuerpo, movil = FabricaAvatares.Movil(go),
                                  rend = go.GetComponentsInChildren<SkinnedMeshRenderer>(true) };
+                c.nat = c.an != null ? ParamAvatar.Naturales(c.an.runtimeAnimatorController) : null;
                 // Pelo y pestañas (recorte alfa, a dos caras) no dan sombra: es la pasada de sombra más cara y no se nota
                 c.conSombra = new bool[c.rend.Length];
                 for (int i = 0; i < c.rend.Length; i++)
@@ -468,7 +473,9 @@ namespace Gemelo
                 c.an.SetBool(idHabla, p.gesto == Gesto.Habla);
                 c.an.SetBool(idMovil, manos);
                 c.an.SetFloat(idEscribe, escribe);
-                c.an.SetFloat(idVel, p.vel);
+                ParamAvatar.Marcha(c.nat, p.sentada ? 0f : p.vel, out float parVel0, out float cadencia0);
+                c.an.SetFloat(idVel, parVel0);
+                c.an.speed = cadencia0;
                 string estado = p.sentada ? (p.gesto == Gesto.Habla ? "SentadoHablando" : manos ? "SentadoMovil" : "Sentado")
                               : p.vel < 0.3f && p.gesto == Gesto.Habla ? "HablarDePie" : p.vel < 0.3f && p.gesto == Gesto.Movil ? "MovilDePie" : "Locomocion";
                 c.an.Play(estado, 0, (p.id * 0.137f) % 1f);

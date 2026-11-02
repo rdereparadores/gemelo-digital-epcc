@@ -1,6 +1,7 @@
 // Tercera persona: el avatar del jugador (Brian o Megan según Ajustes.avatarJugador, de GemeloApp.FabricaJugador; si
 // no hay, el cuerpo de un NPC de GemeloApp.FabricaAvatar o uno de cápsulas) con un CharacterController del tamaño de una persona (radio 0,22, piel 0,02,
-// alto 1,8: cabe por todas las puertas), y la cámara orbital por detrás del hombro. La cámara se acerca con
+// alto 1,72: cabe por todas las puertas), y la cámara orbital por detrás del hombro. La animación de la marcha va a la
+// velocidad real (ParamAvatar.Marcha: parámetro de mezcla y cadencia según los clips del avatar, sin patinar). La cámara se acerca con
 // un spherecast cuando algo se interpone (muros de pasillos estrechos, pilares, techos), y si queda pegada
 // a la cabeza el cuerpo solo proyecta sombra.
 using UnityEngine;
@@ -15,7 +16,9 @@ namespace Gemelo
         // (1,72 m como el agente de la malla de navegación, 1,70: con 1,80 no cabía por las puertas de los cuartos bajo
         // las escaleras, rebajadas a 1,79 m, y la planta P-1 del 1906 se quedaba sin acceso)
         public float radio = 0.22f, piel = 0.02f, altura = 1.72f;
-        public float andar = 1.7f, correr = 4.6f, aceleracion = 9f, alturaSalto = 0.8f, gravedad = -18f;
+        // Andar: el del clip de cada avatar (ParamAvatar.AndarJugador, 1,25-1,5 m/s); este, si no hay avatar de Mixamo.
+        // Correr a 3,8 m/s: el clip de correr con un 10 % más de cadencia (a 4,6 los pies patinaban)
+        public float andar = 1.4f, correr = 3.8f, aceleracion = 9f, giroMarcha = 540f, alturaSalto = 0.8f, gravedad = -18f;
 
         // Cámara
         public float distanciaMin = 0.9f, distanciaMax = 8f;
@@ -53,6 +56,9 @@ namespace Gemelo
         float yCabeza, yCabezaVel;
         Vector3 velH;
         float vy, giroVel;
+        float[] natural;          // velocidad natural de los clips de locomoción del avatar (ParamAvatar.Naturales)
+        float andarAvatar = 1.4f;
+        float vAnim, vAnimVel;
         bool ignorarRaton;
         float siguienteLocal;
         Vector3 ultimaPosSegura;
@@ -143,6 +149,8 @@ namespace Gemelo
             foreach (var c in modelo.GetComponentsInChildren<Collider>(true)) Destroy(c);
             foreach (var t in modelo.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = 2;
             anim = modelo.GetComponentInChildren<Animator>();
+            natural = anim != null ? ParamAvatar.Naturales(anim.runtimeAnimatorController) : null;
+            andarAvatar = natural != null ? ParamAvatar.AndarJugador(anim.runtimeAnimatorController) : andar;
             if (anim != null)
             {
                 anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
@@ -346,7 +354,12 @@ namespace Gemelo
                 if (tSentar || salta || mv != Vector2.zero) Levantarse();
                 else
                 {
-                    if (anim != null && paramVelocidad) anim.SetFloat(hVelocidad, 0f, 0.1f, dt);
+                    if (anim != null)
+                    {
+                        anim.speed = 1f;
+                        if (paramVelocidad) anim.SetFloat(hVelocidad, 0f, 0.1f, dt);
+                    }
+                    vAnim = 0f;
                     if (Time.time >= siguienteLocal)
                     {
                         siguienteLocal = Time.time + 0.2f;
@@ -360,9 +373,20 @@ namespace Gemelo
 
             if (mv.sqrMagnitude > 1f) mv.Normalize();
             var giro = Quaternion.Euler(0, yaw, 0);
-            var deseada = giro * new Vector3(mv.x, 0, mv.y) * (corre ? correr : andar);
-            float acel = deseada.sqrMagnitude > velH.sqrMagnitude ? aceleracion : aceleracion * 1.4f;
-            velH = Vector3.MoveTowards(velH, deseada, acel * dt);
+            var deseada = giro * new Vector3(mv.x, 0, mv.y) * (corre ? correr : andarAvatar);
+            float vDeseada = deseada.magnitude, vAhora = velH.magnitude;
+            float acel = vDeseada > vAhora ? aceleracion : aceleracion * 1.4f;
+            if (vDeseada > 0.01f && vAhora > 0.3f)
+            {
+                // Al cambiar de dirección la velocidad gira (describe una curva) en vez de frenar a cero y arrancar hacia
+                // el otro lado, que volteaba el cuerpo de golpe; en los giros cerrados frena mientras gira
+                var dirDeseada = deseada / vDeseada;
+                float angulo = Vector3.Angle(velH, dirDeseada);
+                var dir = Vector3.RotateTowards(velH / vAhora, dirDeseada, giroMarcha * Mathf.Deg2Rad * dt, 0f);
+                float vObj = angulo > 100f ? vDeseada * 0.35f : vDeseada;
+                velH = dir * Mathf.MoveTowards(vAhora, vObj, (vObj > vAhora ? aceleracion : aceleracion * 1.4f) * dt);
+            }
+            else velH = Vector3.MoveTowards(velH, deseada, acel * dt);
 
             bool enSuelo = cc.isGrounded;
             if (enSuelo && vy < 0f) vy = -2f;
@@ -385,8 +409,12 @@ namespace Gemelo
 
             if (anim != null)
             {
+                // Velocidad real (contra un muro no anda en el sitio), suavizada: los peldaños la hacen dar saltos
                 var v = cc.velocity; v.y = 0;
-                if (paramVelocidad) anim.SetFloat(hVelocidad, v.magnitude, 0.1f, dt);
+                vAnim = Mathf.SmoothDamp(vAnim, Mathf.Min(v.magnitude, velH.magnitude + 0.05f), ref vAnimVel, 0.08f);
+                ParamAvatar.Marcha(natural, vAnim, out float parametro, out float cadencia);
+                if (paramVelocidad) anim.SetFloat(hVelocidad, parametro);
+                anim.speed = cc.isGrounded ? cadencia : 1f;
                 if (paramEnSuelo) anim.SetBool(hEnSuelo, cc.isGrounded);
             }
 

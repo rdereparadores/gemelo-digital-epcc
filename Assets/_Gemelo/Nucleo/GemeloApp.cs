@@ -46,6 +46,54 @@ namespace Gemelo
         /// <summary>float, sentado con las manos ocupadas (estado SentadoMovil): 0 = teclea en un ordenador,
         /// 1 = escribe en la mesa. Lo pone el módulo Personas según el puesto (con ordenador o no).</summary>
         public const string Escribiendo = "Escribiendo";
+
+        // ─── Marcha sin patinar
+        // El árbol Locomocion de Persona.controller pone reposo, andar, trotar y correr en Velocidad = 0, 1,4, 3 y 4,6,
+        // pero los clips de Mixamo (en el sitio) avanzan a otra velocidad: medida por la zancada y por el pie de apoyo,
+        // Walk_MaleStandard ≈1,02 m/s, Walk_Female ≈1,6, Run_Jogging ≈1,9 y Run_Standard ≈3,45. Pasar la velocidad tal
+        // cual hacía patinar los pies un 30-70 % y, al andar a 1,7, mezclaba andar con trotar (paso «ortopédico»).
+        static readonly float[] Umbrales = { 0f, 1.4f, 3f, 4.6f };
+        static readonly float[] NaturalHombre = { 0f, 1.02f, 1.9f, 3.45f };
+        static readonly float[] NaturalMujer = { 0f, 1.6f, 1.9f, 3.45f };
+
+        /// <summary>Velocidad natural (m/s) de los clips de locomoción del controlador, en el orden de los umbrales;
+        /// null si no se conoce (los maniquíes: sus clips ya van a la velocidad de su umbral).</summary>
+        public static float[] Naturales(RuntimeAnimatorController c)
+        {
+            if (c == null) return null;
+            string n = c.name;
+            return n.Contains("Mujer") ? NaturalMujer : n.Contains("Hombre") ? NaturalHombre : null;
+        }
+
+        /// <summary>Velocidad del jugador al andar con este controlador: la de su clip con algo más de cadencia, entre
+        /// 1,25 y 1,5 m/s (el andar de Brian es un paseo de 1 m/s).</summary>
+        public static float AndarJugador(RuntimeAnimatorController c)
+        {
+            var n = Naturales(c);
+            return n == null ? 1.4f : Mathf.Clamp(n[1] * 1.25f, 1.25f, 1.5f);
+        }
+
+        /// <summary>Para que el avatar avance a <paramref name="v"/> m/s sin patinar: valor del parámetro Velocidad y
+        /// cadencia (Animator.speed). Andando, el clip de andar con la cadencia entre 0,85 y 1,3 veces la suya; más
+        /// deprisa, la mezcla trotar-correr a su velocidad, y por encima de la de correr, más cadencia (hasta 1,5).</summary>
+        public static void Marcha(float[] nat, float v, out float parametro, out float cadencia)
+        {
+            if (nat == null || v <= 0.01f) { parametro = Mathf.Max(0f, v); cadencia = 1f; return; }
+            float w = nat[1], kAndarMax = 1.3f, andarMax = w * kAndarMax, kCorrer = 1.15f, correrMin = nat[3] * kCorrer;
+            if (v <= w * 0.85f) cadencia = Mathf.Lerp(1f, 0.85f, v / (w * 0.85f));
+            else if (v <= andarMax) cadencia = v / w;
+            else if (v <= correrMin) cadencia = Mathf.Lerp(kAndarMax, kCorrer, (v - andarMax) / (correrMin - andarMax));
+            else cadencia = Mathf.Min(1.5f, v / nat[3]);
+            float vn = v / cadencia;   // velocidad que tiene que dar la mezcla a cadencia 1
+            parametro = Umbrales[^1];
+            for (int i = 1; i < nat.Length; i++)
+                if (vn <= nat[i])
+                {
+                    float t = (vn - nat[i - 1]) / Mathf.Max(1e-3f, nat[i] - nat[i - 1]);
+                    parametro = Mathf.Lerp(Umbrales[i - 1], Umbrales[i], t);
+                    break;
+                }
+        }
     }
 
     public class GemeloApp : MonoBehaviour
