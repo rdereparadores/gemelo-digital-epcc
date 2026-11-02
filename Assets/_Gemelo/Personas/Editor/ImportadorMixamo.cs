@@ -5,9 +5,13 @@
 //    sustituidos por los URP/Lit de Personajes/<Nombre>/Materiales/ (los crea ConstructorMixamo) con AddRemap, y LOD
 //    de malla generados al importar (Mesh LOD);
 //  · animaciones (Animaciones/*.fbx): Humanoid con su propio avatar (esqueleto de Y Bot), sin materiales; raíz
-//    horneada en la pose (giro, altura y posición, con la referencia original): son «in place» y en bucle;
+//    horneada en la pose (giro, altura y posición, con la referencia original): son «in place» y en bucle. Esos FBX
+//    no traen pose en T (su pose de reposo es el primer fotograma: andando, las rodillas dobladas 24-53°), y el avatar
+//    tomaba esa pose como referencia: al pasar a los personajes se perdía media flexión de rodilla y la cadera quedaba
+//    15-20° desplazada (piernas rígidas). PonerPoseT les da la pose en T de Brian (Tools ▸ Gemelo);
 //  · texturas: 1024 px como mucho; normales como Normal map; máscaras (brillo en A) lineales; el color con alfa
 //    conserva la cobertura en los mipmaps para que el pelo no se deshaga de lejos.
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -74,6 +78,37 @@ namespace Gemelo
                 var mat = AssetDatabase.LoadAssetAtPath<Material>(RutaMaterial(assetPath, m.nombre));
                 if (mat != null) mi.AddRemap(new AssetImporter.SourceAssetIdentifier(typeof(Material), m.nombre), mat);
             }
+        }
+
+        static string Sufijo(string n) => n.Contains(":") ? n.Substring(n.IndexOf(':') + 1) : n;
+
+        /// <summary>Pone como pose de referencia (pose en T) del avatar de cada animación la de Brian, hueso a hueso por
+        /// nombre (mixamorig12:LeftLeg ↔ mixamorig:LeftLeg): solo las rotaciones, con las longitudes de hueso de cada
+        /// archivo. Queda en el .meta de la animación (humanDescription.skeleton).</summary>
+        [MenuItem("Tools/Gemelo/Pose en T de las animaciones de Mixamo")]
+        public static void PonerPoseTDesdeMenu() => Debug.Log("[Mixamo] " + PonerPoseT());
+
+        public static string PonerPoseT()
+        {
+            var refImp = AssetImporter.GetAtPath(CarpetaPersonajes + "/Brian/Brian.fbx") as ModelImporter;
+            if (refImp == null) return "Falta Personajes/Brian/Brian.fbx";
+            var enT = new Dictionary<string, Quaternion>();
+            foreach (var b in refImp.humanDescription.skeleton) enT[Sufijo(b.name)] = b.rotation;
+            int n = 0;
+            foreach (var guid in AssetDatabase.FindAssets("t:Model", new[] { CarpetaAnimaciones }))
+            {
+                if (!(AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(guid)) is ModelImporter mi)) continue;
+                var hd = mi.humanDescription;
+                var sk = hd.skeleton;
+                if (sk == null || sk.Length == 0) continue;
+                for (int i = 0; i < sk.Length; i++)
+                    if (sk[i].name.Contains(":") && enT.TryGetValue(Sufijo(sk[i].name), out var q)) sk[i].rotation = q;
+                hd.skeleton = sk;
+                mi.humanDescription = hd;
+                mi.SaveAndReimport();
+                n++;
+            }
+            return $"{n} animaciones con la pose en T de Brian";
         }
 
         void OnPreprocessAnimation()

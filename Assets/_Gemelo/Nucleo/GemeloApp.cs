@@ -50,11 +50,12 @@ namespace Gemelo
         // ─── Marcha sin patinar
         // El árbol Locomocion de Persona.controller pone reposo, andar, correr y correr rápido en Velocidad = 0, 1,4, 3 y
         // 4,6, pero los clips de Mixamo (en el sitio) avanzan a otra velocidad: medida por la zancada y por el pie de apoyo,
-        // Walk_MaleStandard ≈1,02 m/s, Walk_Female ≈1,6 y Run_Standard ≈3,45 (en los Mixamo, Run_Standard va en las dos
+        // Walk_MaleStandard ≈1,02 m/s, Walk_Female ≈1,6 y Run_Standard ≈3,0 (en los Mixamo, Run_Standard va en las dos
         // ranuras de correr: ver ConstructorMixamo). Pasar la velocidad tal cual hacía patinar los pies un 30-70 %.
+        // (Medidas con la pose en T corregida de las animaciones: antes la rodilla flexionaba la mitad y correr daba 3,45)
         static readonly float[] Umbrales = { 0f, 1.4f, 3f, 4.6f };
-        static readonly float[] NaturalHombre = { 0f, 1.02f, 3.45f, 3.46f };
-        static readonly float[] NaturalMujer = { 0f, 1.6f, 3.45f, 3.46f };
+        static readonly float[] NaturalHombre = { 0f, 1.02f, 3.0f, 3.01f };
+        static readonly float[] NaturalMujer = { 0f, 1.6f, 3.0f, 3.01f };
 
         /// <summary>Velocidad natural (m/s) de los clips de locomoción del controlador, en el orden de los umbrales;
         /// null si no se conoce (los maniquíes: sus clips ya van a la velocidad de su umbral).</summary>
@@ -75,8 +76,8 @@ namespace Gemelo
 
         /// <summary>Para que el avatar avance a <paramref name="v"/> m/s sin patinar: valor del parámetro Velocidad y
         /// cadencia (Animator.speed). Andando, el clip de andar con la cadencia entre 0,85 y 1,3 veces la suya; más
-        /// deprisa, la mezcla andar-correr a su velocidad, y desde la de correr con un 10 % más de cadencia (3,8 m/s, la del
-        /// jugador), correr solo, con más cadencia cuanto más deprisa (hasta 1,5).</summary>
+        /// deprisa, la mezcla andar-correr a su velocidad, y desde la de correr con un 10 % más de cadencia (3,3 m/s),
+        /// correr solo, con más cadencia cuanto más deprisa (hasta 1,5).</summary>
         public static void Marcha(float[] nat, float v, out float parametro, out float cadencia)
         {
             if (nat == null || v <= 0.01f) { parametro = Mathf.Max(0f, v); cadencia = 1f; return; }

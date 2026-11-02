@@ -520,7 +520,7 @@ MonoBehaviour:
   jugadores:
   - {fileID: 7989925549171545347, guid: e3d9e983073ac0262baec115df67f944, type: 3}
   - {fileID: 5112160716172963035, guid: 06ab296eab860ec6d9c399e808220de4, type: 3}
-  alturaAsientoClip: 0.44322038
+  alturaAsientoClip: 0.43982995
   movilSentado: 0
   movil: {fileID: 4300000, guid: 103138c16a8d48b4e96af34064324917, type: 2}
   materialMovil: {fileID: 2100000, guid: 97f2a3a7e09fd9b16b3df03f977994a8, type: 2}

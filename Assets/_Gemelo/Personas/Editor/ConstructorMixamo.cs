@@ -116,22 +116,31 @@ namespace Gemelo
 
         // ───────────────────────── Controladores ─────────────────────────
 
-        /// <summary>Rehace solo los dos controladores (Persona_Hombre y Persona_Mujer) con los clips ya importados y los
-        /// sentados ya recentrados, sin reconstruir los personajes.</summary>
+        /// <summary>Rehace las posturas y los controladores sin reconstruir los personajes: las tres posturas sentadas
+        /// recentradas (copias con las curvas ya traducidas al avatar: hay que rehacerlas si cambia la importación de las
+        /// animaciones, p. ej. su pose en T), los dos controladores (Persona_Hombre y Persona_Mujer) y la altura del
+        /// asiento de la postura sentada (RecursosPersonas.alturaAsientoClip).</summary>
         public static string SoloControladores()
         {
             var baseCtrl = AssetDatabase.LoadAssetAtPath<AnimatorController>("Assets/_Gemelo/Personas/Maniquies/Persona.controller");
             if (baseCtrl == null) return "Falta Maniquies/Persona.controller";
+            var log = new List<string>();
             foreach (var n in new[] { "Sit_Writing", "Sit_Talking", "Sit_StillChair" })
-            {
-                var c = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ImportadorMixamo.CarpetaAnimaciones}/{n}_Centrado.anim");
-                if (c == null) return $"Falta {n}_Centrado.anim: Tools ▸ Gemelo ▸ Personajes de Mixamo";
-                recentrados[n] = c;
-            }
+                recentrados[n] = Recentrar(n, "Sit_Typing", log);
             Override(baseCtrl, "Persona_Hombre", DeHombre);
             Override(baseCtrl, "Persona_Mujer", DeMujer);
+            var rec = ConstructorNavegacion.Recursos();
+            float asiento = rec.alturaAsientoClip;
+            if (rec.avatares != null && rec.perfiles != null && rec.avatares.Length == rec.perfiles.Length)
+            {
+                asiento = MedirAsiento(new List<GameObject>(rec.avatares), new List<PerfilPersonaje>(rec.perfiles));
+                rec.alturaAsientoClip = asiento;
+                EditorUtility.SetDirty(rec);
+            }
+            if (escena.IsValid()) { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(escena); escena = default; }
             AssetDatabase.SaveAssets();
-            return "Persona_Hombre y Persona_Mujer rehechos";
+            return $"Posturas sentadas recentradas, Persona_Hombre y Persona_Mujer rehechos; asiento a {asiento:F3} m" +
+                   (log.Count > 0 ? "\n" + string.Join("\n", log) : "");
         }
 
         static readonly Dictionary<string, AnimationClip> recentrados = new();

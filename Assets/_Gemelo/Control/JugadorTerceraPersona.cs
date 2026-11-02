@@ -17,8 +17,8 @@ namespace Gemelo
         // las escaleras, rebajadas a 1,79 m, y la planta P-1 del 1906 se quedaba sin acceso)
         public float radio = 0.22f, piel = 0.02f, altura = 1.72f;
         // Andar: el del clip de cada avatar (ParamAvatar.AndarJugador, 1,25-1,5 m/s); este, si no hay avatar de Mixamo.
-        // Correr a 3,8 m/s: el clip de correr con un 10 % más de cadencia (a 4,6 los pies patinaban)
-        public float andar = 1.4f, correr = 3.8f, aceleracion = 9f, giroMarcha = 540f, alturaSalto = 0.8f, gravedad = -18f;
+        // Correr a 3,5 m/s: el clip de correr (≈3,0 m/s) con un 17 % más de cadencia (a 4,6 los pies patinaban)
+        public float andar = 1.4f, correr = 3.5f, aceleracion = 9f, giroMarcha = 540f, alturaSalto = 0.8f, gravedad = -18f;
 
         // Cámara
         public float distanciaMin = 0.9f, distanciaMax = 8f;
