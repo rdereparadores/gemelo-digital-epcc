@@ -202,7 +202,13 @@ namespace Gemelo
         {
             if (ajustes.Abierto) { ajustes.Cerrar(); GemeloApp.EscapeConsumido = Time.frameCount; return; }
             if (cenital.CerrarEmergente()) { GemeloApp.EscapeConsumido = Time.frameCount; return; }
-            if (app.Pausado && pausa.Abierto && Time.frameCount != framePausa) reanudarPendiente = true;
+            // Esc con la pausa abierta la cierra (interruptor). Se marca como usado: si no, Control lo leía en el mismo
+            // fotograma, veía el juego ya reanudado y volvía a pausarlo (el menú salía otra vez)
+            if (app.Pausado && pausa.Abierto && Time.frameCount != framePausa)
+            {
+                reanudarPendiente = true;
+                GemeloApp.EscapeConsumido = Time.frameCount;
+            }
         }
 
         void Fps()
