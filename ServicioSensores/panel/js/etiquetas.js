@@ -67,7 +67,7 @@ export const UNIDADES = {
 export const TIPOS_ESPACIO = {
   classroom: 'Aula', computer_lab: 'Aula de informática', lab: 'Laboratorio', office: 'Despacho',
   corridor: 'Pasillo', hall: 'Vestíbulo', technical_room: 'Sala técnica', restroom: 'Aseo',
-  cafeteria: 'Cafetería', meeting_room: 'Sala de reuniones', outdoor: 'Exterior',
+  cafeteria: 'Cafetería', meeting_room: 'Sala de reuniones', auditorium: 'Salón de grados', outdoor: 'Exterior',
   building: 'Todo el edificio', other: 'Otro',
 };
 

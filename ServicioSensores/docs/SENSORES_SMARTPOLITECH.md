@@ -56,8 +56,11 @@ Notas:
 
 ## Qué falta y se simula
 
-El catálogo añade **743 sensores virtuales** (`SIM_…`) para que cada estancia del modelo tenga datos:
+El catálogo añade **749 sensores virtuales** (`SIM_…`) para que cada estancia del modelo tenga datos:
 - CO₂, ocupación, luz, ruido y PM2,5 en aulas, laboratorios, salas y cafetería.
 - Temperatura en despachos y halls.
 - Detectores de incendio en halls y edificios.
 - Contadores de electricidad y agua en los edificios sin ellos.
+- El Salón de Grados de Telecomunicación (`TEL-P00-LOC017`, tipo `auditorium`), que no tiene ningún
+  sensor real: CO₂, ocupación, luz, ruido, PM2,5 y un analizador de red. Su ocupación simulada son
+  actos (conferencias en periodo lectivo y sesiones de defensas de TFG/TFM en los de exámenes).

@@ -473,3 +473,63 @@ def test_clase_no_pasa_del_aforo(sim):
     t = correr(sim, t, 600)
     estado = sim.estado_espacio("INF-P00-AUL001")
     assert estado["occupancy"] <= estado["capacity"] + 0.5
+
+
+# ---------------------------------------------------------------------------------- salón de grados
+def test_actos_del_salon_de_grados():
+    """Conferencias en periodo lectivo y defensas (con poco público) en exámenes; nada los domingos."""
+    from gemelo_sensores.simulacion import calendario as cal
+    from gemelo_sensores.simulacion.ocupacion import programar_dia
+
+    cap = 60
+    por_tipo: dict[str, list[list]] = {}
+    d0 = datetime(2026, 9, 1).date()
+    for i in range(365):
+        d = d0 + timedelta(days=i)
+        tipo_dia = cal.tipo_dia(d.toordinal())
+        iv = programar_dia("auditorium", tipo_dia, cap, 1, 12345, d.toordinal(), d.weekday())
+        por_tipo.setdefault(tipo_dia, []).append(iv)
+        for a, b, n, act in iv:
+            assert 0 <= a < b <= 24 * 60 and 1 <= n <= cap + 2 and act in ("acto", "trabajo")
+    assert all(not iv for iv in por_tipo[cal.FIN_DE_SEMANA] + por_tipo.get(cal.CERRADO, []))
+    con_acto = lambda dias: sum(any(x[3] == "acto" for x in iv) for iv in dias) / len(dias)  # noqa: E731
+    assert 0.3 < con_acto(por_tipo[cal.LECTIVO]) < 0.7
+    assert con_acto(por_tipo[cal.EXAMENES]) > 0.5
+    publico = lambda dias: [x[2] for iv in dias for x in iv if x[3] == "acto"]  # noqa: E731
+    assert max(publico(por_tipo[cal.EXAMENES])) < max(publico(por_tipo[cal.LECTIVO]))
+
+
+def test_salon_de_grados_con_acto():
+    edificios = {"TEL": Edificio("TEL", "Telecomunicación", "1905", ["P00"])}
+    sg = "TEL-P00-LOC017"
+    espacios = [Espacio(sg, "TEL", "P00", "auditorium", "LOC017", "Salón de Grados", "1905_P0_17", 100.9, 4.5)]
+    props = {"climate_co2": ["air_temperature", "relative_humidity", "co2_concentration"],
+             "occupancy_camera": ["occupancy"], "light_sensor": ["illuminance", "lights_on"],
+             "sound_meter": ["sound_level"], "air_quality": ["pm25", "co2_concentration"],
+             "power_meter": ["active_power", "active_energy"]}
+    sensores = [_sensor(k, k, sg, "TEL", p) for k, p in props.items()]
+    sim = Simulador(Catalogo(edificios, {e.id: e for e in espacios}, {s.id: s for s in sensores}), semilla=3)
+    t = datetime(2026, 11, 10, 3, 0, tzinfo=UTC)  # martes lectivo, 4:00
+    sim.avanzar(t, 0.0, None)
+    t = correr(sim, t, 3600)
+    vacio = {k: sim.lectura(k) for k in props}
+    assert vacio["occupancy_camera"]["occupancy"] == 0
+    sim.crear_evento("class_start", sg, 5400, {"people": 50}, t)
+    t = correr(sim, t, 3600)
+    lleno = {k: sim.lectura(k) for k in props}
+    assert lleno["occupancy_camera"]["occupancy"] == 50
+    assert sim._salas[sg].actividad == "acto"
+    assert lleno["climate_co2"]["co2_concentration"] > vacio["climate_co2"]["co2_concentration"] + 300
+    assert lleno["sound_meter"]["sound_level"] > vacio["sound_meter"]["sound_level"] + 15
+    assert lleno["power_meter"]["active_power"] > vacio["power_meter"]["active_power"]
+    assert lleno["light_sensor"]["lights_on"] == 1.0
+
+
+def test_salon_de_grados_en_el_catalogo_real():
+    cat = Catalogo.cargar()
+    esp = cat.espacios.get("TEL-P00-LOC017")
+    if esp is None:
+        pytest.skip("sin catálogo real")
+    assert esp.type == "auditorium" and esp.unity_room == "1905_P0_17"
+    kinds = {s.kind for s in cat.sensores_de_espacio(esp.id)}
+    assert {"climate_co2", "occupancy_camera", "light_sensor", "sound_meter", "air_quality", "power_meter"} <= kinds

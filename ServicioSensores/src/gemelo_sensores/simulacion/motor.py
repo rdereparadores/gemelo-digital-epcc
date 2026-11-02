@@ -81,6 +81,8 @@ _TIPOS: dict[str, _ParamTipo] = {
     "restroom": _ParamTipo(0.7, 3.0, 50, 0.02, 0.010, 8, 200, 20.0, 0.0, 0.5, 5.0, 15, 0),
     "cafeteria": _ParamTipo(1.1, 1.5, 70, 0.07, 0.040, 10, 300, 21.0, 0.8, 15.0, 1.4, 120, 0),
     "meeting_room": _ParamTipo(1.0, 0.7, 80, 0.06, 0.030, 10, 500, 21.0, 0.7, 1.0, 2.5, 30, 10),
+    # Salón de grados: techo alto, split mural (aire acondicionado seguro) y unas 60 plazas en 100 m²
+    "auditorium": _ParamTipo(0.9, 0.7, 75, 0.05, 0.025, 11, 500, 21.0, 1.0, 1.0, 1.7, 100, 3),
     "other": _ParamTipo(0.8, 0.8, 60, 0.04, 0.020, 8, 300, 20.0, 0.2, 2.0, 6.0, 20, 10),
 }
 _TIPOS["outdoor"] = _TIPOS["other"]
@@ -529,7 +531,8 @@ class Simulador:
         s.hm = 8.0 * s.area
         s.cm = 230e3 * s.area * r(3, 0.85, 1.15)
         s.ach_inf = p.ach * r(4, 0.7, 1.4)
-        s.ach_mec = 2.0 if (s.tipo in ("computer_lab", "meeting_room", "cafeteria", "restroom") and u01(c, 5) < 0.5) else 0.0
+        s.ach_mec = 2.0 if (s.tipo in ("computer_lab", "meeting_room", "auditorium", "cafeteria", "restroom")
+                            and u01(c, 5) < 0.5) else 0.0
         s.pmax = p.rad * s.area * r(6, 0.85, 1.2)
         s.frio = (60.0 if s.tipo == "technical_room" else 90.0) * s.area if u01(c, 7) < p.ac else 0.0
         s.a_vid = p.vidrio * s.area * r(8, 0.6, 1.4)
@@ -545,8 +548,8 @@ class Simulador:
             s.n_pc, s.w_pc = int(4 * u01(c, 12)), 120.0  # servidores o equipos de red
         elif s.tipo in ("office", "lab"):
             s.n_pc, s.w_pc = s.puestos, 110.0
-        elif s.tipo == "classroom":
-            s.n_pc, s.w_pc = 1, 120.0
+        elif s.tipo in ("classroom", "auditorium"):
+            s.n_pc, s.w_pc = 1, 120.0  # el ordenador del atril
         else:
             s.n_pc, s.w_pc = 0, 90.0
 
@@ -779,7 +782,7 @@ class Simulador:
             if e.alarma:
                 return 0.0, ""
             if s.forz_ocup is not None:
-                return s.forz_ocup, ("clase" if s.forz_ocup > 0 else "")
+                return s.forz_ocup, (("acto" if s.tipo == "auditorium" else "clase") if s.forz_ocup > 0 else "")
             dia = (c.ordinal, c.tipo_dia)
             if s.dia != dia:
                 self._nuevo_dia(s, c)
@@ -876,12 +879,12 @@ class Simulador:
             pcs = s.n_pc
         elif tipo in ("office", "lab", "other", "meeting_room"):
             pcs = min(max(s.n_pc, 1), int(occ + 0.5) + s.pc_noche)
-        elif tipo == "classroom":
-            pcs = 1 if act == "clase" else 0
+        elif tipo in ("classroom", "auditorium"):
+            pcs = 1 if act in ("clase", "acto") else 0
         else:
             pcs = s.n_pc if c.abierto else 0
         s.pcs = pcs
-        proyector = 250.0 if act in ("clase", "practica") else 0.0
+        proyector = 250.0 if act in ("clase", "practica", "acto") else 0.0
         q_int = (75.0 * occ + 0.9 * pcs * s.w_pc + (s.w_luces if luces else 0.0) + s.equipo_w + proyector) if not apagado \
             else 75.0 * occ + 0.3 * s.equipo_w
         sol = s.a_vid * ext.fachadas[s.orient] * (1.0 - 0.75 * b)
@@ -1428,7 +1431,7 @@ class Simulador:
             p = 0.15 + min(0.7, ss.edif.flujo * 0.5) if c.abierto else 0.0
         elif s.occ < 0.5:
             p = 0.03
-        elif s.actividad in ("clase", "examen", "practica", "reunion"):
+        elif s.actividad in ("clase", "examen", "practica", "reunion", "acto"):
             p = 0.1
         elif s.tipo == "office":
             p = 0.6
@@ -1532,6 +1535,8 @@ class Simulador:
                 por_persona = 24.0
             elif act in ("clase", "practica"):
                 por_persona, extra = 34.0, 10 ** (5.6 + 0.8 * u01(s.c, 71))  # el profesor
+            elif act == "acto":
+                por_persona, extra = 30.0, 10 ** (6.2 + 0.5 * u01(s.c, 71))  # el ponente, con micrófono
             elif s.modo == _CAFETERIA:
                 por_persona, n = 52.0, n * 0.6
             else:

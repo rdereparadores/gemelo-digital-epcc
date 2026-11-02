@@ -60,6 +60,8 @@ TIPO_POR_USO = {
     "minisala": ("meeting_room", "SAL"), "sala_descanso": ("meeting_room", "SAL"),
     "cafeteria": ("cafeteria", "CAF"), "cocina": ("cafeteria", "CAF"),
     "patio": ("outdoor", "EXT"),
+    # El prefijo LOC mantiene el id que tenía la estancia antes de ser de tipo auditorium (TEL-P00-LOC017)
+    "salon_grados": ("auditorium", "LOC"),
 }
 
 # Mediciones que no son del campus o son pruebas
@@ -307,6 +309,9 @@ def main() -> None:
         "computer_lab": ["climate_co2", "occupancy_camera", "light_sensor", "pc_usage", "sound_meter"],
         "lab": ["climate_co2", "occupancy_camera", "light_sensor"],
         "meeting_room": ["climate_co2", "occupancy_camera", "light_sensor"],
+        # Salón de Grados de Telecomunicación: SmartPoliTech no tiene sensores en él, pero el gemelo lo
+        # equipa como un aula (más la potencia del split y el proyector)
+        "auditorium": ["climate_co2", "occupancy_camera", "light_sensor", "sound_meter", "air_quality", "power_meter"],
         "cafeteria": ["climate_co2", "occupancy_camera", "sound_meter", "air_quality"],
         "hall": ["climate", "occupancy_camera", "light_sensor", "fire_alarm"],
         "office": ["climate"],

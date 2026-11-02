@@ -1,7 +1,7 @@
 {
  "_meta": {
   "generado_por": "herramientas/generar_catalogo.py",
-  "generado": "2026-10-30T00:25:07+00:00",
+  "generado": "2026-11-02T11:21:53+00:00",
   "fuentes": [
    "datos/inventario_smartpolitech.json",
    "Referencias/Politecnica/datos/interiores.json"
@@ -5465,7 +5465,7 @@
    "id": "TEL-P00-LOC017",
    "building_id": "TEL",
    "floor": "P00",
-   "type": "other",
+   "type": "auditorium",
    "code": "LOC017",
    "name": "Salón de Grados (antes aula T2)",
    "unity_room": "1905_P0_17",
@@ -16019,6 +16019,89 @@
    "building_id": "TEL",
    "properties": [
     "occupancy"
+   ],
+   "real_available": false,
+   "upstream": null,
+   "last_real_time": null
+  },
+  {
+   "id": "SIM_TEL-P00-LOC017_AIR_QUALITY",
+   "name": "Calidad del aire (virtual)",
+   "kind": "air_quality",
+   "space_id": "TEL-P00-LOC017",
+   "building_id": "TEL",
+   "properties": [
+    "pm25",
+    "co2_concentration"
+   ],
+   "real_available": false,
+   "upstream": null,
+   "last_real_time": null
+  },
+  {
+   "id": "SIM_TEL-P00-LOC017_CLIMATE_CO2",
+   "name": "Sensor de CO₂ (virtual)",
+   "kind": "climate_co2",
+   "space_id": "TEL-P00-LOC017",
+   "building_id": "TEL",
+   "properties": [
+    "air_temperature",
+    "relative_humidity",
+    "co2_concentration"
+   ],
+   "real_available": false,
+   "upstream": null,
+   "last_real_time": null
+  },
+  {
+   "id": "SIM_TEL-P00-LOC017_LIGHT_SENSOR",
+   "name": "Sensor de luz (virtual)",
+   "kind": "light_sensor",
+   "space_id": "TEL-P00-LOC017",
+   "building_id": "TEL",
+   "properties": [
+    "illuminance",
+    "lights_on"
+   ],
+   "real_available": false,
+   "upstream": null,
+   "last_real_time": null
+  },
+  {
+   "id": "SIM_TEL-P00-LOC017_OCCUPANCY_CAMERA",
+   "name": "Cámara de ocupación (virtual)",
+   "kind": "occupancy_camera",
+   "space_id": "TEL-P00-LOC017",
+   "building_id": "TEL",
+   "properties": [
+    "occupancy"
+   ],
+   "real_available": false,
+   "upstream": null,
+   "last_real_time": null
+  },
+  {
+   "id": "SIM_TEL-P00-LOC017_POWER_METER",
+   "name": "Analizador de red (virtual)",
+   "kind": "power_meter",
+   "space_id": "TEL-P00-LOC017",
+   "building_id": "TEL",
+   "properties": [
+    "active_power",
+    "active_energy"
+   ],
+   "real_available": false,
+   "upstream": null,
+   "last_real_time": null
+  },
+  {
+   "id": "SIM_TEL-P00-LOC017_SOUND_METER",
+   "name": "Sonómetro (virtual)",
+   "kind": "sound_meter",
+   "space_id": "TEL-P00-LOC017",
+   "building_id": "TEL",
+   "properties": [
+    "sound_level"
    ],
    "real_available": false,
    "upstream": null,

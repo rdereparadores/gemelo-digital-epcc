@@ -21,8 +21,8 @@ namespace Gemelo
         List<Interaccion> lista = new();
         bool ocupado;
 
-        // Tipos de estancia en los que tiene sentido empezar o terminar una clase (o una reunión)
-        static readonly HashSet<string> docentes = new() { "classroom", "computer_lab", "lab", "meeting_room" };
+        // Tipos de estancia en los que tiene sentido empezar o terminar una clase (o una reunión o un acto)
+        static readonly HashSet<string> docentes = new() { "classroom", "computer_lab", "lab", "meeting_room", "auditorium" };
 
         static readonly Key[] teclasNumero =
         {
@@ -112,15 +112,21 @@ namespace Gemelo
                     if (tipos.TryGetValue(id, out var tipo) && docentes.Contains(tipo))
                     {
                         float ocup = est.Valor("occupancy", 0f);
-                        bool reunion = tipo == "meeting_room";
+                        // (nombre, artículo determinado, artículo indeterminado)
+                        var (que, la, una) = tipo switch
+                        {
+                            "meeting_room" => ("reunión", "la", "una"),
+                            "auditorium" => ("acto", "el", "un"),
+                            _ => ("clase", "la", "una"),
+                        };
                         if (ocup >= 1f)
-                            nueva.Add(Nueva(reunion ? "Terminar la reunión" : "Terminar la clase", "clase",
-                                () => Evento("class_end", id, 0, null, $"Se acabó la {(reunion ? "reunión" : "clase")} en {nombre}: la sala se vacía")));
+                            nueva.Add(Nueva($"Terminar {la} {que}", "clase",
+                                () => Evento("class_end", id, 0, null, $"Se acabó {la} {que} en {nombre}: la sala se vacía")));
                         else
                         {
                             int n = Personas(l);
-                            nueva.Add(Nueva($"{(reunion ? "Empezar una reunión" : "Empezar una clase")} ({n} personas)", "clase",
-                                () => Evento("class_start", id, 0, $"{{\"people\":{n}}}", $"Empieza una {(reunion ? "reunión" : "clase")} de {n} personas en {nombre}")));
+                            nueva.Add(Nueva($"Empezar {una} {que} ({n} personas)", "clase",
+                                () => Evento("class_start", id, 0, $"{{\"people\":{n}}}", $"Empieza {una} {que} de {n} personas en {nombre}")));
                         }
                     }
                     // Ventanas

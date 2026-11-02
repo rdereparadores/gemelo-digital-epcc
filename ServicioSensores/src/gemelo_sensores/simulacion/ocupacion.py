@@ -3,8 +3,10 @@
 Cada estancia "programada" (aulas, laboratorios, despachos, salas de reuniones…) recibe cada día una
 lista de intervalos `(inicio, fin, personas, actividad)` en minutos locales. Las clases siguen el
 horario de la EPCC (mañanas de 8:30 a 14:30 y tardes de 16:00 a 20:30, en franjas de una hora, con
-bloques de una o dos horas y unos minutos de cambio entre clases). Las estancias de paso (pasillos,
-halls, aseos) no tienen horario propio: el motor las deriva del movimiento del edificio.
+bloques de una o dos horas y unos minutos de cambio entre clases). Los salones de grados
+(`auditorium`) tienen actos: conferencias, defensas de TFG/TFM en los periodos de exámenes y alguna
+jornada. Las estancias de paso (pasillos, halls, aseos) no tienen horario propio: el motor las deriva
+del movimiento del edificio.
 """
 
 from __future__ import annotations
@@ -21,7 +23,7 @@ FRANJAS_TARDE = ((960, 1020), (1020, 1080), (1080, 1140), (1140, 1230))
 FRANJAS_EXAMEN = ((540, 720), (750, 870), (960, 1140))
 
 # Prioridad de la actividad cuando se solapan intervalos (para el ruido y las puertas)
-PRIORIDAD = {"examen": 5, "clase": 4, "practica": 4, "reunion": 3, "libre": 2, "trabajo": 1, "": 0}
+PRIORIDAD = {"examen": 5, "acto": 4, "clase": 4, "practica": 4, "reunion": 3, "libre": 2, "trabajo": 1, "": 0}
 
 # Probabilidad de clase por franja (mañana, tarde) y asistencia (mín, máx) sobre la capacidad
 _DOCENCIA = {
@@ -110,6 +112,30 @@ def _reuniones(iv: list[Intervalo], cap: int, c: int, ordinal: int) -> None:
             libre_desde = ini + dur
 
 
+def _actos(iv: list[Intervalo], tipo_dia: str, cap: int, c: int, ordinal: int) -> None:
+    """Salón de grados: conferencias y seminarios en periodo lectivo, defensas de TFG/TFM en los de exámenes
+    (varias seguidas, con poco público) y alguna jornada o lectura de tesis el resto del curso."""
+    if tipo_dia == LECTIVO:
+        franjas = (((600.0, 660.0), 0.30, (0.40, 0.90), (90.0, 180.0)),     # mañana: conferencia o seminario
+                   ((990.0, 1050.0), 0.18, (0.30, 0.75), (90.0, 150.0)))    # tarde
+    elif tipo_dia == EXAMENES:
+        franjas = (((540.0, 600.0), 0.55, (0.15, 0.40), (150.0, 270.0)),    # sesión de defensas
+                   ((960.0, 1020.0), 0.25, (0.15, 0.35), (120.0, 180.0)))
+    elif tipo_dia == NO_LECTIVO:
+        franjas = (((570.0, 630.0), 0.12, (0.30, 0.80), (120.0, 210.0)),)   # jornada o lectura de tesis
+    else:
+        return
+    for j, ((a, b), p, (q0, q1), (d0, d1)) in enumerate(franjas):
+        k = ordinal * 1000 + 850 + j
+        if u01(c, k, 1) >= p:
+            continue
+        ini = a + (b - a) * u01(c, k, 2)
+        fin = ini + d0 + (d1 - d0) * u01(c, k, 3)
+        n = min(cap, max(4, round(cap * (q0 + (q1 - q0) * u01(c, k, 4)))))
+        iv.append((ini - 15.0, ini, max(2, round(n * 0.15)), "trabajo"))  # montaje y primeros en llegar
+        iv.append((ini, fin, n + 2, "acto"))                                # público, ponente y presentador
+
+
 def programar_dia(tipo: str, tipo_dia: str, cap: int, puestos: int, c: int, ordinal: int, dia_semana: int) -> list[Intervalo]:
     """Intervalos de ocupación de una estancia programada en un día."""
     iv: list[Intervalo] = []
@@ -129,6 +155,8 @@ def programar_dia(tipo: str, tipo_dia: str, cap: int, puestos: int, c: int, ordi
     elif tipo == "meeting_room":
         if tipo_dia in (LECTIVO, EXAMENES, NO_LECTIVO):
             _reuniones(iv, cap, c, ordinal)
+    elif tipo == "auditorium":
+        _actos(iv, tipo_dia, cap, c, ordinal)
     elif tipo == "technical_room":
         if tipo_dia in (LECTIVO, EXAMENES, NO_LECTIVO) and u01(c, ordinal, 901) < 0.08:
             ini = 540.0 + 240.0 * u01(c, ordinal, 902)
