@@ -36,10 +36,13 @@ namespace Gemelo
         };
         static readonly (string nombre, bool mujer)[] Jugadores = { ("Brian", false), ("Megan", true) };
 
-        // Clip del maniquí → animación de Mixamo (Animaciones/<nombre>.fbx)
+        // Clip del maniquí → animación de Mixamo (Animaciones/<nombre>.fbx).
+        // «Correr» (Velocidad 3 del árbol Locomocion) es también Run_Standard: Run_Jogging trae cuatro zancadas en el clip y el
+        // árbol sincroniza los clips por tiempo normalizado, así que con cualquier peso suyo esas piernas iban a cuatro veces
+        // el ritmo de las de andar o correr y la pierna «se movía mal» (al acelerar pasaba por un 100 % de trote)
         static readonly Dictionary<string, string> Comunes = new()
         {
-            ["Correr"] = "Run_Jogging", ["CorrerRapido"] = "Run_Standard", ["SentadoHablando"] = "Sit_Talking",
+            ["Correr"] = "Run_Standard", ["CorrerRapido"] = "Run_Standard", ["SentadoHablando"] = "Sit_Talking",
             ["SentadoMovil"] = "Sit_Typing", ["SentadoEscribiendo"] = "Sit_Writing", ["MovilDePie"] = "Texting_Standing",
             ["Aire"] = "Falling_Idle",
         };
@@ -112,6 +115,24 @@ namespace Gemelo
         }
 
         // ───────────────────────── Controladores ─────────────────────────
+
+        /// <summary>Rehace solo los dos controladores (Persona_Hombre y Persona_Mujer) con los clips ya importados y los
+        /// sentados ya recentrados, sin reconstruir los personajes.</summary>
+        public static string SoloControladores()
+        {
+            var baseCtrl = AssetDatabase.LoadAssetAtPath<AnimatorController>("Assets/_Gemelo/Personas/Maniquies/Persona.controller");
+            if (baseCtrl == null) return "Falta Maniquies/Persona.controller";
+            foreach (var n in new[] { "Sit_Writing", "Sit_Talking", "Sit_StillChair" })
+            {
+                var c = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ImportadorMixamo.CarpetaAnimaciones}/{n}_Centrado.anim");
+                if (c == null) return $"Falta {n}_Centrado.anim: Tools ▸ Gemelo ▸ Personajes de Mixamo";
+                recentrados[n] = c;
+            }
+            Override(baseCtrl, "Persona_Hombre", DeHombre);
+            Override(baseCtrl, "Persona_Mujer", DeMujer);
+            AssetDatabase.SaveAssets();
+            return "Persona_Hombre y Persona_Mujer rehechos";
+        }
 
         static readonly Dictionary<string, AnimationClip> recentrados = new();
 
