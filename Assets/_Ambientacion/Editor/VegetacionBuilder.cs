@@ -821,6 +821,9 @@ public static class VegetacionBuilder
         imp.mipMapsPreserveCoverage = alfa;
         imp.alphaTestReferenceValue = 0.5f;
         imp.wrapMode = alfa ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
+        // Las texturas de hierba del Terrain se leen desde la CPU: la build ya activaba Read/Write sola, pero avisa de que
+        // en versiones futuras dejará de hacerlo
+        imp.isReadable = nombre.StartsWith("Hierba");
         imp.SaveAndReimport();
         return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }

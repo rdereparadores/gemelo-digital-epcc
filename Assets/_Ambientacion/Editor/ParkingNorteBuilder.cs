@@ -71,9 +71,15 @@ public static class ParkingNorteBuilder
         var pMediana = MakePrefab("Mediana_Tramo_2m", SaveMesh(TramoMesh("Mediana_Tramo_2m", 3.5f, true), "Mediana_Tramo_2m"),
             new[] { bordillo, mediana }, true, go => AddBox(go, 3.5f));
 
-        GameObject Isleta(string name, float r, float l) =>
-            MakePrefab(name, SaveMesh(IsletaMesh(name, r, l), name), new[] { bordillo, isleta }, true,
+        GameObject Isleta(string name, float r, float l)
+        {
+            // (con la colisión precocinada: la build avisaba de que en versiones futuras no lo hará sola)
+            var mIsleta = SaveMesh(IsletaMesh(name, r, l), name);
+            mIsleta.SetPreBakeCollisionMesh(false, true);
+            EditorUtility.SetDirty(mIsleta);
+            return MakePrefab(name, mIsleta, new[] { bordillo, isleta }, true,
                 go => go.AddComponent<MeshCollider>().sharedMesh = go.GetComponent<MeshFilter>().sharedMesh);
+        }
         var pIsletaPergO = Isleta("Isleta_Pergola_Oeste", 5f, 5f);
         var pIsletaPergE = Isleta("Isleta_Pergola_Este", 5f, 0f);
         var pIsletaMedO = Isleta("Isleta_Mediana_Oeste", 5.8f, 5.4f);

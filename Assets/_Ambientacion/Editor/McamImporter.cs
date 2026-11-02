@@ -16,7 +16,7 @@ using UnityEngine.Rendering;
 // Los nombres "Grupo_resto" se agrupan bajo un hijo "Grupo". Las piezas de mobiliario (carpeta
 // Mobiliario/) llevan una sola BoxCollider en la raíz en vez de MeshCollider por malla, porque se
 // instancian miles de veces, y un LODGroup que las oculta cuando se ven muy pequeñas.
-[ScriptedImporter(8, "mcam")]
+[ScriptedImporter(9, "mcam")]
 public class McamImporter : ScriptedImporter
 {
     public const string MaterialesDir = "Assets/_Ambientacion/Materiales";
@@ -67,9 +67,13 @@ public class McamImporter : ScriptedImporter
                 mesh.RecalculateBounds();
                 // Orden de índices y vértices para la caché de vértices de la GPU (mismo resultado, menos trabajo)
                 mesh.Optimize();
-                // Sin copia en CPU en el build: nada lee las mallas en tiempo de ejecución y los MeshCollider se
-                // precocinan al compilar (Player Settings ▸ Prebake Collision Meshes). En el editor siguen legibles
-                // para los scripts de edición
+                // Las que llevan MeshCollider, con la colisión precocinada marcada en la propia malla: la build ya lo
+                // hacía sola (Player Settings ▸ Prebake Collision Meshes), pero avisaba de que en versiones futuras
+                // dejará de hacerlo en las mallas que no lo pidan (898 mallas)
+                bool conCollider = !mobiliario && !SinCollider.Contains(material);
+                if (conCollider) mesh.SetPreBakeCollisionMesh(false, true);
+                // Sin copia en CPU en el build: nada lee las mallas en tiempo de ejecución y los MeshCollider llevan la
+                // colisión precocinada. En el editor siguen legibles para los scripts de edición
                 mesh.UploadMeshData(true);
                 ctx.AddObjectToAsset(nombre, mesh);
 
@@ -94,7 +98,7 @@ public class McamImporter : ScriptedImporter
                     if (hayLimites) limites.Encapsulate(mesh.bounds); else limites = mesh.bounds;
                     hayLimites = true;
                 }
-                else if (!SinCollider.Contains(material)) go.AddComponent<MeshCollider>().sharedMesh = mesh;
+                else if (conCollider) go.AddComponent<MeshCollider>().sharedMesh = mesh;
                 var flags = StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI |
                             StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic;
                 // Lo opaco de la arquitectura tapa lo que hay detrás (oclusión); el vidrio y los muebles, no

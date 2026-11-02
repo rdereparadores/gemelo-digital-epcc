@@ -101,11 +101,13 @@ Shader "Gemelo/Agua"
 
             // Reflejo en espacio de pantalla: marcha el rayo reflejado (pasos crecientes, ~35 m) contra la profundidad de
             // la cámara. Devuelve el color reflejado y su peso (0 si se sale de la pantalla o no choca con nada).
+            // (dentro del bucle, lecturas con el nivel de detalle 0 explícito: SampleSceneDepth/SampleSceneColor usan
+            // derivadas, que no valen en un bucle de iteraciones variables, y el compilador avisaba en cada build)
             half4 Reflejo(float3 p0, float3 r)
             {
                 float paso = 0.04, s = 0.02;
-                float2 uvAnt = 0;
-                for (int k = 0; k < 32; k++)
+                half4 res = 0;
+                [loop] for (int k = 0; k < 32; k++)
                 {
                     s += paso;
                     paso *= 1.17;
@@ -115,17 +117,19 @@ Shader "Gemelo/Agua"
                     float4 sp = ComputeScreenPos(cs);
                     float2 uv = sp.xy / sp.w;
                     if (any(uv < 0.0) || any(uv > 1.0)) break;
-                    float escena = LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
-                    float dif = cs.w - escena;
+                    float2 uvT = UnityStereoTransformScreenSpaceTex(uv);
+                    float prof = SAMPLE_TEXTURE2D_X_LOD(_CameraDepthTexture, sampler_CameraDepthTexture, uvT, 0).r;
+                    float dif = cs.w - LinearEyeDepth(prof, _ZBufferParams);
                     if (dif > 0.0 && dif < 0.25 + paso * 2.0)
                     {
                         // Atenúa hacia los bordes de la pantalla y a lo lejos
                         float2 b = min(uv, 1.0 - uv);
                         float peso = saturate(min(b.x, b.y) * 12.0) * saturate(1.5 - s / 25.0);
-                        return half4(SampleSceneColor(uv), peso);
+                        res = half4(SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, uvT, 0).rgb, peso);
+                        break;
                     }
                 }
-                return 0;
+                return res;
             }
 
             half4 frag(Varyings i) : SV_Target
